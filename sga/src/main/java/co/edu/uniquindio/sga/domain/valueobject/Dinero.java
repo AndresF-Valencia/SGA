@@ -56,6 +56,20 @@ public record Dinero(BigDecimal valor) {
 
     }
 
+    public Dinero porcentual(double porcentaje) {
+        if (porcentaje < 0.0 || porcentaje > 100.0) {
+            throw new ReglaDominioException("El porcentaje debe estar entre 0 y 100");
+        }
+
+        BigDecimal factor = BigDecimal.valueOf(porcentaje)
+                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+
+        BigDecimal resultado = this.valor.multiply(factor);
+
+        // El constructor compacto de Dinero aplicará automáticamente setScale(0, HALF_UP)
+        return new Dinero(resultado);
+    }
+
     public boolean esCero() {
 
         return this.valor.signum() == 0;

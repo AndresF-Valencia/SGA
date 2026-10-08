@@ -1,4 +1,9 @@
 package co.edu.uniquindio.sga.domain.valueobject;
+/**
+
+ * Estados del ciclo de vida de una reserva
+
+ */
 
 public enum EstadoReserva {
     PENDIENTE(true),
@@ -17,7 +22,6 @@ public enum EstadoReserva {
     }
 
     /** Reservas activas: PENDIENTE, CONFIRMADA y EN_CURSO. */
-
     public boolean esActiva() {
 
         return activa;
@@ -25,28 +29,41 @@ public enum EstadoReserva {
     }
 
     /** FINALIZADA, CANCELADA y NO_SHOW son estados terminales. */
-
     public boolean esTerminal() {
 
         return !activa;
 
     }
 
-    /**
-
-     * En este dominio solo las reservas activas retienen noches (RN-12).
-
-     * Se expone como método aparte porque el negocio habla de las dos cosas
-
-     * y podría dejar de coincidir en otro alojamiento.
-
-     */
-
+    /** RN-12: en este dominio solo las reservas activas retienen noches. */
     public boolean retieneDisponibilidad() {
 
         return activa;
 
     }
 
+    /**
+     * RN-08: define el ciclo de vida válido de una reserva.
+     */
+
+    public boolean puedeTransicionarA(EstadoReserva siguiente) {
+
+        return switch (this) {
+
+            case PENDIENTE  -> siguiente == CONFIRMADA || siguiente == CANCELADA;
+
+            case CONFIRMADA -> siguiente == EN_CURSO
+
+                            || siguiente == CANCELADA
+
+                            || siguiente == NO_SHOW;
+
+            case EN_CURSO   -> siguiente == FINALIZADA;
+
+            case FINALIZADA, CANCELADA, NO_SHOW -> false;   // estados terminales
+
+        };
+
+    }
 
 }
