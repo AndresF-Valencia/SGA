@@ -71,5 +71,16 @@ public record Estancia(LocalDate fechaEntrada, LocalDate fechaSalida) {
 
     }
 
+    /** 
+     * Días de anticipación entre una fecha de referencia (ej. momento de cancelación) 
+     * y la fecha de entrada.
+     */
+    public long diasAnticipacionDesde(LocalDate fechaReferencia) {
+        if (fechaReferencia == null) {
+            throw new ReglaDominioException("La fecha de referencia no puede ser nula");
+        }
+        return ChronoUnit.DAYS.between(fechaReferencia, fechaEntrada);
+    }
+    
 }
 
