@@ -6,6 +6,7 @@ import java.util.List;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.valueobject.Cargo;
 import co.edu.uniquindio.sga.domain.valueobject.Dinero;
+import co.edu.uniquindio.sga.domain.valueobject.TipoCargo;
 
 /**
  * Raíz del agregado Folio: la cuenta de una reserva.
@@ -13,7 +14,9 @@ import co.edu.uniquindio.sga.domain.valueobject.Dinero;
  *
  * Invariantes que garantiza:
  * - el saldo es siempre la diferencia entre cargos y pagos (RN-15);
- * se calcula, nunca se guarda, para que no pueda desincronizarse.
+ * - se calcula, nunca se guarda, para que no pueda desincronizarse.
+ * - un folio cerrado no admite pagos.
+ * - un folio cerrado no admite cargos.
  */
 
 public class Folio {
@@ -43,6 +46,10 @@ public class Folio {
         return totalCargos.menos(totalPagos);
     }
 
+    /**
+     * RN-15: todo pago se registra contra un folio abierto, con su medio y su
+     * fecha.
+     */
     public void registrarPago(Pago pago) {
         if (pago == null) {
             throw new ReglaDominioException("El pago a registrar es obligatorio");
@@ -51,6 +58,20 @@ public class Folio {
             throw new ReglaDominioException("No se puede registrar un pago en un folio cerrado");
         }
         pagos.add(pago);
+    }
+
+    /**
+     * RN-16: el cargo solo se agrega a un folio abierto, y nunca se modifica ni se
+     * elimina
+     */
+    public void registrarCargo(Cargo cargo) {
+        if (cargo == null) {
+            throw new ReglaDominioException("El cargo a registrar es obligatorio");
+        }
+        if (this.cerrado) {
+            throw new ReglaDominioException("No se puede registrar un cargo en un folio cerrado");
+        }
+        cargos.add(cargo);
     }
 
 }
