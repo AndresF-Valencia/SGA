@@ -6,6 +6,15 @@ import java.util.List;
 import co.edu.uniquindio.sga.domain.valueobject.Cargo;
 import co.edu.uniquindio.sga.domain.valueobject.Dinero;
 
+/**
+ * Raíz del agregado Folio: la cuenta de una reserva.
+ * Acumula cargos y pagos, y de ellos determina el saldo.
+ *
+ * Invariantes que garantiza:
+ * - el saldo es siempre la diferencia entre cargos y pagos (RN-15);
+ * se calcula, nunca se guarda, para que no pueda desincronizarse.
+ */
+
 public class Folio {
 
     private final List<Cargo> cargos = new ArrayList<>();
