@@ -20,6 +20,12 @@ public class Folio {
     private final List<Cargo> cargos = new ArrayList<>();
     private final List<Pago> pagos = new ArrayList<>();
 
+    /**
+     * RN-15: calcula el saldo del folio, que es la diferencia entre cargos y pagos.
+     * Si es positivo, el huésped le debe al alojamiento; si es cero, la cuenta está
+     * saldada;
+     * si es negativo, el huésped tiene saldo a favor.
+     */
     public Dinero saldo() {
         Dinero totalCargos = Dinero.CERO;
 
