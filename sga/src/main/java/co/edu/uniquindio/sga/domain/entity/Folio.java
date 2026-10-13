@@ -7,6 +7,7 @@ import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.valueobject.Cargo;
 import co.edu.uniquindio.sga.domain.valueobject.Dinero;
 import co.edu.uniquindio.sga.domain.valueobject.TipoCargo;
+import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
 
 /**
  * Raíz del agregado Folio: la cuenta de una reserva.
@@ -21,10 +22,29 @@ import co.edu.uniquindio.sga.domain.valueobject.TipoCargo;
 
 public class Folio {
 
+    private final CodigoReserva reserva;
     private final List<Cargo> cargos = new ArrayList<>();
     private final List<Pago> pagos = new ArrayList<>();
-
     private boolean cerrado;
+
+    /**
+     * Constructor del folio.
+     * F-08: el folio se abre al crear la reserva, con su cargo de alojamiento
+     * (7.7).
+     */
+    public Folio(CodigoReserva reserva, Cargo cargoAlojamiento) {
+        if (reserva == null) {
+            throw new ReglaDominioException("El folio debe estar asociado a una reserva");
+        }
+        if (cargoAlojamiento == null) {
+            throw new ReglaDominioException("El folio debe iniciar con un cargo de alojamiento");
+        }
+        if (cargoAlojamiento.tipo() != TipoCargo.ALOJAMIENTO) {
+            throw new ReglaDominioException("El folio debe iniciar con un cargo de alojamiento");
+        }
+        this.reserva = reserva;
+        this.cargos.add(cargoAlojamiento);
+    }
 
     /**
      * RN-15: calcula el saldo del folio, que es la diferencia entre cargos y pagos.
