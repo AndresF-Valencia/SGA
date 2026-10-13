@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
+import co.edu.uniquindio.sga.domain.valueobject.AutorizacionCierre;
 import co.edu.uniquindio.sga.domain.valueobject.Cargo;
 import co.edu.uniquindio.sga.domain.valueobject.Dinero;
 import co.edu.uniquindio.sga.domain.valueobject.TipoCargo;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
+import java.util.Collections;
 
 /**
  * Raíz del agregado Folio: la cuenta de una reserva.
@@ -18,6 +20,11 @@ import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
  * - se calcula, nunca se guarda, para que no pueda desincronizarse.
  * - un folio cerrado no admite pagos.
  * - un folio cerrado no admite cargos.
+ * - un folio pertenece a una sola reserva y se abre con su cargo de
+ * alojamiento.
+ * - solo se cierra con saldo cero, o con una autorización registrada (RN-17);
+ * - los cargos y pagos solo se consultan; nunca se modifican desde afuera
+ * (RN-16).
  */
 
 public class Folio {
@@ -25,6 +32,7 @@ public class Folio {
     private final CodigoReserva reserva;
     private final List<Cargo> cargos = new ArrayList<>();
     private final List<Pago> pagos = new ArrayList<>();
+    private AutorizacionCierre autorizacionCierre;
     private boolean cerrado;
 
     /**
@@ -40,10 +48,30 @@ public class Folio {
             throw new ReglaDominioException("El folio debe iniciar con un cargo de alojamiento");
         }
         if (cargoAlojamiento.tipo() != TipoCargo.ALOJAMIENTO) {
-            throw new ReglaDominioException("El folio debe iniciar con un cargo de alojamiento");
+            throw new ReglaDominioException("El folio solo puede abrirse con un cargo de tipo alojamiento");
         }
         this.reserva = reserva;
         this.cargos.add(cargoAlojamiento);
+    }
+
+    public CodigoReserva getReserva() {
+        return reserva;
+    }
+
+    public boolean isCerrado() {
+        return cerrado;
+    }
+
+    public AutorizacionCierre getAutorizacionCierre() {
+        return autorizacionCierre;
+    }
+
+    public List<Cargo> getCargos() {
+        return Collections.unmodifiableList(cargos);
+    }
+
+    public List<Pago> getPagos() {
+        return Collections.unmodifiableList(pagos);
     }
 
     /**
@@ -92,6 +120,33 @@ public class Folio {
             throw new ReglaDominioException("No se puede registrar un cargo en un folio cerrado");
         }
         cargos.add(cargo);
+    }
+
+    /** RN-17: el folio se cierra sin autorización solo si el saldo es cero. */
+    public void cerrar() {
+        if (this.cerrado) {
+            throw new ReglaDominioException("El folio ya está cerrado");
+        }
+        if (!saldo().esCero()) {
+            throw new ReglaDominioException("El folio no puede cerrarse con saldo distinto de cero");
+        }
+        this.cerrado = true;
+    }
+
+    /**
+     * RN-17: con saldo distinto de cero, el cierre exige una autorización
+     * registrada.
+     */
+    public void cerrarConAutorizacion(AutorizacionCierre autorizacion) {
+        if (autorizacion == null) {
+            throw new ReglaDominioException(
+                    "Se requiere una autorización para cerrar el folio con saldo distinto de cero");
+        }
+        if (this.cerrado) {
+            throw new ReglaDominioException("El folio ya está cerrado");
+        }
+        autorizacionCierre = autorizacion;
+        this.cerrado = true;
     }
 
 }
