@@ -1,5 +1,11 @@
 package co.edu.uniquindio.sga.domain.valueobject;
 
+/**
+ * Representa la identificación de un apartamento.
+ * Se utiliza para garantizar que cada apartamento tenga una identificación única y válida.
+ */
+
+
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 
 public record IdentificacionApartamento(String valor) {
