@@ -4,31 +4,46 @@ import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 
 import co.edu.uniquindio.sga.domain.valueobject.EstadoOperativo;
 
+import co.edu.uniquindio.sga.domain.valueobject.Dormitorio;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
+import co.edu.uniquindio.sga.domain.valueobject.LimiteMascota;
+import co.edu.uniquindio.sga.domain.valueobject.CapacidadOcupantes;
+import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
+import co.edu.uniquindio.sga.domain.valueobject.TiempoPreparacion;
 
 public class Apartamento {
 
-    private final IdentificacionApartamento identificacion;  
+    private final IdentificacionApartamento identificacion;
 
-    private String nombre;                                   
+    private final IdentificacionAlojamiento indentificacionAlojamiento; // identificacion al alojamiento que pertence
 
-    private int dormitorios;
+    private String nombre;
 
-    private int capacidad;
+    private Dormitorio dormitorios; // encapsulado en VO
 
-    private EstadoOperativo estadoOperativo;
+    private CapacidadOcupantes capacidad; // encapsulado en VO
+
+    private EstadoOperativo estadoOperativo; // encapsulado en VO
+
+    private LimiteMascota limiteMascotas; // encapsulado en VO
+
+    private TiempoPreparacion tiempoPreparacion; // encapsulado en VO
 
     private boolean activo;
 
-    
     public Apartamento(IdentificacionApartamento identificacion, String nombre,
+            TiempoPreparacion tiempoPreparacion,
 
-                       int dormitorios, int capacidad) {
+            IdentificacionAlojamiento identificacionAlojamiento, Dormitorio dormitorios, CapacidadOcupantes capacidad,
+            LimiteMascota limiteMascotas) {
 
         if (identificacion == null) {
 
             throw new ReglaDominioException("El apartamento debe tener identificación");
 
+        }
+        if (identificacionAlojamiento == null) {
+            throw new ReglaDominioException("El apartamento debe tener una identificación de alojamiento");
         }
 
         if (nombre == null || nombre.isBlank()) {
@@ -37,21 +52,34 @@ public class Apartamento {
 
         }
 
-        if (dormitorios < 1) {
+        if (dormitorios.cantidad() < 1) {
 
             throw new ReglaDominioException("El apartamento debe tener al menos un dormitorio");
 
         }
 
-        if (capacidad < 1) {
+        if (capacidad.cantidad() < 1) {
 
             throw new ReglaDominioException("La capacidad del apartamento debe ser al menos 1");
 
         }
 
+        if (limiteMascotas.limite() < 0) {
+
+            throw new ReglaDominioException(" El límite de mascotas no puede ser negativo");
+
+        }
+        if (tiempoPreparacion == null) {
+            throw new ReglaDominioException("El apartamento debe tener un tiempo de preparación");
+        }
+
         this.identificacion = identificacion;
 
+        this.indentificacionAlojamiento = identificacionAlojamiento;
+
         this.nombre = nombre;
+
+        this.tiempoPreparacion = tiempoPreparacion;
 
         this.dormitorios = dormitorios;
 
@@ -61,6 +89,8 @@ public class Apartamento {
 
         this.activo = true;
 
+        this.limiteMascotas = limiteMascotas;
+
     }
 
     // Comportamiento: los nombres vienen del lenguaje del dominio
@@ -69,7 +99,7 @@ public class Apartamento {
 
     public boolean admite(int totalOcupantes) {
 
-        return totalOcupantes > 0 && totalOcupantes <= capacidad;
+        return totalOcupantes > 0 && totalOcupantes <= capacidad.cantidad();
 
     }
 
@@ -89,9 +119,34 @@ public class Apartamento {
 
     }
 
+    /**
+     * este metodo se encarga de autorizar la admision de mascotas
+     * 
+     * @param limiteMascotas limite de mascotas permitido en el apartamento
+     * @param cantidad       cantidad de mascotas que se desea alojar en el
+     *                       apartamento
+     * @return retorna true si adimite la cantidad de mascotas, false si no lo haces
+     */
+    public boolean adminteMascotas(int cantidad) {
+
+        if (cantidad < 0) {
+            throw new ReglaDominioException("La cantidad de mascotas no puede ser negativa");
+        }
+
+        return cantidad <= limiteMascotas.limite();
+    }
+
+    // ------ CONSULTAS ------
+
     public IdentificacionApartamento getIdentificacion() {
 
         return identificacion;
+
+    }
+
+    public IdentificacionAlojamiento getIndentificacionAlojamiento() {
+
+        return indentificacionAlojamiento;
 
     }
 
@@ -101,13 +156,13 @@ public class Apartamento {
 
     }
 
-    public int getDormitorios() {
+    public Dormitorio getDormitorios() {
 
         return dormitorios;
 
     }
 
-    public int getCapacidad() {
+    public CapacidadOcupantes getCapacidad() {
 
         return capacidad;
 
@@ -123,6 +178,18 @@ public class Apartamento {
 
         return activo;
 
+    }
+
+    public TiempoPreparacion getTiempoPreparacion() {
+        return tiempoPreparacion;
+    }
+
+    public LimiteMascota getLimiteMascotas() {
+        return limiteMascotas;
+    }
+
+    public void setLimiteMascotas(LimiteMascota limiteMascotas) {
+        this.limiteMascotas = limiteMascotas;
     }
 
     // Dos apartamentos son el mismo si tienen la misma identificación,
@@ -156,5 +223,4 @@ public class Apartamento {
         return identificacion.hashCode();
 
     }
-
 }
