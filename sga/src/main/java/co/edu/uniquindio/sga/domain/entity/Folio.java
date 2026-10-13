@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga.domain.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.valueobject.Cargo;
 import co.edu.uniquindio.sga.domain.valueobject.Dinero;
 
@@ -19,6 +20,8 @@ public class Folio {
 
     private final List<Cargo> cargos = new ArrayList<>();
     private final List<Pago> pagos = new ArrayList<>();
+
+    private boolean cerrado;
 
     /**
      * RN-15: calcula el saldo del folio, que es la diferencia entre cargos y pagos.
@@ -38,6 +41,16 @@ public class Folio {
             totalPagos = totalPagos.mas(pago.getMonto());
         }
         return totalCargos.menos(totalPagos);
+    }
+
+    public void registrarPago(Pago pago) {
+        if (pago == null) {
+            throw new ReglaDominioException("El pago a registrar es obligatorio");
+        }
+        if (this.cerrado) {
+            throw new ReglaDominioException("No se puede registrar un pago en un folio cerrado");
+        }
+        pagos.add(pago);
     }
 
 }
