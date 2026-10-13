@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.valueobject.CanalOrigen;
+import co.edu.uniquindio.sga.domain.valueobject.CantidadMascota;
 import co.edu.uniquindio.sga.domain.valueobject.CargoNoche;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.Dinero;
@@ -43,6 +44,7 @@ class ReservaTest {
     private static final IdentificacionApartamento APTO = new IdentificacionApartamento("APTO-101");
     private static final VersionPolitica POLITICA = new VersionPolitica(1);
     private static final String RECEPCION = "recepcionista";
+    private static final CantidadMascota SIN_MASCOTAS = new CantidadMascota(0);
 
     private Ocupante titular;
     private Ocupante acompanante;
@@ -71,7 +73,7 @@ class ReservaTest {
 
     private Reserva crearReserva(Estancia e, List<Ocupante> ocupantes) {
         return Reserva.crear(CODIGO, APTO, e, titular, ocupantes, CanalOrigen.DIRECTO,
-                valorPara(e, ocupantes.size()), POLITICA, AHORA);
+                valorPara(e, ocupantes.size()), POLITICA, AHORA, SIN_MASCOTAS);
     }
 
     private void confirmar() {
@@ -125,19 +127,19 @@ class ReservaTest {
         CanalOrigen canal = CanalOrigen.PORTAL;
 
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(
-                null, APTO, estancia, titular, grupo, canal, valor, POLITICA, AHORA));
+                null, APTO, estancia, titular, grupo, canal, valor, POLITICA, AHORA, SIN_MASCOTAS));
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(
-                CODIGO, null, estancia, titular, grupo, canal, valor, POLITICA, AHORA));
+                CODIGO, null, estancia, titular, grupo, canal, valor, POLITICA, AHORA, SIN_MASCOTAS));
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(
-                CODIGO, APTO, null, titular, grupo, canal, valor, POLITICA, AHORA));
+                CODIGO, APTO, null, titular, grupo, canal, valor, POLITICA, AHORA, SIN_MASCOTAS));
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(
-                CODIGO, APTO, estancia, null, grupo, canal, valor, POLITICA, AHORA));
+                CODIGO, APTO, estancia, null, grupo, canal, valor, POLITICA, AHORA, SIN_MASCOTAS));
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(
-                CODIGO, APTO, estancia, titular, grupo, null, valor, POLITICA, AHORA));
+                CODIGO, APTO, estancia, titular, grupo, null, valor, POLITICA, AHORA, SIN_MASCOTAS));
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(
-                CODIGO, APTO, estancia, titular, grupo, canal, null, POLITICA, AHORA));
+                CODIGO, APTO, estancia, titular, grupo, canal, null, POLITICA, AHORA, SIN_MASCOTAS));
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(
-                CODIGO, APTO, estancia, titular, grupo, canal, valor, null, AHORA));
+                CODIGO, APTO, estancia, titular, grupo, canal, valor, null, AHORA, SIN_MASCOTAS));
     }
 
     @Test
@@ -182,7 +184,7 @@ class ReservaTest {
 
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(
                 CODIGO, APTO, estancia, titular, List.of(titular), CanalOrigen.PORTAL,
-                valorPara(dosNoches, 1), POLITICA, AHORA));
+                valorPara(dosNoches, 1), POLITICA, AHORA, SIN_MASCOTAS));
     }
 
     @Test
