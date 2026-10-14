@@ -42,6 +42,8 @@ class ApartamentoTest {
                 DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS);
     }
 
+    // ---------- Creación ----------
+
     @Test
     @DisplayName("Exige identificación, alojamiento, nombre y tiempo de preparación")
     void validaDatos() {
@@ -56,10 +58,22 @@ class ApartamentoTest {
     }
 
     @Test
+    @DisplayName("Exige dormitorios, capacidad y límite de mascotas, con un error del negocio")
+    void exigeCantidades() {
+        assertThrows(ReglaDominioException.class, () -> new Apartamento(
+                APTO_101, "A", PREPARACION, ALOJAMIENTO, null, CUATRO_PERSONAS, DOS_MASCOTAS));
+        assertThrows(ReglaDominioException.class, () -> new Apartamento(
+                APTO_101, "A", PREPARACION, ALOJAMIENTO, DOS_DORMITORIOS, null, DOS_MASCOTAS));
+        assertThrows(ReglaDominioException.class, () -> new Apartamento(
+                APTO_101, "A", PREPARACION, ALOJAMIENTO, DOS_DORMITORIOS, CUATRO_PERSONAS, null));
+    }
+
+    @Test
     @DisplayName("Necesita al menos un dormitorio, capacidad para una persona y límite de mascotas no negativo")
     void validaCantidades() {
         // TODO: Dormitorio y CapacidadOcupantes lanzan hoy IllegalArgumentException.
-        // Cuando pasen a ReglaDominioException, cambiar RuntimeException por ReglaDominioException.
+        // Cuando pasen a ReglaDominioException, cambiar RuntimeException por
+        // ReglaDominioException.
         assertThrows(RuntimeException.class, () -> new Dormitorio(0));
         assertThrows(RuntimeException.class, () -> new CapacidadOcupantes(0));
         assertThrows(ReglaDominioException.class, () -> new LimiteMascota(-1));
@@ -71,6 +85,8 @@ class ApartamentoTest {
         assertTrue(apartamento.estaActivo());
         assertEquals(EstadoOperativo.PREPARADO, apartamento.getEstadoOperativo());
     }
+
+    // ---------- Capacidad y mascotas ----------
 
     @Test
     @DisplayName("RN-02: la capacidad es un tope rígido")
@@ -84,11 +100,82 @@ class ApartamentoTest {
     @Test
     @DisplayName("Admite mascotas hasta su límite")
     void respetaLimiteMascotas() {
-        assertTrue(apartamento.adminteMascotas(0));
-        assertTrue(apartamento.adminteMascotas(2), "admite exactamente su límite");
-        assertFalse(apartamento.adminteMascotas(3), "no admite ni una mascota más");
-        assertThrows(ReglaDominioException.class, () -> apartamento.adminteMascotas(-1));
+        assertTrue(apartamento.admiteMascotas(0));
+        assertTrue(apartamento.admiteMascotas(2), "admite exactamente su límite");
+        assertFalse(apartamento.admiteMascotas(3), "no admite ni una mascota más");
+        assertThrows(ReglaDominioException.class, () -> apartamento.admiteMascotas(-1));
     }
+
+    @Test
+    @DisplayName("El administrador puede cambiar el límite de mascotas")
+    void cambiaLimiteMascotas() {
+        apartamento.cambiarLimiteMascotas(new LimiteMascota(0));
+
+        assertFalse(apartamento.admiteMascotas(1), "ya no admite mascotas");
+        assertThrows(ReglaDominioException.class, () -> apartamento.cambiarLimiteMascotas(null));
+    }
+
+    // ---------- Estado operativo (7.6) ----------
+
+    @Test
+    @DisplayName("7.6: ciclo completo preparado → ocupado → pendiente → en preparación → preparado")
+    void cicloCompleto() {
+        apartamento.marcarOcupado();
+        assertEquals(EstadoOperativo.OCUPADO, apartamento.getEstadoOperativo());
+
+        apartamento.marcarPendientePreparacion();
+        assertEquals(EstadoOperativo.PENDIENTE_PREPARACION, apartamento.getEstadoOperativo());
+
+        apartamento.marcarEnPreparacion();
+        assertEquals(EstadoOperativo.EN_PREPARACION, apartamento.getEstadoOperativo());
+
+        apartamento.marcarPreparado();
+        assertEquals(EstadoOperativo.PREPARADO, apartamento.getEstadoOperativo());
+    }
+
+    @Test
+    @DisplayName("RN-11: un apartamento a mitad de preparación no recibe un grupo")
+    void noOcupaEnPreparacion() {
+        apartamento.marcarOcupado();
+        apartamento.marcarPendientePreparacion();
+        apartamento.marcarEnPreparacion();
+
+        assertFalse(apartamento.puedeRecibirGrupo());
+        assertThrows(ReglaDominioException.class, () -> apartamento.marcarOcupado());
+        assertEquals(EstadoOperativo.EN_PREPARACION, apartamento.getEstadoOperativo(), "no cambió");
+    }
+
+    @Test
+    @DisplayName("7.6: un apartamento ocupado no se puede declarar fuera de servicio")
+    void ocupadoNoPasaAFueraDeServicio() {
+        apartamento.marcarOcupado();
+
+        assertThrows(ReglaDominioException.class, () -> apartamento.marcarFueraDeServicio());
+        assertEquals(EstadoOperativo.OCUPADO, apartamento.getEstadoOperativo());
+    }
+
+    @Test
+    @DisplayName("7.6: fuera de servicio no vuelve directo a preparado; pasa por la preparación")
+    void fueraDeServicioVuelvePorPreparacion() {
+        apartamento.marcarFueraDeServicio();
+
+        assertFalse(apartamento.puedeRecibirGrupo());
+        assertThrows(ReglaDominioException.class, () -> apartamento.marcarPreparado());
+
+        apartamento.marcarPendientePreparacion();
+        apartamento.marcarEnPreparacion();
+        apartamento.marcarPreparado();
+        assertTrue(apartamento.puedeRecibirGrupo());
+    }
+
+    @Test
+    @DisplayName("Un apartamento preparado no vuelve a prepararse")
+    void preparadoNoSeVuelveAPreparar() {
+        assertThrows(ReglaDominioException.class, () -> apartamento.marcarPendientePreparacion());
+        assertThrows(ReglaDominioException.class, () -> apartamento.marcarEnPreparacion());
+    }
+
+    // ---------- Activo ----------
 
     @Test
     @DisplayName("RN-11: un apartamento activo y PREPARADO puede recibir un grupo")
@@ -104,6 +191,8 @@ class ApartamentoTest {
         assertFalse(apartamento.estaActivo());
         assertFalse(apartamento.puedeRecibirGrupo());
     }
+
+    // ---------- Identidad ----------
 
     @Test
     @DisplayName("Dos apartamentos son el mismo si tienen la misma identificación")
