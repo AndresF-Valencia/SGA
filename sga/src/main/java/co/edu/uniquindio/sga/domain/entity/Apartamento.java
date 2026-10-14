@@ -136,6 +136,46 @@ public class Apartamento {
         return cantidad <= limiteMascotas.limite();
     }
 
+    private void verificarEstado(EstadoOperativo estado) {
+        if (!this.estadoOperativo.puedeTransicionarA(estado)) {
+            throw new ReglaDominioException(
+                    "El apartamento no puede pasar de " + this.estadoOperativo + " a " + estado);
+        }
+    }
+
+    /** RN-11: el grupo hace el registro. PREPARADO → OCUPADO. */
+    public void marcarOcupado() {
+        cambiarEstado(EstadoOperativo.OCUPADO);
+    }
+
+    /** Salida del grupo. OCUPADO → PENDIENTE_PREPARACION. */
+    public void marcarPendientePreparacion() {
+        cambiarEstado(EstadoOperativo.PENDIENTE_PREPARACION);
+    }
+
+    /**
+     * El personal de servicio empieza a preparar. PENDIENTE_PREPARACION →
+     * EN_PREPARACION.
+     */
+    public void marcarEnPreparacion() {
+        cambiarEstado(EstadoOperativo.EN_PREPARACION);
+    }
+
+    /** Terminó la preparación. EN_PREPARACION → PREPARADO. */
+    public void marcarPreparado() {
+        cambiarEstado(EstadoOperativo.PREPARADO);
+    }
+
+    /** Decisión administrativa, desde cualquier estado no ocupado (7.6). */
+    public void marcarFueraDeServicio() {
+        cambiarEstado(EstadoOperativo.FUERA_DE_SERVICIO);
+    }
+
+    private void cambiarEstado(EstadoOperativo estado) {
+        verificarEstado(estado);
+        this.estadoOperativo = estado;
+    }
+
     // ------ CONSULTAS ------
 
     public IdentificacionApartamento getIdentificacion() {
