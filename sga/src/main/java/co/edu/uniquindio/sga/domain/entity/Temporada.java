@@ -53,8 +53,8 @@ public class Temporada {
      * RNP-01: Verifica si la cantidad de noches cumple con la estancia mínima de la temporada.
      */
     public boolean cumpleEstanciaMinima(int cantidadNoches) {
-        if (cantidadNoches < 1) {
-            throw new ReglaDominioException("La cantidad de noches debe ser al menos 1");
+        if (cantidadNoches < 2) {
+            throw new ReglaDominioException("La cantidad de noches debe ser al menos 2");
         }
 
         // Si es temporada base o no tiene restricción de mínimo configurada, cumple por defecto
@@ -69,6 +69,14 @@ public class Temporada {
 
     public IdentificacionTemporada getIdentificacion() {
         return identificacion;
+    }
+
+    public boolean esAlta(){
+        if(tipo== TipoTemporada.ALTA){
+            return true;
+        }else{
+            return false;
+        }
     }
 
     public Estancia getPeriodo() {

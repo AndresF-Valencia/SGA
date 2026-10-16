@@ -2,8 +2,8 @@ package co.edu.uniquindio.sga.domain.valueobject;
 
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 
-public record IdBloqueo(String valor) {
-    public IdBloqueo {
+public record IdentificacionBloqueo(String valor) {
+    public IdentificacionBloqueo {
         if (valor == null || valor.isBlank()) {
             throw new ReglaDominioException("El bloqueo debe tener un identificador");
         }
