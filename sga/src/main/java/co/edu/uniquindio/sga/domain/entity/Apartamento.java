@@ -23,7 +23,7 @@ import co.edu.uniquindio.sga.domain.valueobject.TiempoPreparacion;
 public class Apartamento {
 
     private final IdentificacionApartamento identificacion;
-    private final IdentificacionAlojamiento indentificacionAlojamiento; // alojamiento al que pertenece
+    private final IdentificacionAlojamiento identificacionAlojamiento; // alojamiento al que pertenece
     private String nombre;
     private Dormitorio dormitorios;
     private CapacidadOcupantes capacidad;
@@ -62,7 +62,7 @@ public class Apartamento {
         }
 
         this.identificacion = identificacion;
-        this.indentificacionAlojamiento = identificacionAlojamiento;
+        this.identificacionAlojamiento = identificacionAlojamiento;
         this.nombre = nombre;
         this.tiempoPreparacion = tiempoPreparacion;
         this.dormitorios = dormitorios;
@@ -155,8 +155,8 @@ public class Apartamento {
         return identificacion;
     }
 
-    public IdentificacionAlojamiento getIndentificacionAlojamiento() {
-        return indentificacionAlojamiento;
+    public IdentificacionAlojamiento getIdentificacionAlojamiento() {
+        return identificacionAlojamiento;
     }
 
     public String getNombre() {

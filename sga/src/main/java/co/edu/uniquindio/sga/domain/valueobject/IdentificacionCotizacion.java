@@ -5,9 +5,9 @@ package co.edu.uniquindio.sga.domain.valueobject;
  * Se utiliza para garantizar que cada cotización tenga una identificación única y válida.
  */
 
-public record IndentificacionCotizacion(String valor) {
+public record IdentificacionCotizacion(String valor) {
 
-    public IndentificacionCotizacion {
+    public IdentificacionCotizacion {
 
         if (valor == null || valor.isBlank()) {
 
