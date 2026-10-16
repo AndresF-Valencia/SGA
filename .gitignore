@@ -1,0 +1,37 @@
+# ---------- Gradle ----------
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# ---------- Clases compiladas por VS Code / Eclipse ----------
+bin/
+out/
+*.class
+
+# ---------- Base de datos H2 local ----------
+*.db
+*.mv.db
+*.trace.db
+
+# ---------- VS Code ----------
+.vscode/
+
+# ---------- IntelliJ IDEA ----------
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# ---------- Eclipse ----------
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+
+# ---------- Sistema operativo ----------
+.DS_Store
+Thumbs.db
+
+# ---------- Logs ----------
+*.log
