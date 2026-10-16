@@ -1,7 +1,7 @@
 package co.edu.uniquindio.sga.domain.entity;
 
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
-import co.edu.uniquindio.sga.domain.valueobject.IdBloqueo;
+import co.edu.uniquindio.sga.domain.valueobject.IdentificacionBloqueo;
 import co.edu.uniquindio.sga.domain.valueobject.MotivoBloqueo;
 import co.edu.uniquindio.sga.domain.valueobject.Periodo;
 import co.edu.uniquindio.sga.domain.valueobject.EstadoBloqueo;
@@ -26,13 +26,13 @@ import java.time.LocalDate;
  */
 public class Bloqueo {
 
-    private final IdBloqueo id;
+    private final IdentificacionBloqueo identificacionBloqueo;
     private final IdentificacionApartamento apartamento;
     private final Periodo periodo;
     private final MotivoBloqueo motivo;
     private EstadoBloqueo estado;
 
-    public Bloqueo(IdBloqueo id, IdentificacionApartamento apartamento, Periodo periodo, MotivoBloqueo motivo) {
+    public Bloqueo(IdentificacionBloqueo id, IdentificacionApartamento apartamento, Periodo periodo, MotivoBloqueo motivo) {
         if (id == null) {
             throw new ReglaDominioException("El bloqueo debe tener un identificador");
         }
@@ -45,7 +45,7 @@ public class Bloqueo {
         if (motivo == null) {
             throw new ReglaDominioException("El bloqueo debe tener un motivo");
         }
-        this.id = id;
+        this.identificacionBloqueo = id;
         this.apartamento = apartamento;
         this.periodo = periodo;
         this.motivo = motivo;
@@ -79,8 +79,8 @@ public class Bloqueo {
         estado = EstadoBloqueo.LEVANTADO;
     }
 
-    public IdBloqueo getId() {
-        return id;
+    public IdentificacionBloqueo getIdentificacionBloqueo() {
+        return identificacionBloqueo;
     }
 
     public IdentificacionApartamento getApartamento() {
@@ -108,11 +108,11 @@ public class Bloqueo {
         if (!(o instanceof Bloqueo otro)) {
             return false;
         }
-        return this.id.equals(otro.id);
+        return this.identificacionBloqueo.equals(otro.identificacionBloqueo);
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode();
+        return identificacionBloqueo.hashCode();
     }
 }

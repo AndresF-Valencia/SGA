@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 
-@DisplayName("Periodo, IdBloqueo y EstadoBloqueo")
+@DisplayName("Periodo, identificacionBloqueo y EstadoBloqueo")
 class PeriodoTest {
 
     private static LocalDate dia(int dia) {
@@ -70,15 +70,15 @@ class PeriodoTest {
         assertThrows(ReglaDominioException.class, () -> new Periodo(dia(1), dia(2)).incluye(null));
     }
 
-    // ---------- IdBloqueo ----------
+    // ---------- identificacionBloqueo ----------
 
     @Test
-    @DisplayName("IdBloqueo es obligatorio y se guarda sin espacios")
+    @DisplayName("identificacionBloqueo es obligatorio y se guarda sin espacios")
     void idBloqueo() {
-        assertEquals("BLQ-001", new IdBloqueo("  BLQ-001 ").valor());
-        assertEquals(new IdBloqueo("BLQ-001"), new IdBloqueo(" BLQ-001"));
-        assertThrows(ReglaDominioException.class, () -> new IdBloqueo(null));
-        assertThrows(ReglaDominioException.class, () -> new IdBloqueo("   "));
+        assertEquals("BLQ-001", new IdentificacionBloqueo("  BLQ-001 ").valor());
+        assertEquals(new IdentificacionBloqueo("BLQ-001"), new IdentificacionBloqueo(" BLQ-001"));
+        assertThrows(ReglaDominioException.class, () -> new IdentificacionBloqueo(null));
+        assertThrows(ReglaDominioException.class, () -> new IdentificacionBloqueo("   "));
     }
 
     // ---------- EstadoBloqueo ----------

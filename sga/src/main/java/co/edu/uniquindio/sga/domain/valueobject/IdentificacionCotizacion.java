@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga.domain.valueobject;
 
+import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
+
 /**
  * Representa la identificación de una cotización.
  * Se utiliza para garantizar que cada cotización tenga una identificación única y válida.
@@ -11,7 +13,7 @@ public record IdentificacionCotizacion(String valor) {
 
         if (valor == null || valor.isBlank()) {
 
-            throw new IllegalArgumentException("La cotización debe tener una identificación");
+            throw new ReglaDominioException("La cotización debe tener una identificación");
 
         }
 

@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.valueobject.EstadoBloqueo;
 import co.edu.uniquindio.sga.domain.valueobject.Estancia;
-import co.edu.uniquindio.sga.domain.valueobject.IdBloqueo;
+import co.edu.uniquindio.sga.domain.valueobject.IdentificacionBloqueo;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
 import co.edu.uniquindio.sga.domain.valueobject.MotivoBloqueo;
 import co.edu.uniquindio.sga.domain.valueobject.Periodo;
@@ -23,7 +23,7 @@ import co.edu.uniquindio.sga.domain.valueobject.Periodo;
 @DisplayName("Bloqueo")
 class BloqueoTest {
 
-    private static final IdBloqueo ID = new IdBloqueo("BLQ-001");
+    private static final IdentificacionBloqueo ID = new IdentificacionBloqueo("BLQ-001");
     private static final IdentificacionApartamento APTO = new IdentificacionApartamento("APTO-101");
 
     /** El 101 se bloquea del 15 al 20 de noviembre, ambos días incluidos. */
@@ -53,7 +53,7 @@ class BloqueoTest {
     @DisplayName("Nace VIGENTE y conserva sus datos")
     void naceVigente() {
         assertEquals(EstadoBloqueo.VIGENTE, bloqueo.getEstado());
-        assertEquals(ID, bloqueo.getId());
+        assertEquals(ID, bloqueo.getIdentificacionBloqueo());
         assertEquals(APTO, bloqueo.getApartamento());
         assertEquals(DEL_15_AL_20, bloqueo.getPeriodo());
         assertEquals(MotivoBloqueo.MANTENIMIENTO, bloqueo.getMotivo());
@@ -138,9 +138,9 @@ class BloqueoTest {
     @Test
     @DisplayName("Dos bloqueos son el mismo si tienen el mismo identificador")
     void igualdadPorId() {
-        Bloqueo mismoId = new Bloqueo(new IdBloqueo(" BLQ-001 "), new IdentificacionApartamento("APTO-202"),
+        Bloqueo mismoId = new Bloqueo(new IdentificacionBloqueo(" BLQ-001 "), new IdentificacionApartamento("APTO-202"),
                 new Periodo(dia(1), dia(2)), MotivoBloqueo.REMODELACION);
-        Bloqueo otro = new Bloqueo(new IdBloqueo("BLQ-002"), APTO, DEL_15_AL_20, MotivoBloqueo.MANTENIMIENTO);
+        Bloqueo otro = new Bloqueo(new IdentificacionBloqueo("BLQ-002"), APTO, DEL_15_AL_20, MotivoBloqueo.MANTENIMIENTO);
 
         assertEquals(bloqueo, mismoId);
         assertEquals(bloqueo.hashCode(), mismoId.hashCode());
