@@ -26,13 +26,13 @@ public class DisponibilidadApartamentoService {
      * Verifica la disponibilidad completa del apartamento.
      * Lanza una ReglaDominioException con el motivo si falla alguna regla.
      *
-     * @param reservaExcluida   código de la reserva que se está modificando, o null
-     * @param alojamiento       da las horas de entrada y salida para RN-20
+     * @param reservaExcluida código de la reserva que se está modificando, o null
+     * @param alojamiento     da las horas de entrada y salida para RN-20
      */
     public void verificarDisponibilidad(Apartamento apartamento, Estancia estancia, int totalOcupantes,
-                                        CantidadMascota mascotas, CodigoReserva reservaExcluida,
-                                        List<Reserva> reservasExistentes, List<Bloqueo> bloqueosExistentes,
-                                        Alojamiento alojamiento) {
+            CantidadMascota mascotas, CodigoReserva reservaExcluida,
+            List<Reserva> reservasExistentes, List<Bloqueo> bloqueosExistentes,
+            Alojamiento alojamiento) {
         if (apartamento == null || estancia == null || alojamiento == null) {
             throw new ReglaDominioException(
                     "El apartamento, la estancia y el alojamiento son obligatorios para verificar disponibilidad");
@@ -54,7 +54,8 @@ public class DisponibilidadApartamentoService {
                     apartamento.getLimiteMascotas().limite(), cantidadMascotas));
         }
 
-        // 3. Solapamiento y tiempo de preparación con reservas activas (RN-01, RN-12, RN-20)
+        // 3. Solapamiento y tiempo de preparación con reservas activas (RN-01, RN-12,
+        // RN-20)
         if (reservasExistentes != null) {
             for (Reserva reserva : reservasExistentes) {
                 if (!reservaCuenta(reserva, apartamento, reservaExcluida)) {
@@ -65,7 +66,7 @@ public class DisponibilidadApartamentoService {
                             "El apartamento ya se encuentra reservado en el rango de fechas solicitado");
                 }
                 verificarTiempoPreparacion(estancia, reserva.getEstancia(),
-                        apartamento.getTiempoPreparacion(), alojamiento);
+                        alojamiento.getTiempoPreparacion(), alojamiento);
             }
         }
 
@@ -82,8 +83,8 @@ public class DisponibilidadApartamentoService {
 
     /** Consulta rápida: true si está disponible, false si viola alguna regla. */
     public boolean estaDisponible(Apartamento apartamento, Estancia estancia, int totalOcupantes,
-                                  CantidadMascota mascotas, List<Reserva> reservasExistentes,
-                                  List<Bloqueo> bloqueosExistentes, Alojamiento alojamiento) {
+            CantidadMascota mascotas, List<Reserva> reservasExistentes,
+            List<Bloqueo> bloqueosExistentes, Alojamiento alojamiento) {
         try {
             verificarDisponibilidad(apartamento, estancia, totalOcupantes, mascotas, null,
                     reservasExistentes, bloqueosExistentes, alojamiento);
@@ -110,7 +111,7 @@ public class DisponibilidadApartamentoService {
      * la hora de salida y la de entrada debe caber el tiempo de preparación.
      */
     private void verificarTiempoPreparacion(Estancia nueva, Estancia existente,
-                                            TiempoPreparacion tiempo, Alojamiento alojamiento) {
+            TiempoPreparacion tiempo, Alojamiento alojamiento) {
         boolean mismoDia = nueva.fechaEntrada().equals(existente.fechaSalida())
                 || existente.fechaEntrada().equals(nueva.fechaSalida());
         if (mismoDia && !tiempo.alcanzaEntre(alojamiento.getHoraSalida(), alojamiento.getHoraEntrada())) {

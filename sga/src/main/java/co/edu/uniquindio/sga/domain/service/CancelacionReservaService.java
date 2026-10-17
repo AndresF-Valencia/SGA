@@ -9,12 +9,14 @@ import co.edu.uniquindio.sga.domain.valueobject.EstadoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.PoliticaCancelacion;
 import co.edu.uniquindio.sga.domain.valueobject.ResultadoCancelacion;
 import co.edu.uniquindio.sga.domain.valueobject.TipoCargo;
+import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 
 import java.time.LocalDateTime;
 
 /**
  * Servicio de Dominio: CancelacionReservaService
- * RN-12, RN-13, RN-16: cancela una reserva y deja la cuenta correcta en el folio.
+ * RN-12, RN-13, RN-16: cancela una reserva y deja la cuenta correcta en el
+ * folio.
  *
  * La reserva solo guarda el número de versión de su política (RN-13); por eso
  * quien llama debe buscar esa versión y pasarla aquí como
@@ -32,9 +34,10 @@ public class CancelacionReservaService {
      * @return el tramo aplicado, la penalidad y el reembolso
      */
     public ResultadoCancelacion cancelar(Reserva reserva, Folio folio, PoliticaCancelacion politicaCongelada,
-                                         String motivo, String autor, LocalDateTime ahora) {
-        if (reserva == null || politicaCongelada == null || ahora == null) {
-            throw new ReglaDominioException("La reserva, su política y la marca temporal son obligatorias");
+            Alojamiento alojamiento, String motivo, String autor, LocalDateTime ahora) {
+        if (reserva == null || politicaCongelada == null || alojamiento == null || ahora == null) {
+            throw new ReglaDominioException(
+                    "La reserva, su política, el alojamiento y la marca temporal son obligatorias");
         }
         if (folio != null && !folio.getReserva().equals(reserva.getCodigo())) {
             throw new ReglaDominioException("El folio no corresponde a la reserva");
@@ -47,9 +50,13 @@ public class CancelacionReservaService {
             throw new ReglaDominioException("Una reserva " + reserva.getEstado() + " no se puede cancelar");
         }
 
-        // 1. Calcular penalidad y reembolso con la política congelada (RN-13)
+        // 1. Calcular retención y devolución con la política congelada (RN-13).
+        // Según el glosario del equipo, el tramo define la devolución del ANTICIPO.
         Dinero valorReserva = reserva.getValor().total();
-        ResultadoCancelacion resultado = politicaCongelada.evaluar(ahora, reserva.getEstancia(), valorReserva);
+        Dinero anticipo = alojamiento.isExigeAnticipo()
+                ? valorReserva.porcentual(alojamiento.getPorcentajeAnticipo())
+                : Dinero.CERO;
+        ResultadoCancelacion resultado = politicaCongelada.evaluar(ahora, reserva.getEstancia(), anticipo);
 
         // 2. Cancelar la reserva: libera las noches de inmediato (RN-12)
         reserva.cancelar(motivo, autor, ahora);

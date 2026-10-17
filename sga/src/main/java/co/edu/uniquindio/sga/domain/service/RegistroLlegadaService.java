@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga.domain.service;
 import co.edu.uniquindio.sga.domain.entity.Apartamento;
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
+import co.edu.uniquindio.sga.domain.entity.Folio;
 
 import java.time.LocalDateTime;
 
@@ -20,15 +21,26 @@ import java.time.LocalDateTime;
  */
 public class RegistroLlegadaService {
 
-    public void registrarLlegada(Reserva reserva, Apartamento apartamento, String autor, LocalDateTime ahora) {
-        if (reserva == null || apartamento == null || ahora == null) {
-            throw new ReglaDominioException("La reserva, el apartamento y la marca temporal son obligatorios");
+    public void registrarLlegada(Reserva reserva, Apartamento apartamento, Folio folio,
+            String autor, LocalDateTime ahora) {
+        if (reserva == null || apartamento == null || folio == null || ahora == null) {
+            throw new ReglaDominioException(
+                    "La reserva, el apartamento, el folio y la marca temporal son obligatorios");
         }
         if (autor == null || autor.isBlank()) {
             throw new ReglaDominioException("Debe indicarse quién registra la llegada");
         }
         if (!reserva.getApartamento().equals(apartamento.getIdentificacion())) {
             throw new ReglaDominioException("La reserva no corresponde a este apartamento");
+        }
+        if (!folio.getReserva().equals(reserva.getCodigo())) {
+            throw new ReglaDominioException("El folio no corresponde a la reserva");
+        }
+
+        // RNP-03: el 50 % restante se paga al registrar la llegada
+        if (folio.saldo().esPositivo()) {
+            throw new ReglaDominioException(
+                    "Antes de registrar la llegada debe pagarse el saldo pendiente: " + folio.saldo().valor());
         }
 
         // RN-11: solo se entrega un apartamento activo y PREPARADO
