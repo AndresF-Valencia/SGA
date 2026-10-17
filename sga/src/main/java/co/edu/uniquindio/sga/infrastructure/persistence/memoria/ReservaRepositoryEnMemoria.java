@@ -1,0 +1,46 @@
+package co.edu.uniquindio.sga.infrastructure.persistence.memoria;
+
+import co.edu.uniquindio.sga.domain.entity.Reserva;
+import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
+import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
+import co.edu.uniquindio.sga.domain.valueobject.EstadoReserva;
+import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+/** Adaptador en memoria del puerto {@link ReservaRepository}. */
+@Repository
+public class ReservaRepositoryEnMemoria extends AlmacenEnMemoria<CodigoReserva, Reserva>
+        implements ReservaRepository {
+
+    public ReservaRepositoryEnMemoria() {
+        super(Reserva::getCodigo);
+    }
+
+    @Override
+    public void guardar(Reserva reserva) {
+        almacenar(reserva);
+    }
+
+    @Override
+    public Optional<Reserva> buscarPorCodigo(CodigoReserva codigo) {
+        return porId(codigo);
+    }
+
+    @Override
+    public List<Reserva> buscarActivasPorApartamento(IdentificacionApartamento apartamento) {
+        return filtrar(r -> r.getApartamento().equals(apartamento) && r.getEstado().retieneDisponibilidad());
+    }
+
+    @Override
+    public List<Reserva> buscarPendientes() {
+        return filtrar(r -> r.getEstado() == EstadoReserva.PENDIENTE);
+    }
+
+    @Override
+    public List<Reserva> listar() {
+        return todos();
+    }
+}

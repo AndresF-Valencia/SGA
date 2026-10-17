@@ -46,7 +46,7 @@ public record PoliticaCancelacion(
 
         // 2. Calcular valores monetarios
         // Si el tramo devuelve 100%, la penalidad es 0%. Si devuelve 70%, la penalidad es 30%.
-        double porcentajePenalidad = 100.0 - tramoAplicable.porcentajeDevolucion();
+        int porcentajePenalidad = 100 - tramoAplicable.porcentajeDevolucion();
         
         Dinero penalidad = valorTotal.porcentual(porcentajePenalidad);
         Dinero reembolso = valorTotal.menos(penalidad);

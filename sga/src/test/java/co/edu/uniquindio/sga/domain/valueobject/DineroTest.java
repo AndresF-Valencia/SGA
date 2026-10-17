@@ -87,6 +87,6 @@ class DineroTest {
         Dinero valor = Dinero.de(100_000);
 
         assertThrows(ReglaDominioException.class, () -> valor.porcentual(-1));
-        assertThrows(ReglaDominioException.class, () -> valor.porcentual(100.1));
+        assertThrows(ReglaDominioException.class, () -> valor.porcentual(101));
     }
 }
