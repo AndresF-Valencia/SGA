@@ -49,7 +49,8 @@ public class CotizadorEstanciaService {
     public ValorCongelado cotizar(IdentificacionApartamento apartamentoId, Estancia estancia,
                                   List<Ocupante> ocupantes, UmbralEdadFacturable umbral,
                                   List<Temporada> temporadasDisponibles, List<Tarifa> tarifasDisponibles) {
-        if (apartamentoId == null || estancia == null || ocupantes == null) {
+        if (apartamentoId == null || estancia == null || ocupantes == null
+                || temporadasDisponibles == null || tarifasDisponibles == null) {
             throw new ReglaDominioException("Los parámetros de cotización son obligatorios");
         }
 

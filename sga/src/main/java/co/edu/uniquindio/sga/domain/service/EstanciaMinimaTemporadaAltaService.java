@@ -9,51 +9,46 @@ import java.util.List;
 
 /**
  * Servicio de Dominio: EstanciaMinimaTemporadaAltaService
- * RP-01 (Regla propia 1, Anexo A.6): Rechaza la solicitud si una estancia
- * que abarca Temporada Alta no cumple con el número mínimo de noches exigido.
+ * RP-01 (Regla propia 1, Anexo A.6): rechaza la solicitud si una estancia que
+ * toca una temporada alta no cumple el mínimo de noches de esa temporada.
+ *
+ * El mínimo ya no llega como un número suelto: cada temporada guarda el suyo
+ * ({@link Temporada#getEstanciaMinima()}), así que el servicio le pregunta a
+ * cada temporada que toque la estancia ({@link Temporada#cumpleEstanciaMinima(int)}).
+ * Así la regla vive en un solo lugar.
  */
 public class EstanciaMinimaTemporadaAltaService {
 
     /**
-     * Verifica que si la estancia incluye noches de temporada alta, cumpla con el mínimo de noches exigido (RP-01).
-     * Lanza una ReglaDominioException si no cumple con la condición.
+     * Lanza una ReglaDominioException si alguna temporada alta que toca la
+     * estancia exige más noches de las que tiene.
      */
-    public void verificarEstanciaMinima(Estancia estancia, List<Temporada> temporadasDisponibles, int nochesMinimasTemporadaAlta) {
+    public void verificarEstanciaMinima(Estancia estancia, List<Temporada> temporadasDisponibles) {
         if (estancia == null || temporadasDisponibles == null) {
             throw new ReglaDominioException("La estancia y las temporadas son obligatorias para verificar la estancia mínima");
         }
 
-        // 1. Verificar si la estancia abarca o es de temporada alta
-        if (esEstanciaDeTemporadaAlta(estancia, temporadasDisponibles)) {
-            
-            // 2. Validar que la cantidad de noches cumpla con el mínimo exigido
-            if (estancia.noches() < nochesMinimasTemporadaAlta) {
-                throw new ReglaDominioException(
-                    String.format("La regla de temporada alta exige un mínimo de %d noches de estancia. La solicitud cuenta con %d noches.", 
-                        nochesMinimasTemporadaAlta, estancia.noches())
-                );
+        for (Temporada temporada : temporadasQueToca(estancia, temporadasDisponibles)) {
+            if (!temporada.cumpleEstanciaMinima(estancia.noches())) {
+                throw new ReglaDominioException(String.format(
+                        "La temporada %s exige un mínimo de %d noches de estancia. La solicitud cuenta con %d noches.",
+                        temporada.getNombre(), temporada.getEstanciaMinima().noches(), estancia.noches()));
             }
         }
     }
 
-    /**
-     * Determina si alguna de las noches ocupadas de la estancia cae dentro de una Temporada Alta.
-     */
+    /** Indica si alguna de las noches de la estancia cae en una temporada alta. */
     public boolean esEstanciaDeTemporadaAlta(Estancia estancia, List<Temporada> temporadasDisponibles) {
         if (estancia == null || temporadasDisponibles == null) {
             return false;
         }
+        return temporadasQueToca(estancia, temporadasDisponibles).stream().anyMatch(Temporada::esAlta);
+    }
 
+    private List<Temporada> temporadasQueToca(Estancia estancia, List<Temporada> temporadas) {
         List<LocalDate> noches = estancia.nochesOcupadas();
-        for (LocalDate noche : noches) {
-            for (Temporada temporada : temporadasDisponibles) {
-                // Verifica si la temporada cubre la noche y es de tipo alta 
-                // (puedes ajustar el método según tengas implementado en tu entidad Temporada, ej: temporada.esAlta())
-                if (temporada.cubre(noche) && temporada.esAlta()) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return temporadas.stream()
+                .filter(t -> noches.stream().anyMatch(t::cubre))
+                .toList();
     }
 }

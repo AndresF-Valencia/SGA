@@ -1,16 +1,16 @@
 package co.edu.uniquindio.sga.domain.valueobject;
 
-/**
- * representa la estancia minima de una temporada
- * EstanciaMinima
- * 
- * @param noches
- */
+import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 
+/**
+ * Mínimo de noches que exige una temporada alta (RP-01).
+ *
+ * @param noches número mínimo de noches, al menos 1
+ */
 public record EstanciaMinima(int noches) {
     public EstanciaMinima {
         if (noches < 1) {
-            throw new IllegalArgumentException("La estancia mínima no puede ser menor a 1s");
+            throw new ReglaDominioException("La estancia mínima debe ser de al menos 1 noche");
         }
     }
 }

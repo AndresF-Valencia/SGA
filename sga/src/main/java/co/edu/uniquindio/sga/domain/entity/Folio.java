@@ -81,17 +81,25 @@ public class Folio {
      * si es negativo, el huésped tiene saldo a favor.
      */
     public Dinero saldo() {
-        Dinero totalCargos = Dinero.CERO;
+        return totalCargos().menos(totalPagado());
+    }
 
+    /** Suma de todos los cargos, incluidos los ajustes negativos. */
+    public Dinero totalCargos() {
+        Dinero total = Dinero.CERO;
         for (Cargo cargo : cargos) {
-            totalCargos = totalCargos.mas(cargo.valor());
+            total = total.mas(cargo.valor());
         }
+        return total;
+    }
 
-        Dinero totalPagos = Dinero.CERO;
+    /** Suma de todos los pagos registrados; la usa la confirmación para el anticipo (RP-03). */
+    public Dinero totalPagado() {
+        Dinero total = Dinero.CERO;
         for (Pago pago : pagos) {
-            totalPagos = totalPagos.mas(pago.getMonto());
+            total = total.mas(pago.getMonto());
         }
-        return totalCargos.menos(totalPagos);
+        return total;
     }
 
     /**

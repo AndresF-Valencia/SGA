@@ -68,6 +68,7 @@ public class Reserva {
         this.valor = valor;
         this.politica = politica;
         this.creadaEn = creadaEn;
+        this.cantidadMascotas = cantidadMascotas;
         this.estado = EstadoReserva.PENDIENTE; // toda reserva nace PENDIENTE
     }
 
@@ -107,8 +108,11 @@ public class Reserva {
         if (ocupantes.stream().distinct().count() != ocupantes.size()) {
             throw new ReglaDominioException("No se puede repetir un ocupante en la reserva");
         }
-        if (cantidadMascotas.cantidad() < 0) {
-            throw new ReglaDominioException("La reserva debe indicar la cantidad de mascotas");
+        if (cantidadMascotas == null) {
+            throw new ReglaDominioException("La reserva debe indicar la cantidad de mascotas (0 si no trae)");
+        }
+        if (ahora == null) {
+            throw new ReglaDominioException("La reserva debe indicar el momento de creación");
         }
 
         // RN-04: no se crean reservas hacia el pasado
@@ -293,6 +297,11 @@ public class Reserva {
             throw new ReglaDominioException(
                     "El desglose del valor no corresponde al número de noches de la estancia");
         }
+        // RN-04: tampoco se puede mover la reserva hacia el pasado
+        if (ahora == null || nuevaEstancia.fechaEntrada().isBefore(ahora.toLocalDate())) {
+            throw new ReglaDominioException(
+                    "La nueva fecha de entrada no puede ser anterior a la fecha actual");
+        }
 
         // Calcula la diferencia usando el método .menos() del VO Dinero
         Dinero ajuste = nuevoValor.total().menos(this.valor.total());
@@ -389,9 +398,6 @@ public class Reserva {
         return cantidadMascotas;
     }
 
-    public void setCantidadMascotas(CantidadMascota cantidadMascotas) {
-        this.cantidadMascotas = cantidadMascotas;
-    }
 
     @Override
     public boolean equals(Object o) {

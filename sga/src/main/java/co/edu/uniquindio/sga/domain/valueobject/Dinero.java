@@ -56,18 +56,33 @@ public record Dinero(BigDecimal valor) {
 
     }
 
-    public Dinero porcentual(double porcentaje) {
-        if (porcentaje < 0.0 || porcentaje > 100.0) {
+    /**
+     * Calcula un porcentaje entero del valor (por ejemplo, el 50 % del anticipo).
+     * Sección 3.4: el dinero nunca pasa por double, para no arrastrar errores de
+     * redondeo; todo el cálculo se hace con BigDecimal.
+     */
+    public Dinero porcentual(int porcentaje) {
+        if (porcentaje < 0 || porcentaje > 100) {
             throw new ReglaDominioException("El porcentaje debe estar entre 0 y 100");
         }
-
-        BigDecimal factor = BigDecimal.valueOf(porcentaje)
-                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
-
-        BigDecimal resultado = this.valor.multiply(factor);
-
-        // El constructor compacto de Dinero aplicará automáticamente setScale(0, HALF_UP)
+        BigDecimal resultado = this.valor
+                .multiply(BigDecimal.valueOf(porcentaje))
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
         return new Dinero(resultado);
+    }
+
+    /** Compara dos valores sin depender de la escala del BigDecimal. */
+    public boolean esMenorQue(Dinero otro) {
+        return this.valor.compareTo(otro.valor) < 0;
+    }
+
+    public boolean esPositivo() {
+        return this.valor.signum() > 0;
+    }
+
+    /** El mismo valor con el signo contrario: sirve para reversar un cargo con un ajuste. */
+    public Dinero negado() {
+        return new Dinero(this.valor.negate());
     }
 
     public boolean esCero() {
