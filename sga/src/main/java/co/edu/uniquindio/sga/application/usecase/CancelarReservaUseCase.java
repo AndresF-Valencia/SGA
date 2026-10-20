@@ -2,9 +2,6 @@ package co.edu.uniquindio.sga.application.usecase;
 
 import java.time.LocalDateTime;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import co.edu.uniquindio.sga.application.exception.FolioNoEncontradoException;
 import co.edu.uniquindio.sga.application.exception.ReservaNoEncontradaException;
 import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
@@ -19,8 +16,7 @@ import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.domain.valueobject.PoliticaCancelacion;
 
-/** Caso de uso (Guía 06), servicio de Spring con transacción (Guía 09) */
-@Service
+/** Caso de uso (Guía 06). Se vuelve servicio de Spring en la Guía 09. */
 public class CancelarReservaUseCase {
 
         private final ReservaRepository reservaRepository;
@@ -40,7 +36,6 @@ public class CancelarReservaUseCase {
                 this.alojamientoRepository = alojamientoRepository;
         }
 
-        @Transactional
         public void ejecutar(CodigoReserva codigoReserva, IdentificacionAlojamiento identificacionAlojamiento,
                         String motivo, LocalDateTime momentoActual) {
                 Reserva reserva = reservaRepository.buscarPorCodigo(codigoReserva)
