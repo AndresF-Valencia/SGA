@@ -5,6 +5,7 @@ import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.domain.valueobject.PlazoConfirmacion;
 import co.edu.uniquindio.sga.domain.valueobject.TiempoPreparacion;
 import co.edu.uniquindio.sga.domain.valueobject.UmbralEdadFacturable;
+import co.edu.uniquindio.sga.domain.valueobject.VersionPolitica;
 
 import java.time.LocalTime;
 
@@ -18,7 +19,7 @@ public class Alojamiento {
     private final String nombre;
     private final String ciudad;
     private final String descripcion;
-    
+
     private LocalTime horaEntrada;
     private LocalTime horaSalida;
     private LocalTime horaLimiteNoShow;
@@ -27,12 +28,15 @@ public class Alojamiento {
     private PlazoConfirmacion plazoConfirmacion;
     private boolean exigeAnticipo;
     private int porcentajeAnticipo; // Ej: 50%
+    // F-07: una sola política de cancelación, versionada. Cada reserva congela la
+    // vigente (RN-22).
+    private VersionPolitica versionPoliticaVigente = new VersionPolitica(1);
 
     public Alojamiento(IdentificacionAlojamiento identificacion, String nombre, String ciudad,
-                       String descripcion, LocalTime horaEntrada, LocalTime horaSalida,
-                       LocalTime horaLimiteNoShow, UmbralEdadFacturable umbralEdadFacturable,
-                       TiempoPreparacion tiempoPreparacion, PlazoConfirmacion plazoConfirmacion,
-                       boolean exigeAnticipo, int porcentajeAnticipo) {
+            String descripcion, LocalTime horaEntrada, LocalTime horaSalida,
+            LocalTime horaLimiteNoShow, UmbralEdadFacturable umbralEdadFacturable,
+            TiempoPreparacion tiempoPreparacion, PlazoConfirmacion plazoConfirmacion,
+            boolean exigeAnticipo, int porcentajeAnticipo) {
         if (identificacion == null) {
             throw new ReglaDominioException("El alojamiento debe tener una identificación");
         }
@@ -75,8 +79,8 @@ public class Alojamiento {
     // ----- COMPORTAMIENTO DE CONFIGURACIÓN -----
 
     public void actualizarParametrosOperativos(LocalTime horaEntrada, LocalTime horaSalida,
-                                               TiempoPreparacion tiempoPreparacion,
-                                               PlazoConfirmacion plazoConfirmacion) {
+            TiempoPreparacion tiempoPreparacion,
+            PlazoConfirmacion plazoConfirmacion) {
         if (horaEntrada == null || horaSalida == null || tiempoPreparacion == null || plazoConfirmacion == null) {
             throw new ReglaDominioException("Los parámetros operativos no pueden ser nulos");
         }
@@ -132,14 +136,29 @@ public class Alojamiento {
         return exigeAnticipo;
     }
 
+    /**
+     * 7.4: al actualizar la política se conserva la anterior y se publica una
+     * versión nueva.
+     */
+    public VersionPolitica publicarNuevaVersionPolitica() {
+        this.versionPoliticaVigente = new VersionPolitica(versionPoliticaVigente.numero() + 1);
+        return versionPoliticaVigente;
+    }
+
+    public VersionPolitica getVersionPoliticaVigente() {
+        return versionPoliticaVigente;
+    }
+
     public int getPorcentajeAnticipo() {
         return porcentajeAnticipo;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Alojamiento otro)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof Alojamiento otro))
+            return false;
         return this.identificacion.equals(otro.identificacion);
     }
 
