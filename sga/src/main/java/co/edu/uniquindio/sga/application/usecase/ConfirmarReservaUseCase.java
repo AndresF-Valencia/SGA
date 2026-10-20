@@ -20,37 +20,37 @@ import java.time.LocalDateTime;
  */
 public class ConfirmarReservaUseCase {
 
-    private final ReservaRepository reservaRepository;
-    private final FolioRepository folioRepository;
-    private final AlojamientoRepository alojamientoRepository;
-    private final ConfirmacionReservaService confirmacionService;
+        private final ReservaRepository reservaRepository;
+        private final FolioRepository folioRepository;
+        private final AlojamientoRepository alojamientoRepository;
+        private final ConfirmacionReservaService confirmacionService;
 
-    public ConfirmarReservaUseCase(ReservaRepository reservaRepository, FolioRepository folioRepository,
-            AlojamientoRepository alojamientoRepository,
-            ConfirmacionReservaService confirmacionService) {
-        this.reservaRepository = reservaRepository;
-        this.folioRepository = folioRepository;
-        this.alojamientoRepository = alojamientoRepository;
-        this.confirmacionService = confirmacionService;
-    }
+        public ConfirmarReservaUseCase(ReservaRepository reservaRepository, FolioRepository folioRepository,
+                        AlojamientoRepository alojamientoRepository,
+                        ConfirmacionReservaService confirmacionService) {
+                this.reservaRepository = reservaRepository;
+                this.folioRepository = folioRepository;
+                this.alojamientoRepository = alojamientoRepository;
+                this.confirmacionService = confirmacionService;
+        }
 
-    /**
-     * Devuelve la reserva para que la API responda con su detalle actualizado (Guía
-     * 07).
-     */
-    public Reserva ejecutar(CodigoReserva codigo, IdentificacionAlojamiento alojamientoId,
-            String autor, LocalDateTime ahora) {
-        Reserva reserva = reservaRepository.buscarPorCodigo(codigo)
-                .orElseThrow(() -> new ReservaNoEncontradaException(codigo));
-        Folio folio = folioRepository.buscarPorReserva(codigo)
-                .orElseThrow(() -> new FolioNoEncontradoException(codigo));
-        Alojamiento alojamiento = alojamientoRepository.buscarPorId(alojamientoId)
-                .orElseThrow(() -> new AlojamientoNoEncontradoException(alojamientoId));
+        /**
+         * Devuelve la reserva para que la API responda con su detalle actualizado (Guía
+         * 07).
+         */
+        public Reserva ejecutar(CodigoReserva codigo, IdentificacionAlojamiento alojamientoId,
+                        String autor, LocalDateTime ahora) {
+                Reserva reserva = reservaRepository.buscarPorCodigo(codigo)
+                                .orElseThrow(() -> new ReservaNoEncontradaException(codigo));
+                Folio folio = folioRepository.buscarPorReserva(codigo)
+                                .orElseThrow(() -> new FolioNoEncontradoException(codigo));
+                Alojamiento alojamiento = alojamientoRepository.buscarPorId(alojamientoId)
+                                .orElseThrow(() -> new AlojamientoNoEncontradoException(alojamientoId));
 
-        // RNP-03: exige el anticipo; la reserva valida RN-08 y RN-09
-        confirmacionService.autorizarConfirmacion(reserva, folio, alojamiento, ahora, autor);
+                // RNP-03: exige el anticipo; la reserva valida RN-08 y RN-09
+                confirmacionService.autorizarConfirmacion(reserva, folio, alojamiento, ahora, autor);
 
-        reservaRepository.guardar(reserva);
-        return reserva;
-    }
+                reservaRepository.guardar(reserva);
+                return reserva;
+        }
 }
