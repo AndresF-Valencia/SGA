@@ -6,7 +6,7 @@ import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 public record TramoCancelacion(
         int diasMinimosAnticipacion,
         int diasMaximosAnticipacion,
-        double porcentajeDevolucion) {
+        int porcentajeDevolucion) {
 
     public TramoCancelacion {
         if (diasMinimosAnticipacion < 0 || diasMaximosAnticipacion < 0) {
@@ -15,7 +15,7 @@ public record TramoCancelacion(
         if (diasMinimosAnticipacion > diasMaximosAnticipacion) {
             throw new ReglaDominioException("El límite mínimo no puede superar el límite máximo del tramo");
         }
-        if (porcentajeDevolucion < 0.0 || porcentajeDevolucion > 100.0) {
+        if (porcentajeDevolucion < 0 || porcentajeDevolucion > 100) {
             throw new ReglaDominioException("El porcentaje de devolución debe estar entre 0 y 100");
         }
     }

@@ -1,24 +1,30 @@
 package co.edu.uniquindio.sga.domain.entity;
 
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
-import co.edu.uniquindio.sga.domain.valueobject.Estancia;
 import co.edu.uniquindio.sga.domain.valueobject.EstanciaMinima;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionTemporada;
+import co.edu.uniquindio.sga.domain.valueobject.Periodo;
 import co.edu.uniquindio.sga.domain.valueobject.TipoTemporada;
+
 import java.time.LocalDate;
 
 /**
- * Raíz o entidad del agregado Temporada: periodo del calendario con tarifas y reglas propias (7.4, RNP-01).
+ * Raíz del agregado Temporada: periodo del calendario con tarifas y reglas
+ * propias (7.4, RP-01).
+ *
+ * El periodo es un {@link Periodo} y no una {@link co.edu.uniquindio.sga.domain.valueobject.Estancia}:
+ * una temporada del 1 al 31 de diciembre incluye la noche del 31. Con Estancia
+ * esa última noche quedaba sin temporada y la cotización fallaba.
  */
 public class Temporada {
 
     private final IdentificacionTemporada identificacion;
-    private final Estancia periodo;
+    private final Periodo periodo;
     private final String nombre;
     private final TipoTemporada tipo;
-    private final EstanciaMinima estanciaMinima; // Puede ser nula o tener un valor base si no aplica
+    private final EstanciaMinima estanciaMinima; // null = sin mínimo de noches
 
-    public Temporada(IdentificacionTemporada identificacion, Estancia periodo, String nombre, TipoTemporada tipo,
+    public Temporada(IdentificacionTemporada identificacion, Periodo periodo, String nombre, TipoTemporada tipo,
             EstanciaMinima estanciaMinima) {
         if (identificacion == null) {
             throw new ReglaDominioException("La temporada debe tener una identificación");
@@ -40,46 +46,48 @@ public class Temporada {
         this.estanciaMinima = estanciaMinima;
     }
 
-    /**
-     * Verifica si una fecha específica cae dentro del periodo de esta temporada.
-     */
+    /** Indica si la noche de esa fecha pertenece a esta temporada (ambos extremos incluidos). */
     public boolean cubre(LocalDate fecha) {
-        // Asumiendo que Estancia o Periodo permite verificar si incluye una fecha
-        // (o si el periodo se maneja con las reglas de fecha de entrada/salida)
-        return !fecha.isBefore(periodo.fechaEntrada()) && fecha.isBefore(periodo.fechaSalida());
+        return periodo.incluye(fecha);
+    }
+
+    /** Dos temporadas no deberían cubrir la misma noche; sirve para validarlo al crearlas. */
+    public boolean seSolapaCon(Temporada otra) {
+        return !this.periodo.hasta().isBefore(otra.periodo.desde())
+                && !otra.periodo.hasta().isBefore(this.periodo.desde());
     }
 
     /**
-     * RNP-01: Verifica si la cantidad de noches cumple con la estancia mínima de la temporada.
+     * RP-01: indica si una estancia de esa cantidad de noches cumple el mínimo
+     * de la temporada. Si la temporada es base o no tiene mínimo, siempre cumple.
+     * (Antes rechazaba cualquier estancia de una sola noche, aunque fuera en
+     * temporada base.)
      */
     public boolean cumpleEstanciaMinima(int cantidadNoches) {
-        if (cantidadNoches < 2) {
-            throw new ReglaDominioException("La cantidad de noches debe ser al menos 2");
+        if (cantidadNoches < 1) {
+            throw new ReglaDominioException("Una estancia tiene al menos una noche");
         }
-
-        // Si es temporada base o no tiene restricción de mínimo configurada, cumple por defecto
-        if (tipo == TipoTemporada.BASE || estanciaMinima == null) {
+        if (!exigeEstanciaMinima()) {
             return true;
         }
-
         return cantidadNoches >= estanciaMinima.noches();
     }
 
-    // ----- CONSULTAS (Inmutables) ----- //
+    public boolean exigeEstanciaMinima() {
+        return tipo == TipoTemporada.ALTA && estanciaMinima != null;
+    }
+
+    public boolean esAlta() {
+        return tipo == TipoTemporada.ALTA;
+    }
+
+    // ----- CONSULTAS ----- //
 
     public IdentificacionTemporada getIdentificacion() {
         return identificacion;
     }
 
-    public boolean esAlta(){
-        if(tipo== TipoTemporada.ALTA){
-            return true;
-        }else{
-            return false;
-        }
-    }
-
-    public Estancia getPeriodo() {
+    public Periodo getPeriodo() {
         return periodo;
     }
 
