@@ -22,10 +22,9 @@ import java.time.LocalTime;
 class NoShowServiceTest {
 
     /**
-     * Llegada indicada a las 15:00 + 2 horas de tolerancia: el límite es a las
-     * 17:00.
+     * El alojamiento de prueba tiene la hora límite de no-show a las 20:00 (L-15).
      */
-    private static final LocalDateTime DESPUES_DEL_LIMITE = NOVIEMBRE.fechaEntrada().atTime(18, 0);
+    private static final LocalDateTime DESPUES_DEL_LIMITE = NOVIEMBRE.fechaEntrada().atTime(21, 0);
 
     private final NoShowService servicio = new NoShowService();
     private Reserva reserva; // vale 600.000

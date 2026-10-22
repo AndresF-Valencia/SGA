@@ -37,11 +37,14 @@ import co.edu.uniquindio.sga.domain.valueobject.VersionPolitica;
 @DisplayName("Reserva (raíz del agregado)")
 class ReservaTest {
 
-    /** Momento fijo en que "se crea" la reserva: las pruebas no dependen del reloj real. */
+    /**
+     * Momento fijo en que "se crea" la reserva: las pruebas no dependen del reloj
+     * real.
+     */
     private static final LocalDateTime AHORA = LocalDateTime.of(2026, 10, 12, 10, 0);
 
     private static final LocalDate ENTRADA = LocalDate.of(2026, 11, 1);
-    private static final LocalDate SALIDA = LocalDate.of(2026, 11, 4);   // 3 noches
+    private static final LocalDate SALIDA = LocalDate.of(2026, 11, 4); // 3 noches
 
     private static final CodigoReserva CODIGO = new CodigoReserva("RES-2026-00001");
     private static final IdentificacionApartamento APTO = new IdentificacionApartamento("APTO-101");
@@ -74,11 +77,10 @@ class ReservaTest {
                 LocalTime.of(11, 0), // Hora salida
                 LocalTime.of(17, 0), // Hora límite no-show
                 new UmbralEdadFacturable(12),
-                new TiempoPreparacion(60),
+                new TiempoPreparacion(3), // en horas (máximo 24),
                 new PlazoConfirmacion(24),
                 true,
-                50
-        );
+                50);
     }
 
     // ---------- Ayudantes ----------
@@ -213,7 +215,7 @@ class ReservaTest {
         List<Ocupante> grupo = new ArrayList<>(List.of(titular));
         Reserva r = crearReserva(estancia, grupo);
 
-        grupo.add(acompanante);   // modificar la lista original
+        grupo.add(acompanante); // modificar la lista original
 
         assertEquals(1, r.totalOcupantes());
         assertThrows(UnsupportedOperationException.class, () -> r.getOcupantes().add(acompanante));
