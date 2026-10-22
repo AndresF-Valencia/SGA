@@ -17,7 +17,6 @@ public record CotizacionResponse(
         int cantidadNoches,
         Long valorTotal,
         Long valorSubtotal,
-        Long impuestos,
         List<DetalleTarifaNocheDto> desgloseNoches
 
 ) {

@@ -9,11 +9,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * DTO de entrada para crear una nueva reserva directa o interna (CU-01).
+ * DTO de entrada para crear una nueva reserva directa o interno (CU-01).
  * Mapea al endpoint: POST /api/reservas.
  * 
  * Nota de diseño: Contiene toda la información inicial necesaria para instanciar 
- * una reserva, incluyendo apartamento, fechas, canal, titular y ocupantes.
+ * una reserva, incluyendo apartamento, fechas, canal, titular, ocupantes y fecha de nacimiento.
  */
 public record CrearReservaRequest(
 
@@ -52,7 +52,10 @@ public record CrearReservaRequest(
             String email,
 
             @NotBlank(message = "El teléfono del titular es obligatorio")
-            String telefono
+            String telefono,
+
+            @NotNull(message = "La fecha de nacimiento del titular es obligatoria")
+            LocalDate fechaNacimiento
     ) {}
 
     public record OcupanteDto(
@@ -60,6 +63,9 @@ public record CrearReservaRequest(
             String nombre,
 
             @NotBlank(message = "El documento del ocupante es obligatorio")
-            String documento
+            String documento,
+
+            @NotNull(message = "La fecha de nacimiento del ocupante es obligatoria")
+            LocalDate fechaNacimiento
     ) {}
 }
