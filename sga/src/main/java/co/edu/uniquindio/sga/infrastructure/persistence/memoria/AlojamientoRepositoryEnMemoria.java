@@ -25,4 +25,13 @@ public class AlojamientoRepositoryEnMemoria extends AlmacenEnMemoria<Identificac
     public Optional<Alojamiento> buscarPorId(IdentificacionAlojamiento id) {
         return porId(id);
     }
+
+    @Override
+    public Optional<Alojamiento> obtenerUnico() {
+        // Al tratarse del establecimiento principal (Sanrocco), 
+        // retorna el primer alojamiento registrado en el almacén en memoria.
+        return todos().stream().findFirst();
+    }
+
+  
 }

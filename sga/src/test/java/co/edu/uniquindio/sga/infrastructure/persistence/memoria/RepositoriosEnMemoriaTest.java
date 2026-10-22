@@ -49,7 +49,7 @@ class RepositoriosEnMemoriaTest {
         repositorio.guardar(reserva);
 
         assertSame(reserva, repositorio.buscarPorCodigo(reserva.getCodigo()).orElseThrow());
-        assertEquals(1, repositorio.listar().size());
+        assertEquals(1, repositorio.obtenerTodas().size());
         assertTrue(repositorio.buscarPorCodigo(codigo("RES-99")).isEmpty());
         assertTrue(repositorio.buscarPorCodigo(null).isEmpty());
     }

@@ -38,4 +38,9 @@ public class BloqueoRepositoryEnMemoria extends AlmacenEnMemoria<IdentificacionB
     public List<Bloqueo> buscarPorApartamento(IdentificacionApartamento apartamento) {
         return filtrar(b -> b.getApartamento().equals(apartamento));
     }
+
+    @Override
+    public List<Bloqueo> obtenerTodos() {
+        return todos();
+    }
 }
