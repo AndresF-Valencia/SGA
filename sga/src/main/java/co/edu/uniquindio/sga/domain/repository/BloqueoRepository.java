@@ -7,7 +7,10 @@ import co.edu.uniquindio.sga.domain.valueobject.IdentificacionBloqueo;
 import java.util.List;
 import java.util.Optional;
 
-/** Puerto de salida del agregado Bloqueo. */
+/** 
+ * Puerto de salida del agregado Bloqueo.
+ * El dominio define QUÉ necesita consultar; la infraestructura decide CÓMO.
+ */
 public interface BloqueoRepository {
 
     void guardar(Bloqueo bloqueo);
@@ -19,4 +22,10 @@ public interface BloqueoRepository {
 
     /** Todos los bloqueos del apartamento, también los levantados (historial). */
     List<Bloqueo> buscarPorApartamento(IdentificacionApartamento apartamento);
+
+    /**
+     * Retorna la totalidad de los bloqueos registrados en el sistema.
+     * Útil para servicios de dominio y casos de uso que evalúan la disponibilidad global.
+     */
+    List<Bloqueo> obtenerTodos();
 }
