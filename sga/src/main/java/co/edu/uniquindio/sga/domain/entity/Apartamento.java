@@ -1,5 +1,9 @@
 package co.edu.uniquindio.sga.domain.entity;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.valueobject.CapacidadOcupantes;
 import co.edu.uniquindio.sga.domain.valueobject.Dormitorio;
@@ -7,6 +11,7 @@ import co.edu.uniquindio.sga.domain.valueobject.EstadoOperativo;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
 import co.edu.uniquindio.sga.domain.valueobject.LimiteMascota;
+import co.edu.uniquindio.sga.domain.valueobject.Novedad;
 import co.edu.uniquindio.sga.domain.valueobject.TiempoPreparacion;
 
 /**
@@ -24,6 +29,7 @@ public class Apartamento {
 
     private final IdentificacionApartamento identificacion;
     private final IdentificacionAlojamiento identificacionAlojamiento; // alojamiento al que pertenece
+    private final List<Novedad> novedades = new ArrayList<>();
     private String nombre;
     private Dormitorio dormitorios;
     private CapacidadOcupantes capacidad;
@@ -73,6 +79,20 @@ public class Apartamento {
     }
 
     // ------ COMPORTAMIENTO ------
+
+    /**
+     * Registra una novedad (daño, faltante o situación) reportada en el apartamento (CU-15).
+     */
+    public void registrarNovedad(Novedad novedad) {
+        if (!activo) {
+            throw new ReglaDominioException("No se pueden registrar novedades en un apartamento inactivo");
+        }
+        if (novedad == null) {
+            throw new ReglaDominioException("La novedad a registrar es obligatoria");
+        }
+        this.novedades.add(novedad);
+    }
+
 
     /** RN-02: la capacidad es un tope rígido, sin excepciones. */
     public boolean admite(int totalOcupantes) {
@@ -137,7 +157,7 @@ public class Apartamento {
         cambiarEstado(EstadoOperativo.FUERA_DE_SERVICIO);
     }
 
-    private void cambiarEstado(EstadoOperativo estado) {
+    public void cambiarEstado(EstadoOperativo estado) {
         verificarEstado(estado);
         this.estadoOperativo = estado;
     }
@@ -149,7 +169,14 @@ public class Apartamento {
         }
     }
 
-    // ------ CONSULTAS ------
+    // ------ CONSULTAS -----
+
+    /**
+     * Devuelve una vista inmodificable de las novedades registradas en el apartamento.
+     */
+    public List<Novedad> getNovedades() {
+        return Collections.unmodifiableList(novedades);
+    }
 
     public IdentificacionApartamento getIdentificacion() {
         return identificacion;

@@ -238,14 +238,20 @@ public class Reserva {
     }
 
     /**
-     * RN-11: El no-show solo se puede declarar si han transcurrido 2 horas
+     * RN-11:
+     * Declara el no-show basándose estrictamente en los parámetros configurados 
+     * en el agregado Alojamiento (hora de entrada y límite de tolerancia).
      * después de la hora estimada de llegada (o de la hora estándar 14:00 si no la
      * indicó).
      * Tampoco procede si el huésped registró previamente una Notificación de
      * Retraso.
      */
-    public void declararNoShow(String autor, LocalDateTime ahora) {
+    public void declararNoShow(String autor, LocalDateTime ahora, Alojamiento alojamiento) {
         verificarQueNoEsteTerminada();
+
+        if (alojamiento == null) {
+            throw new ReglaDominioException("Se requiere la configuración del alojamiento para evaluar el no-show");
+        }
 
         // 1. Si existe una notificación formal de retraso, se bloquea el No-Show
         if (this.notificacionRetraso != null) {
@@ -254,19 +260,24 @@ public class Reserva {
                             + this.notificacionRetraso.motivo() + ")");
         }
 
-        // 2. Determinar el VO a usar: el propio de la reserva o la constante ESTANDAR
-        HoraEstimadaLlegada horaEfectiva = (this.horaEstimadaLlegada != null)
-                ? this.horaEstimadaLlegada
-                : HoraEstimadaLlegada.ESTANDAR;
+        // 2. Obtener la hora base: la estimada por el huésped o la hora de entrada oficial del Alojamiento
+        LocalTime horaBase = (this.horaEstimadaLlegada != null)
+                ? this.horaEstimadaLlegada.horaEstimada()
+                : alojamiento.getHoraEntrada();
 
-        // 3. Calcular momento límite exacto con la fecha de entrada
-        LocalDateTime momentoLimite = estancia.fechaEntrada().atTime(horaEfectiva.horaLimiteNoShow());
+        // 3. Obtener el momento límite utilizando la configuración del Alojamiento 
+        // (Si el alojamiento tiene una hora límite específica configurada, se usa; de lo contrario, se calcula con la tolerancia o regla del negocio)
+        LocalTime horaLimiteEfectiva = (alojamiento.getHoraLimiteNoShow() != null)
+                ? alojamiento.getHoraLimiteNoShow()
+                : horaBase.plusHours(2); // O el parámetro de tolerancia parametrizado en Alojamiento
 
-        // 4. Validar tolerancia de 2 horas
+        LocalDateTime momentoLimite = estancia.fechaEntrada().atTime(horaLimiteEfectiva);
+
+        // 4. Validar que la hora actual supere el límite configurado
         if (ahora.isBefore(momentoLimite)) {
             throw new ReglaDominioException(
-                    "No se puede declarar no-show antes de la hora límite ("
-                            + horaEfectiva.horaLimiteNoShow() + ")");
+                    "No se puede declarar no-show antes de la hora límite configurada ("
+                            + horaLimiteEfectiva + ")");
         }
 
         // 5. Transición de estado
@@ -275,8 +286,8 @@ public class Reserva {
         this.estado = EstadoReserva.NO_SHOW;
 
         registrarEvento("NO_SHOW", autor, anterior, this.estado,
-                "No-show declarado tras superar las 2 horas de tolerancia (hora límite: "
-                        + horaEfectiva.horaLimiteNoShow() + ")",
+                "No-show declarado tras superar el límite operativo del alojamiento (hora límite: "
+                        + horaLimiteEfectiva + ")",
                 ahora);
     }
 

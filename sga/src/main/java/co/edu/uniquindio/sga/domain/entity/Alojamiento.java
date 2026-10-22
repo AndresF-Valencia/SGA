@@ -90,6 +90,22 @@ public class Alojamiento {
         this.plazoConfirmacion = plazoConfirmacion;
     }
 
+    public void actualizarConfiguracionAnticipo(boolean exigeAnticipo, int porcentajeAnticipo) {
+        if (exigeAnticipo && (porcentajeAnticipo <= 0 || porcentajeAnticipo > 100)) {
+            throw new ReglaDominioException("El porcentaje de anticipo debe estar entre 1 y 100");
+        }
+        this.exigeAnticipo = exigeAnticipo;
+        this.porcentajeAnticipo = porcentajeAnticipo;
+    }
+
+    public void actualizarPoliticasGenerales(LocalTime horaLimiteNoShow, UmbralEdadFacturable umbralEdadFacturable) {
+        if (umbralEdadFacturable == null) {
+            throw new ReglaDominioException("El umbral de edad facturable es obligatorio");
+        }
+        this.horaLimiteNoShow = horaLimiteNoShow;
+        this.umbralEdadFacturable = umbralEdadFacturable;
+    }
+
     // ----- CONSULTAS -----
 
     public IdentificacionAlojamiento getIdentificacion() {

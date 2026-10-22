@@ -9,13 +9,12 @@ import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 public record VersionPolitica(int numero) {
 
     public VersionPolitica {
-
-        if (numero < 1) {
-
-            throw new ReglaDominioException("La versión de la política debe ser mayor que cero");
-
+        if (numero <= 0) {
+            throw new ReglaDominioException("El número de versión debe ser un entero positivo");
         }
-
     }
 
+    public VersionPolitica siguiente() {
+        return new VersionPolitica(this.numero + 1);
+    }
 }
