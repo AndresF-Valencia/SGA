@@ -19,27 +19,16 @@ class LlegadaYPlazosTest {
     // ---------- HoraEstimadaLlegada ----------
 
     @Test
-    @DisplayName("Sin hora indicada, la entrada es a las 14:00 y el no-show a las 16:00")
-    void horaEstandar() {
-        assertEquals(LocalTime.of(14, 0), HoraEstimadaLlegada.ESTANDAR.horaEntrada());
-        assertEquals(LocalTime.of(16, 0), HoraEstimadaLlegada.ESTANDAR.horaLimiteNoShow());
+    @DisplayName("Se puede crear una hora estimada de llegada válida")
+    void crearHoraEstimada() {
+        HoraEstimadaLlegada hel = HoraEstimadaLlegada.de(LocalTime.of(15, 30));
+        assertEquals(LocalTime.of(15, 30), hel.horaEstimada());
     }
 
     @Test
-    @DisplayName("Con hora estimada, el límite es esa hora más dos horas")
-    void horaEstimadaMasTolerancia() {
-        assertEquals(LocalTime.of(20, 30), HoraEstimadaLlegada.de(18, 30).horaLimiteNoShow());
-        assertEquals(LocalTime.of(11, 0),
-                HoraEstimadaLlegada.de(LocalTime.of(9, 0)).horaLimiteNoShow());
-    }
-
-    @Test
-    @DisplayName("La tolerancia queda fija en dos horas")
-    void toleranciaFija() {
-        HoraEstimadaLlegada hora = new HoraEstimadaLlegada(null, LocalTime.of(15, 0), 5);
-
-        assertEquals(2, hora.horasToleranciaNoShow());
-        assertEquals(LocalTime.of(17, 0), hora.horaLimiteNoShow());
+    @DisplayName("La hora estimada de llegada no puede ser nula")
+    void horaEstimadaNula() {
+        assertThrows(ReglaDominioException.class, () -> HoraEstimadaLlegada.de(null));
     }
 
     // ---------- NotificacionRetraso ----------

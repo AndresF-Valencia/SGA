@@ -32,8 +32,8 @@ public class NoShowService {
             throw new ReglaDominioException("No se puede declarar no-show con el folio cerrado");
         }
 
-        // 1. La reserva pasa a NO_SHOW (RN-12); si no procede, lanza y nada cambia
-        reserva.declararNoShow(autor, ahora);
+        // 1. La reserva pasa a NO_SHOW (RN-12); se pasa el alojamiento para validar horas límite y tolerancias
+        reserva.declararNoShow(autor, ahora, alojamiento);
 
         // 2. Retención del anticipo (Ficha A.4)
         Dinero valorReserva = reserva.getValor().total();

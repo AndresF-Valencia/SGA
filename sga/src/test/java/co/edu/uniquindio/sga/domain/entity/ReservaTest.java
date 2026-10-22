@@ -25,9 +25,12 @@ import co.edu.uniquindio.sga.domain.valueobject.DocumentoIdentidad;
 import co.edu.uniquindio.sga.domain.valueobject.EstadoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.Estancia;
 import co.edu.uniquindio.sga.domain.valueobject.EventoReserva;
+import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
 import co.edu.uniquindio.sga.domain.valueobject.NotificacionRetraso;
 import co.edu.uniquindio.sga.domain.valueobject.PlazoConfirmacion;
+import co.edu.uniquindio.sga.domain.valueobject.TiempoPreparacion;
+import co.edu.uniquindio.sga.domain.valueobject.UmbralEdadFacturable;
 import co.edu.uniquindio.sga.domain.valueobject.ValorCongelado;
 import co.edu.uniquindio.sga.domain.valueobject.VersionPolitica;
 
@@ -50,6 +53,7 @@ class ReservaTest {
     private Ocupante acompanante;
     private Estancia estancia;
     private Reserva reserva;
+    private Alojamiento alojamientoPrueba;
 
     @BeforeEach
     void setUp() {
@@ -59,6 +63,22 @@ class ReservaTest {
                 LocalDate.of(1988, 2, 10), AHORA.toLocalDate());
         estancia = new Estancia(ENTRADA, SALIDA);
         reserva = crearReserva(estancia, List.of(titular, acompanante));
+
+        // Configuración de un Alojamiento de prueba para las validaciones de No-Show
+        alojamientoPrueba = new Alojamiento(
+                new IdentificacionAlojamiento("HOTEL-01"),
+                "Hotel Sanrocco",
+                "Armenia",
+                "Hotel campestre",
+                LocalTime.of(15, 0), // Hora entrada estándar
+                LocalTime.of(11, 0), // Hora salida
+                LocalTime.of(17, 0), // Hora límite no-show
+                new UmbralEdadFacturable(12),
+                new TiempoPreparacion(60),
+                new PlazoConfirmacion(24),
+                true,
+                50
+        );
     }
 
     // ---------- Ayudantes ----------
@@ -368,7 +388,7 @@ class ReservaTest {
         confirmar();
 
         assertThrows(ReglaDominioException.class,
-                () -> reserva.declararNoShow(RECEPCION, elDiaDeEntradaA(16, 59)));
+                () -> reserva.declararNoShow(RECEPCION, elDiaDeEntradaA(16, 59), alojamientoPrueba));
         assertEquals(EstadoReserva.CONFIRMADA, reserva.getEstado());
     }
 
@@ -377,7 +397,7 @@ class ReservaTest {
     void noShowDespuesDelLimite() {
         confirmar();
 
-        reserva.declararNoShow(RECEPCION, elDiaDeEntradaA(17, 0));
+        reserva.declararNoShow(RECEPCION, elDiaDeEntradaA(17, 0), alojamientoPrueba);
 
         assertEquals(EstadoReserva.NO_SHOW, reserva.getEstado());
         assertEquals("NO_SHOW", ultimoEvento().accion());
@@ -387,7 +407,7 @@ class ReservaTest {
     @DisplayName("No-show: no se declara sobre una reserva sin confirmar")
     void noShowSinConfirmar() {
         assertThrows(ReglaDominioException.class,
-                () -> reserva.declararNoShow(RECEPCION, elDiaDeEntradaA(23, 0)));
+                () -> reserva.declararNoShow(RECEPCION, elDiaDeEntradaA(23, 0), alojamientoPrueba));
     }
 
     @Test
@@ -414,7 +434,7 @@ class ReservaTest {
                 "huesped", elDiaDeEntradaA(14, 0));
 
         assertThrows(ReglaDominioException.class,
-                () -> reserva.declararNoShow(RECEPCION, elDiaDeEntradaA(23, 0)));
+                () -> reserva.declararNoShow(RECEPCION, elDiaDeEntradaA(23, 0), alojamientoPrueba));
     }
 
     @Test
