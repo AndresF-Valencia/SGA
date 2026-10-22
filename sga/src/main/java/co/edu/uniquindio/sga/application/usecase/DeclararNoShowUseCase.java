@@ -11,10 +11,7 @@ import co.edu.uniquindio.sga.application.exception.ReservaNoEncontradaException;
 import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 import co.edu.uniquindio.sga.domain.entity.Folio;
 import co.edu.uniquindio.sga.domain.entity.Reserva;
-import co.edu.uniquindio.sga.domain.service.NoShowService;
 import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
-import co.edu.uniquindio.sga.domain.entity.Alojamiento;
-import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
 import java.time.LocalDateTime;
 
 /**
