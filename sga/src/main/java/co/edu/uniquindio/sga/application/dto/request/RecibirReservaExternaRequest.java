@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga.application.dto.request;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -20,6 +21,9 @@ public record RecibirReservaExternaRequest(
         @NotBlank(message = "El código externo de la reserva es obligatorio para la idempotencia")
         String codigoExterno,
 
+        @NotNull(message = "La hora estimada de llegada es obligatoria")
+        LocalTime horaEstimadaLlegada,
+        
         @NotBlank(message = "La identificación del apartamento es obligatoria")
         String identificacionApartamento,
 

@@ -443,7 +443,7 @@ paths:
     put:
       tags:
       - Folio y Finanzas
-      summary: Cerrar el folio (RN-17)
+      summary: Cerrar el folio con autor y motivo (RN-17)
       operationId: cerrarFolio
       parameters:
       - $ref: '#/components/parameters/CodigoReserva'
@@ -769,35 +769,33 @@ paths:
   /api/canales/disponibilidad:
     get:
       tags:
-      - Canal Externo
+        - Canal Externo
       summary: 'Canal externo: consultar disponibilidad (10.3.1)'
       operationId: consultarDisponibilidadCanal
       parameters:
-      - name: fechaEntrada
-        in: query
-        required: true
-        schema:
-          type: string
-          format: date
-          example: '2026-11-01'
-      - name: fechaSalida
-        in: query
-        required: true
-        schema:
-          type: string
-          format: date
-          example: '2026-11-04'
-      - name: personas
-        in: query
-        required: true
-        description: Total de personas del grupo (todos cuentan para la capacidad, RN-02).
-        schema:
-          type: integer
-          format: int32
-          minimum: 1
-          example: 2
-      - $ref: '#/components/parameters/Pagina'
-      - $ref: '#/components/parameters/Tamano'
+        - name: fechaEntrada
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: '2026-11-01'
+        - name: fechaSalida
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: '2026-11-04'
+        - name: personas
+          in: query
+          required: true
+          description: Total de personas del grupo (todos cuentan para la capacidad, RN-02).
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            example: 2
       responses:
         '200':
           description: Apartamentos disponibles
@@ -810,7 +808,7 @@ paths:
         '401':
           $ref: '#/components/responses/NoAutenticado'
       security:
-      - canalCredencial: []
+        - canalCredencial: []
 
   /api/canales/reservas-externas:
     post:
@@ -1001,10 +999,18 @@ components:
     CerrarFolioRequest:
       type: object
       required:
-      - autorizacionAdministrador
+      - autor
+      - motivo
       properties:
-        autorizacionAdministrador:
-          type: boolean
+        autor:
+          type: string
+          minLength: 1
+          example: Administrador Juan Pérez
+        motivo:
+          type: string
+          minLength: 5
+          maxLength: 300
+          example: Cierre de folio aprobado administrativamente
         observaciones:
           type: string
           maxLength: 300
@@ -1014,7 +1020,7 @@ components:
       required:
       - horaEntrada
       - horaSalida
-      - minutosPreparacion
+      - horasPreparacion
       - horasPlazoConfirmacion
       - edadUmbralFacturable
       properties:
@@ -1030,10 +1036,10 @@ components:
           type: string
           format: time
           example: '20:00:00'
-        minutosPreparacion:
+        horasPreparacion:
           type: integer
           format: int32
-          example: 180
+          example: 3
         horasPlazoConfirmacion:
           type: integer
           format: int32
@@ -1146,6 +1152,7 @@ components:
       - apartamentoId
       - fechaEntrada
       - fechaSalida
+      - horaEstimadaLlegada
       - canalOrigen
       - titular
       - ocupantes
@@ -1163,6 +1170,9 @@ components:
           type: string
           format: date
           example: '2026-11-04'
+        horaEstimadaLlegada:
+          type: string
+          example: '15:00:00'
         canalOrigen:
           type: string
           minLength: 1
@@ -1281,7 +1291,7 @@ components:
           example: 300000
         fechaPago:
           type: string
-          format: date-time
+          format: date
           example: '2026-10-22'
         referencia:
           type: string
@@ -1326,10 +1336,6 @@ components:
           type: number
           format: double
           example: 100
-        cargoFijo:
-          type: integer
-          format: int64
-          example: 0
     PublicarPoliticaCancelacionRequest:
       type: object
       required:
@@ -1347,21 +1353,32 @@ components:
           minItems: 1
     PublicarPoliticaCancelacionRequest.TramoPoliticaDto:
       type: object
+      required:
+      - diasMinimos
+      - diasMaximos
+      - porcentajeRetencion
       properties:
-        diasAnticipacion:
+        diasMinimos:
           type: integer
           format: int32
           minimum: 0
           example: 7
-        porcentajeRetencion:
+        diasMaximos:
           type: integer
           format: int32
           minimum: 0
+          example: 14
+        porcentajeRetencion:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
           example: 100
     RecibirReservaExternaRequest:
       type: object
       required:
       - codigoExterno
+      - horaEstimadaLlegada
       - identificacionApartamento
       - fechaEntrada
       - fechaSalida
@@ -1372,6 +1389,9 @@ components:
           type: string
           minLength: 1
           example: BKG-998877
+        horaEstimadaLlegada:
+          type: string
+          example: '15:00:00'
         identificacionApartamento:
           type: string
           minLength: 1
@@ -1454,17 +1474,17 @@ components:
       type: object
       required:
       - descripcion
-      - tipo
+      - gravedad
       properties:
         descripcion:
           type: string
           minLength: 5
           maxLength: 500
-          example: Apartamento familiar con balcón
-        tipo:
+          example: Daño en cerradura de la puerta principal
+        gravedad:
           type: string
           minLength: 1
-          example: DANO
+          example: ALTA
     RegistrarPagoRequest:
       type: object
       required:
@@ -1487,9 +1507,19 @@ components:
           example: '2026-10-22'
     RegistrarSalidaRequest:
       type: object
+      required:
+      - autor
+      - motivo
       properties:
-        autorizacionAdministradorFolioPendiente:
-          type: boolean
+        autor:
+          type: string
+          minLength: 1
+          example: Recepcionista Ana Gómez
+        motivo:
+          type: string
+          minLength: 5
+          maxLength: 300
+          example: Salida ejecutada y validada en recepción
         observaciones:
           type: string
           maxLength: 300
@@ -1758,9 +1788,9 @@ components:
         identificacionApartamento:
           type: string
           example: AP001
-        tipo:
+        gravedad:
           type: string
-          example: DANO
+          example: ALTA
         descripcion:
           type: string
           example: Apartamento familiar con balcón
@@ -1880,10 +1910,10 @@ components:
           type: string
           format: time
           example: '20:00:00'
-        minutosPreparacion:
+        horasPreparacion:
           type: integer
           format: int32
-          example: 180
+          example: 3
         horasPlazoConfirmacion:
           type: integer
           format: int32
@@ -1950,6 +1980,9 @@ components:
           type: string
           format: date
           example: '2026-11-04'
+        horaEstimadaLlegada:
+          type: string
+          example: '15:00:00'
         fechaCreacion:
           type: string
           format: date-time
@@ -2021,13 +2054,10 @@ components:
         tipoTemporada:
           type: string
           example: ALTA
-        factorAjuste:
-          type: number
-          format: double
-          example: 1.3
-        descripcion:
-          type: string
-          example: Apartamento familiar con balcón
+        estanciaMinima:
+          type: integer
+          format: int64
+          example: 3
   responses:
     DatosInvalidos:
       description: '400: el mensaje está mal formado o le falta un campo (lo detecta Bean Validation).'

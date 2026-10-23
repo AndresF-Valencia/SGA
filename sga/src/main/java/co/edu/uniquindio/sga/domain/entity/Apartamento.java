@@ -30,6 +30,8 @@ public class Apartamento {
     private final IdentificacionApartamento identificacion;
     private final IdentificacionAlojamiento identificacionAlojamiento; // alojamiento al que pertenece
     private final List<Novedad> novedades = new ArrayList<>();
+    private final List<String> caracteristicas = new ArrayList<>();
+    private final List<String> imagenes = new ArrayList<>();
     private String nombre;
     private Dormitorio dormitorios;
     private CapacidadOcupantes capacidad;
@@ -40,7 +42,7 @@ public class Apartamento {
 
     public Apartamento(IdentificacionApartamento identificacion, String nombre,
             TiempoPreparacion tiempoPreparacion, IdentificacionAlojamiento identificacionAlojamiento,
-            Dormitorio dormitorios, CapacidadOcupantes capacidad, LimiteMascota limiteMascotas) {
+            Dormitorio dormitorios, CapacidadOcupantes capacidad, LimiteMascota limiteMascotas,List<String> caracteristicas,List<String> imagenes) {
 
         if (identificacion == null) {
             throw new ReglaDominioException("El apartamento debe tener identificación");
@@ -67,6 +69,14 @@ public class Apartamento {
             throw new ReglaDominioException("El apartamento debe tener un tiempo de preparación");
         }
 
+        if (caracteristicas == null) {
+            throw new ReglaDominioException("La lista de características del apartamento no puede ser nula");
+        }
+
+        if (imagenes == null) {
+            throw new ReglaDominioException("La lista de imágenes del apartamento no puede ser nula");
+        }
+
         this.identificacion = identificacion;
         this.identificacionAlojamiento = identificacionAlojamiento;
         this.nombre = nombre;
@@ -76,9 +86,30 @@ public class Apartamento {
         this.limiteMascotas = limiteMascotas;
         this.estadoOperativo = EstadoOperativo.PREPARADO;
         this.activo = true;
+        this.caracteristicas.addAll(caracteristicas);
+        this.imagenes.addAll(imagenes);
     }
 
     // ------ COMPORTAMIENTO ------
+
+
+    public void agregarImagen(String urlImagen) {
+        if (urlImagen == null || urlImagen.isBlank()) {
+            throw new ReglaDominioException("La URL de la imagen no puede estar vacía");
+        }
+        if (!this.imagenes.contains(urlImagen)) {
+            this.imagenes.add(urlImagen);
+        }
+    }
+
+    public void agregarCaracteristica(String caracteristica) {
+        if (caracteristica == null || caracteristica.isBlank()) {
+            throw new ReglaDominioException("La característica no puede estar vacía");
+        }
+        if (!this.caracteristicas.contains(caracteristica)) {
+            this.caracteristicas.add(caracteristica);
+        }
+    }
 
     /**
      * Registra una novedad (daño, faltante o situación) reportada en el apartamento (CU-15).
@@ -180,6 +211,14 @@ public class Apartamento {
 
     public IdentificacionApartamento getIdentificacion() {
         return identificacion;
+    }
+
+    public List<String> getCaracteristicas() {
+        return Collections.unmodifiableList(caracteristicas);
+    }
+
+    public List<String> getImagenes() {
+        return Collections.unmodifiableList(imagenes);
     }
 
     public IdentificacionAlojamiento getIdentificacionAlojamiento() {

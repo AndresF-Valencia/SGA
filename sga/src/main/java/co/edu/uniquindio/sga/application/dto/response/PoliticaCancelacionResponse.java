@@ -25,7 +25,6 @@ public record PoliticaCancelacionResponse(
     public record TramoPoliticaDto(
             int diasMinimosAnticipacion,
             int diasMaximosAnticipacion,
-            Double porcentajeRetencion,
-            Long cargoFijo
+            Double porcentajeRetencion
     ) {}
 }

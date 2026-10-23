@@ -14,6 +14,6 @@ public record RegistrarNovedadRequest(
         String descripcion,
 
         @NotBlank(message = "El tipo de novedad es obligatorio")
-        String tipo
+        String gravedad
 
 ) {}

@@ -18,7 +18,6 @@ public record TemporadaResponse(
         LocalDate fechaInicio,
         LocalDate fechaFin,
         String tipoTemporada,
-        Double factorAjuste,
-        String descripcion
+        int estanciaMinima
 
 ) {}

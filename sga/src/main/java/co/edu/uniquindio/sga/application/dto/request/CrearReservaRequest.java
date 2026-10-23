@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -23,6 +24,9 @@ public record CrearReservaRequest(
         @NotNull(message = "La fecha de entrada es obligatoria")
         @Future(message = "La fecha de entrada debe ser en el futuro")
         LocalDate fechaEntrada,
+        
+        @NotNull(message = "La hora estimada de llegada es obligatoria")
+        LocalTime horaEstimadaLlegada,
 
         @NotNull(message = "La fecha de salida es obligatoria")
         LocalDate fechaSalida,

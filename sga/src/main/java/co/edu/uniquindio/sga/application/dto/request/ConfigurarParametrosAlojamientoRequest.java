@@ -22,7 +22,7 @@ public record ConfigurarParametrosAlojamientoRequest(
         LocalTime horaLimiteNoShow,
 
         @NotNull(message = "El tiempo de preparación es obligatorio")
-        Integer minutosPreparacion,
+        Integer horasPreparacion,
 
         @NotNull(message = "El plazo de confirmación es obligatorio")
         Integer horasPlazoConfirmacion,

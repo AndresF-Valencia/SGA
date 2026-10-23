@@ -24,7 +24,10 @@ public record PublicarPoliticaCancelacionRequest(
 ) {
     public record TramoPoliticaDto(
             @Min(value = 0, message = "Los días de anticipación no pueden ser negativos")
-            int diasAnticipacion,
+            int diasMinimo,
+
+            @Min(value = 0, message = "Los días de anticipación no pueden ser negativos")
+            int diasMaximo,
 
             @Min(value = 0, message = "El porcentaje de retención no puede ser negativo")
             int porcentajeRetencion

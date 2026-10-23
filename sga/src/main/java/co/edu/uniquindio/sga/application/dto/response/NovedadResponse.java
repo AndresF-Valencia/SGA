@@ -15,7 +15,7 @@ public record NovedadResponse(
 
         String id,
         String identificacionApartamento,
-        String tipo,
+        String gravedad,
         String descripcion,
         String estado,
         LocalDateTime fechaRegistro,

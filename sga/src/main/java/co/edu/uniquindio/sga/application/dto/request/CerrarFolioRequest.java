@@ -1,6 +1,6 @@
 package co.edu.uniquindio.sga.application.dto.request;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -10,8 +10,8 @@ import jakarta.validation.constraints.Size;
  */
 public record CerrarFolioRequest(
 
-        @NotNull(message = "La autorización del administrador es obligatoria")
-        Boolean autorizacionAdministrador,
+        @NotBlank String autor,
+        @NotBlank @Size(min = 5, max = 300) String motivo,
 
         @Size(max = 300, message = "Las observaciones no pueden superar los 300 caracteres")
         String observaciones
