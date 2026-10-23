@@ -95,7 +95,8 @@ public final class Escenario {
     /** Apartamento para 4 personas y hasta 1 mascota, con 3 horas de preparación. */
     public static Apartamento apartamento(IdentificacionApartamento id) {
         return new Apartamento(id, "Apartamento " + id.valor(), TiempoPreparacion.estandar(), SAN_ROCCO,
-                new Dormitorio(2), new CapacidadOcupantes(4), new LimiteMascota(1));
+                new Dormitorio(2), new CapacidadOcupantes(4), new LimiteMascota(1),
+                List.of("Wifi", "Balcón"), List.of("https://img.sga.com/apto-default.jpg"));
     }
 
     public static Ocupante adulto(String documento, String nombre) {

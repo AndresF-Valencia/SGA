@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,8 @@ class ApartamentoTest {
     private static final Dormitorio DOS_DORMITORIOS = new Dormitorio(2);
     private static final CapacidadOcupantes CUATRO_PERSONAS = new CapacidadOcupantes(4);
     private static final LimiteMascota DOS_MASCOTAS = new LimiteMascota(2);
+    private static final List<String> CARACTERISTICAS_BASE = List.of("Wifi", "Balcón");
+    private static final List<String> IMAGENES_BASE = List.of("https://img.sga.com/apto101-1.jpg");
 
     private Apartamento apartamento;
 
@@ -36,10 +40,10 @@ class ApartamentoTest {
         apartamento = crear(APTO_101, "Vista al lago");
     }
 
-    /** Crea un apartamento válido: 2 dormitorios, 4 personas y hasta 2 mascotas. */
+    /** Crea un apartamento válido con características e imágenes por defecto. */
     private static Apartamento crear(IdentificacionApartamento identificacion, String nombre) {
         return new Apartamento(identificacion, nombre, PREPARACION, ALOJAMIENTO,
-                DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS);
+                DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS, CARACTERISTICAS_BASE, IMAGENES_BASE);
     }
 
     // ---------- Creación ----------
@@ -48,32 +52,38 @@ class ApartamentoTest {
     @DisplayName("Exige identificación, alojamiento, nombre y tiempo de preparación")
     void validaDatos() {
         assertThrows(ReglaDominioException.class, () -> new Apartamento(
-                null, "A", PREPARACION, ALOJAMIENTO, DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS));
+                null, "A", PREPARACION, ALOJAMIENTO, DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS, CARACTERISTICAS_BASE, IMAGENES_BASE));
         assertThrows(ReglaDominioException.class, () -> new Apartamento(
-                APTO_101, " ", PREPARACION, ALOJAMIENTO, DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS));
+                APTO_101, " ", PREPARACION, ALOJAMIENTO, DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS, CARACTERISTICAS_BASE, IMAGENES_BASE));
         assertThrows(ReglaDominioException.class, () -> new Apartamento(
-                APTO_101, "A", PREPARACION, null, DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS));
+                APTO_101, "A", PREPARACION, null, DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS, CARACTERISTICAS_BASE, IMAGENES_BASE));
         assertThrows(ReglaDominioException.class, () -> new Apartamento(
-                APTO_101, "A", null, ALOJAMIENTO, DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS));
+                APTO_101, "A", null, ALOJAMIENTO, DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS, CARACTERISTICAS_BASE, IMAGENES_BASE));
     }
 
     @Test
     @DisplayName("Exige dormitorios, capacidad y límite de mascotas, con un error del negocio")
     void exigeCantidades() {
         assertThrows(ReglaDominioException.class, () -> new Apartamento(
-                APTO_101, "A", PREPARACION, ALOJAMIENTO, null, CUATRO_PERSONAS, DOS_MASCOTAS));
+                APTO_101, "A", PREPARACION, ALOJAMIENTO, null, CUATRO_PERSONAS, DOS_MASCOTAS, CARACTERISTICAS_BASE, IMAGENES_BASE));
         assertThrows(ReglaDominioException.class, () -> new Apartamento(
-                APTO_101, "A", PREPARACION, ALOJAMIENTO, DOS_DORMITORIOS, null, DOS_MASCOTAS));
+                APTO_101, "A", PREPARACION, ALOJAMIENTO, DOS_DORMITORIOS, null, DOS_MASCOTAS, CARACTERISTICAS_BASE, IMAGENES_BASE));
         assertThrows(ReglaDominioException.class, () -> new Apartamento(
-                APTO_101, "A", PREPARACION, ALOJAMIENTO, DOS_DORMITORIOS, CUATRO_PERSONAS, null));
+                APTO_101, "A", PREPARACION, ALOJAMIENTO, DOS_DORMITORIOS, CUATRO_PERSONAS, null, CARACTERISTICAS_BASE, IMAGENES_BASE));
+    }
+
+    @Test
+    @DisplayName("Exige que las listas de características e imágenes no sean nulas")
+    void exigeListasNoNulas() {
+        assertThrows(ReglaDominioException.class, () -> new Apartamento(
+                APTO_101, "A", PREPARACION, ALOJAMIENTO, DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS, null, IMAGENES_BASE));
+        assertThrows(ReglaDominioException.class, () -> new Apartamento(
+                APTO_101, "A", PREPARACION, ALOJAMIENTO, DOS_DORMITORIOS, CUATRO_PERSONAS, DOS_MASCOTAS, CARACTERISTICAS_BASE, null));
     }
 
     @Test
     @DisplayName("Necesita al menos un dormitorio, capacidad para una persona y límite de mascotas no negativo")
     void validaCantidades() {
-        // TODO: Dormitorio y CapacidadOcupantes lanzan hoy IllegalArgumentException.
-        // Cuando pasen a ReglaDominioException, cambiar RuntimeException por
-        // ReglaDominioException.
         assertThrows(RuntimeException.class, () -> new Dormitorio(0));
         assertThrows(RuntimeException.class, () -> new CapacidadOcupantes(0));
         assertThrows(ReglaDominioException.class, () -> new LimiteMascota(-1));
@@ -84,6 +94,8 @@ class ApartamentoTest {
     void estadoInicial() {
         assertTrue(apartamento.estaActivo());
         assertEquals(EstadoOperativo.PREPARADO, apartamento.getEstadoOperativo());
+        assertEquals(2, apartamento.getCaracteristicas().size());
+        assertEquals(1, apartamento.getImagenes().size());
     }
 
     // ---------- Capacidad y mascotas ----------
