@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.entity.Bloqueo;
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
@@ -16,6 +19,7 @@ import java.util.List;
 /**
  * Caso de uso: Gestionar bloqueo de apartamento (Crear y Levantar Bloqueo - CU-17).
  */
+@Service
 public class GestionarBloqueoUseCase {
 
     private final BloqueoApartamentoService bloqueoApartamentoService;
@@ -33,7 +37,8 @@ public class GestionarBloqueoUseCase {
     /**
      * Crea un nuevo bloqueo administrativo validando que no existan reservas activas (RN-07, 7.3).
      */
-    public void crearBloqueo(IdentificacionBloqueo idBloqueo,
+    @Transactional
+    public Bloqueo crearBloqueo(IdentificacionBloqueo idBloqueo,
                              IdentificacionApartamento apartamentoId,
                              Periodo periodo,
                              MotivoBloqueo motivo) {
@@ -49,11 +54,13 @@ public class GestionarBloqueoUseCase {
 
         // 3. Persistir el nuevo bloqueo creado
         bloqueoRepository.guardar(bloqueo);
+        return bloqueo;
     }
 
     /**
      * Levanta un bloqueo existente de forma lógica (12.4).
      */
+    @Transactional
     public void levantarBloqueo(IdentificacionBloqueo idBloqueo) {
         if (idBloqueo == null) {
             throw new ReglaDominioException("El identificador del bloqueo es obligatorio para levantarlo");

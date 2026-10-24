@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
 import co.edu.uniquindio.sga.domain.service.NoShowService;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
@@ -25,6 +28,7 @@ import java.time.LocalDateTime;
  * No cierra el folio: eso es otra intención (7.7).
  */
 
+@Service
 public class DeclararNoShowUseCase {
 
     private final ReservaRepository reservaRepository;
@@ -41,7 +45,8 @@ public class DeclararNoShowUseCase {
         this.noShowService = noShowService;
     }
 
-    public Reserva ejecutar(CodigoReserva codigo, IdentificacionAlojamiento alojamientoId,
+        @Transactional
+        public Reserva ejecutar(CodigoReserva codigo, IdentificacionAlojamiento alojamientoId,
             String autor, LocalDateTime ahora) {
         // 1. Buscar
         Reserva reserva = reservaRepository.buscarPorCodigo(codigo)

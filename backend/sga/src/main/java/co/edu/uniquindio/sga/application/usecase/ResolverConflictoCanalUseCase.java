@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
@@ -11,6 +14,7 @@ import java.time.LocalDateTime;
  * Caso de uso: Resolver conflicto de canal (CU-21).
  * Gestiona y resuelve las sobre-reservas o colisiones generadas por canales externos (Channel Manager).
  */
+@Service
 public class ResolverConflictoCanalUseCase {
 
     private final ReservaRepository reservaRepository;
@@ -25,7 +29,8 @@ public class ResolverConflictoCanalUseCase {
      * @param codigoReserva Código único de la reserva en conflicto.
      * @param motivo        Descripción del motivo de la resolución (ej. "Sobre-reserva por bloqueo previo").
      */
-    public void rechazarReservaCanal(CodigoReserva codigoReserva, String motivo) {
+    @Transactional
+    public Reserva rechazarReservaCanal(CodigoReserva codigoReserva, String motivo) {
         if (codigoReserva == null) {
             throw new ReglaDominioException("El código de la reserva es obligatorio");
         }
@@ -42,5 +47,6 @@ public class ResolverConflictoCanalUseCase {
 
         // 3. Persistir el nuevo estado de la reserva
         reservaRepository.guardar(reserva);
+        return reserva;
     }
 }

@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
 import co.edu.uniquindio.sga.application.exception.ApartamentoNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Alojamiento;
@@ -31,6 +34,7 @@ import java.util.List;
 /**
  * Caso de uso: Modificar una reserva existente (fechas, apartamento, ocupantes o mascotas).
  */
+@Service
 public class ModificarReservaUseCase {
 
     private final ReservaRepository reservaRepository;
@@ -68,7 +72,8 @@ public class ModificarReservaUseCase {
      * Modifica la estancia de una reserva existente, validando disponibilidad,
      * recotizando y aplicando las reglas del dominio.
      */
-    public Dinero ejecutar(
+        @Transactional
+        public Reserva ejecutar(
             CodigoReserva codigoReserva,
             IdentificacionAlojamiento alojamientoId,
             IdentificacionApartamento nuevoApartamentoId,
@@ -108,21 +113,22 @@ public class ModificarReservaUseCase {
         estanciaMinimaService.verificarEstanciaMinima(nuevaEstancia, temporadas);
 
         // 5. Recotizar los valores con la nueva configuración
+        List<Ocupante> ocupantes = nuevosOcupantes != null ? nuevosOcupantes : reserva.getOcupantes();
         ValorCongelado nuevoValor = cotizadorService.cotizar(
                 nuevoApartamentoId,
                 nuevaEstancia,
-                nuevosOcupantes,
+                ocupantes,
                 alojamiento.getUmbralEdadFacturable(),
                 temporadas,
                 tarifaRepository.buscarPorApartamento(nuevoApartamentoId)
         );
 
         // 6. Delegar la modificación a la entidad de dominio (RN-14, RN-22)
-        Dinero ajuste = reserva.modificarEstancia(nuevaEstancia, nuevoValor, autor, ahora);
+        reserva.modificarEstancia(nuevaEstancia, nuevoValor, autor, ahora);
 
         // 7. Persistir cambios actualizados
         reservaRepository.guardar(reserva);
 
-        return ajuste;
+        return reserva;
     }
 }

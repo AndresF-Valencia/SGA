@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
 import co.edu.uniquindio.sga.application.exception.ApartamentoNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Alojamiento;
@@ -27,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class RecibirReservaExternaUseCase {
 
     private final ReservaRepository reservaRepository;
@@ -70,7 +74,8 @@ public class RecibirReservaExternaUseCase {
      * Procesa una solicitud de reserva enviada por un canal externo.
      * Garantiza idempotencia (RN-19) y manejo riguroso de conflictos (RN-18).
      */
-    public Reserva ejecutar(
+        @Transactional
+        public Reserva ejecutar(
             String identificadorExterno,
             CanalOrigen canalOrigen,
             IdentificacionAlojamiento alojamientoId,

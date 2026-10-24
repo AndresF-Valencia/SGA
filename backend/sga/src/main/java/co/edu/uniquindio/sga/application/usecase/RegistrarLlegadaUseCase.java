@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.repository.ApartamentoRepository;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
@@ -32,6 +35,7 @@ import co.edu.uniquindio.sga.application.exception.FolioNoEncontradoException;
  * pagado,
  * pero no le agrega movimientos.
  */
+@Service
 public class RegistrarLlegadaUseCase {
 
         private final ReservaRepository reservaRepository;
@@ -61,6 +65,7 @@ public class RegistrarLlegadaUseCase {
          * pendiente (RNP-03)
          */
 
+        @Transactional
         public Reserva ejecutar(CodigoReserva codigo, String autor, LocalDateTime ahora) {
                 // 1. BUSCAR: de lo que llega (el código) a los objetos del dominio
                 Reserva reserva = reservaRepository.buscarPorCodigo(codigo)

@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
@@ -13,6 +16,7 @@ import java.util.List;
  * Caso de uso: Vencer automáticamente las reservas pendientes cuyo plazo de
  * confirmación ha expirado (RN-21).
  */
+@Service
 public class VencerReservasPendientesUseCase {
 
     private final ReservaRepository reservaRepository;
@@ -31,6 +35,7 @@ public class VencerReservasPendientesUseCase {
      *              tarea programada).
      * @return Lista de reservas que fueron vencidas y canceladas en este ciclo.
      */
+    @Transactional
     public List<Reserva> ejecutar(LocalDateTime ahora) {
         if (ahora == null) {
             throw new ReglaDominioException(
