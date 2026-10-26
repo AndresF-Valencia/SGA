@@ -19,7 +19,7 @@ import java.util.List;
  * Caso de uso: Gestionar Temporadas y Tarifas (Módulo de Administración).
  * Permite registrar nuevas temporadas comerciales validando solapamientos y configurar sus tarifas.
  */
-@Service
+ 
 public class GestionarTemporadasTarifasUseCase {
 
     private final TemporadaRepository temporadaRepository;

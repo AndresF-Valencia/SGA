@@ -13,7 +13,7 @@ import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
  * Caso de uso: Actualiza el estado operativo de un apartamento 
  * (por ejemplo, a PREPARADO al terminar la preparación) (CU-16).
  */
-@Service
+ 
 public class CambiarEstadoOperativoUseCase {
 
     private final ApartamentoRepository apartamentoRepository;

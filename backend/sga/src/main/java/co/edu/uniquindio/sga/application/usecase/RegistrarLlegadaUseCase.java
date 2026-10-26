@@ -35,7 +35,7 @@ import co.edu.uniquindio.sga.application.exception.FolioNoEncontradoException;
  * pagado,
  * pero no le agrega movimientos.
  */
-@Service
+ 
 public class RegistrarLlegadaUseCase {
 
         private final ReservaRepository reservaRepository;

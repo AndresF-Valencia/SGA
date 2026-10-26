@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Caso de uso: Gestionar bloqueo de apartamento (Crear y Levantar Bloqueo - CU-17).
  */
-@Service
+ 
 public class GestionarBloqueoUseCase {
 
     private final BloqueoApartamentoService bloqueoApartamentoService;

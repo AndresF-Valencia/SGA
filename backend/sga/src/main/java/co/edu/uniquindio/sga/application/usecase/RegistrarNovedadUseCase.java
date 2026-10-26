@@ -13,7 +13,7 @@ import co.edu.uniquindio.sga.domain.valueobject.Novedad;
  * Caso de uso: Registrar una novedad (daño, faltante o situación) 
  * reportada por el personal de servicio en un apartamento (CU-15).
  */
-@Service
+ 
 public class RegistrarNovedadUseCase {
 
     private final ApartamentoRepository apartamentoRepository;

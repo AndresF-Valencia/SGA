@@ -17,7 +17,7 @@ import java.time.LocalTime;
  * Caso de uso: Configurar parámetros del alojamiento (CU-20).
  * Permite actualizar todos los parámetros operativos y comerciales del Alojamiento.
  */
-@Service
+ 
 public class ConfigurarParametrosAlojamientoUseCase {
 
     private final AlojamientoRepository alojamientoRepository;

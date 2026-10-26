@@ -22,7 +22,7 @@ import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.domain.valueobject.PoliticaCancelacion;
 
 /** Caso de uso (Guía 06). Se vuelve servicio de Spring en la Guía 09. */
-@Service
+ 
 public class CancelarReservaUseCase {
 
         private final ReservaRepository reservaRepository;

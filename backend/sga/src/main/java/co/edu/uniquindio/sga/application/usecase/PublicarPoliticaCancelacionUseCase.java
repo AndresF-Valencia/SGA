@@ -12,7 +12,7 @@ import co.edu.uniquindio.sga.domain.valueobject.VersionPolitica;
  * Caso de uso: Publicar política de cancelación (CU-19).
  * Publica y congela una nueva versión de la política de cancelación.
  */
-@Service
+ 
 public class PublicarPoliticaCancelacionUseCase {
 
     private final PoliticaCancelacionRepository politicaCancelacionRepository;

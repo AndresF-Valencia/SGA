@@ -20,7 +20,7 @@ import co.edu.uniquindio.sga.domain.valueobject.ValorCongelado;
 import java.time.LocalDate;
 import java.util.List;
 
-@Service
+ 
 public class CotizarEstanciaUseCase {
 
     private final TemporadaRepository temporadaRepository;

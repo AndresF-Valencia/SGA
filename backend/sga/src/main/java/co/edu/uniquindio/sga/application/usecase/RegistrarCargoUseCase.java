@@ -12,7 +12,7 @@ import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
 /**
  * Caso de uso: Registrar un nuevo cargo (adicional o de consumo) en el folio de una reserva.
  */
-@Service
+ 
 public class RegistrarCargoUseCase {
 
     private final FolioRepository folioRepository;

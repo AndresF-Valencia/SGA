@@ -14,7 +14,7 @@ import co.edu.uniquindio.sga.domain.entity.Pago;
  * Caso de uso: Corregir un movimiento (cargo o pago) del folio mediante la creación 
  * de un movimiento inverso, sin alterar ni eliminar el original (CU-13, RN-16).
  */
-@Service
+ 
 public class CorregirMovimientoUseCase {
 
     private final FolioRepository folioRepository;

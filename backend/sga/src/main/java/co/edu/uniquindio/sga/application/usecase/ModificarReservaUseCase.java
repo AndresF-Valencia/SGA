@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * Caso de uso: Modificar una reserva existente (fechas, apartamento, ocupantes o mascotas).
  */
-@Service
+ 
 public class ModificarReservaUseCase {
 
     private final ReservaRepository reservaRepository;

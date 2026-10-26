@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * Caso de uso: Resolver conflicto de canal (CU-21).
  * Gestiona y resuelve las sobre-reservas o colisiones generadas por canales externos (Channel Manager).
  */
-@Service
+ 
 public class ResolverConflictoCanalUseCase {
 
     private final ReservaRepository reservaRepository;

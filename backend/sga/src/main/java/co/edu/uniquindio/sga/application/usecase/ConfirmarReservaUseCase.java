@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 /**
  * Caso de uso (Guía 06): confirmar una reserva exigiendo el anticipo (RNP-03).
  */
-@Service
+ 
 public class ConfirmarReservaUseCase {
 
         private final ReservaRepository reservaRepository;

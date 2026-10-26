@@ -13,7 +13,7 @@ import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
  * Caso de uso: Cierra el folio de una reserva. Si el saldo es cero se cierra directamente;
  * si el saldo es distinto de cero, requiere una autorización registrada (CU-14, RN-17).
  */
-@Service
+ 
 public class CerrarFolioUseCase {
 
     private final FolioRepository folioRepository;

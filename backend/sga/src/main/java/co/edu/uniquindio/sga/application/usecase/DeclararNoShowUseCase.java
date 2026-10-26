@@ -28,7 +28,7 @@ import java.time.LocalDateTime;
  * No cierra el folio: eso es otra intención (7.7).
  */
 
-@Service
+ 
 public class DeclararNoShowUseCase {
 
     private final ReservaRepository reservaRepository;

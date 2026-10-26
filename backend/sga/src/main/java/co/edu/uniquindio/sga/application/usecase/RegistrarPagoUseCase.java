@@ -12,7 +12,7 @@ import co.edu.uniquindio.sga.domain.entity.Pago;
 /**
  * Caso de uso: Registrar un pago con su medio y fecha contra el folio de una reserva (CU-12, RN-15).
  */
-@Service
+ 
 public class RegistrarPagoUseCase {
 
     private final FolioRepository folioRepository;

@@ -16,7 +16,7 @@ import java.util.List;
  * Caso de uso: Vencer automáticamente las reservas pendientes cuyo plazo de
  * confirmación ha expirado (RN-21).
  */
-@Service
+ 
 public class VencerReservasPendientesUseCase {
 
     private final ReservaRepository reservaRepository;

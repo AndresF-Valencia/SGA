@@ -25,7 +25,7 @@ import co.edu.uniquindio.sga.domain.valueobject.AutorizacionCierre;
  * La autorización del administrador llega desde afuera: el caso de uso no
  * decide si autorizar.
  */
-@Service
+ 
 public class RegistrarSalidaUseCase {
 
     private final ReservaRepository reservaRepository;

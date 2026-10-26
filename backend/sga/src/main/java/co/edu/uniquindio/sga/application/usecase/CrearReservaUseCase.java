@@ -41,7 +41,7 @@ import java.util.List;
  * Solo coordina: busca en los repositorios, deja que los servicios de dominio
  * validen (7.5) y calculen el valor, crea la reserva y abre su folio (F-08).
  */
-@Service
+ 
 public class CrearReservaUseCase {
 
         private final ReservaRepository reservaRepository;
