@@ -3,7 +3,6 @@ package co.edu.uniquindio.sga.infrastructure.persistence.jpa.entity;
 import co.edu.uniquindio.sga.domain.valueobject.CanalOrigen;
 import co.edu.uniquindio.sga.domain.valueobject.EstadoReserva;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,7 +15,7 @@ import java.time.LocalTime;
 @Table(name = "reserva")
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class ReservaEntity {
 
     @Id

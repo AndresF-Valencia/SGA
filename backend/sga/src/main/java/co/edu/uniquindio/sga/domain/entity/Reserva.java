@@ -134,6 +134,26 @@ public class Reserva {
         return reserva;
     }
 
+    /**
+     * Vuelve a armar una reserva que ya estaba guardada (la usa la persistencia).
+     * NO valida como si fuera nueva ni registra el evento de creación: el estado,
+     * los datos opcionales y el historial vienen tal cual de la base de datos.
+     */
+    public static Reserva reconstruir(CodigoReserva codigo, IdentificacionApartamento apartamento,
+            Estancia estancia, Ocupante titular, List<Ocupante> ocupantes,
+            CanalOrigen canalOrigen, ValorCongelado valor, VersionPolitica politica,
+            LocalDateTime creadaEn, CantidadMascota cantidadMascotas, EstadoReserva estado,
+            HoraEstimadaLlegada horaEstimadaLlegada, NotificacionRetraso notificacionRetraso,
+            List<EventoReserva> historial) {
+        Reserva reserva = new Reserva(codigo, apartamento, estancia, titular, ocupantes,
+                canalOrigen, valor, politica, creadaEn, cantidadMascotas);
+        reserva.estado = estado;
+        reserva.horaEstimadaLlegada = horaEstimadaLlegada;
+        reserva.notificacionRetraso = notificacionRetraso;
+        reserva.historial.addAll(historial);
+        return reserva;
+    }
+
     // ---------- Comportamiento del negocio ----------
 
     /** RN-09: la hora estimada de llegada es requisito para confirmar. */
