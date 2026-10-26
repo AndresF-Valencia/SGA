@@ -90,6 +90,24 @@ public class Apartamento {
         this.imagenes.addAll(imagenes);
     }
 
+    /**
+     * Vuelve a armar un apartamento que ya estaba guardado (la usa la persistencia).
+     * El estado operativo se asigna tal cual, sin pasar por la máquina de estados,
+     * porque ya fue validado cuando cambió.
+     */
+    public static Apartamento reconstruir(IdentificacionApartamento identificacion, String nombre,
+            TiempoPreparacion tiempoPreparacion, IdentificacionAlojamiento identificacionAlojamiento,
+            Dormitorio dormitorios, CapacidadOcupantes capacidad, LimiteMascota limiteMascotas,
+            List<String> caracteristicas, List<String> imagenes, EstadoOperativo estadoOperativo,
+            boolean activo, List<Novedad> novedades) {
+        Apartamento apartamento = new Apartamento(identificacion, nombre, tiempoPreparacion,
+                identificacionAlojamiento, dormitorios, capacidad, limiteMascotas, caracteristicas, imagenes);
+        apartamento.estadoOperativo = estadoOperativo;
+        apartamento.activo = activo;
+        apartamento.novedades.addAll(novedades);
+        return apartamento;
+    }
+
     // ------ COMPORTAMIENTO ------
 
 

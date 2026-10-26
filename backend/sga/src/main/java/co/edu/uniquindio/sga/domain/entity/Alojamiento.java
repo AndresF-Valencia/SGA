@@ -76,6 +76,22 @@ public class Alojamiento {
         this.porcentajeAnticipo = porcentajeAnticipo;
     }
 
+    /**
+     * Vuelve a armar el alojamiento guardado (la usa la persistencia), incluida la
+     * versión vigente de la política, que el constructor siempre pone en 1.
+     */
+    public static Alojamiento reconstruir(IdentificacionAlojamiento identificacion, String nombre,
+            String ciudad, String descripcion, LocalTime horaEntrada, LocalTime horaSalida,
+            LocalTime horaLimiteNoShow, UmbralEdadFacturable umbralEdadFacturable,
+            TiempoPreparacion tiempoPreparacion, PlazoConfirmacion plazoConfirmacion,
+            boolean exigeAnticipo, int porcentajeAnticipo, VersionPolitica versionPoliticaVigente) {
+        Alojamiento alojamiento = new Alojamiento(identificacion, nombre, ciudad, descripcion,
+                horaEntrada, horaSalida, horaLimiteNoShow, umbralEdadFacturable, tiempoPreparacion,
+                plazoConfirmacion, exigeAnticipo, porcentajeAnticipo);
+        alojamiento.versionPoliticaVigente = versionPoliticaVigente;
+        return alojamiento;
+    }
+
     // ----- COMPORTAMIENTO DE CONFIGURACIÓN -----
 
     public void actualizarParametrosOperativos(LocalTime horaEntrada, LocalTime horaSalida,
