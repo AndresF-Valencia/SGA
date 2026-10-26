@@ -5,13 +5,12 @@ import co.edu.uniquindio.sga.domain.repository.BloqueoRepository;
 import co.edu.uniquindio.sga.domain.valueobject.EstadoBloqueo;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionBloqueo;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 /** Adaptador en memoria del puerto {@link BloqueoRepository}. */
-@Repository
+// Sin @Repository: la aplicación usa el adaptador JPA. Esta clase queda para las pruebas unitarias.
 public class BloqueoRepositoryEnMemoria extends AlmacenEnMemoria<IdentificacionBloqueo, Bloqueo>
         implements BloqueoRepository {
 
