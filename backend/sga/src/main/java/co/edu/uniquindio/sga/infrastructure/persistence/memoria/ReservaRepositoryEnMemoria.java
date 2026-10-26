@@ -6,13 +6,17 @@ import co.edu.uniquindio.sga.domain.valueobject.CanalOrigen;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.EstadoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-/** Adaptador en memoria del puerto {@link ReservaRepository}. */
-@Repository
+/**
+ * Adaptador en memoria del puerto {@link ReservaRepository}.
+ *
+ * Ya no lleva @Repository: la aplicación guarda las reservas con
+ * ReservaRepositoryJpa. Esta clase se conserva para las pruebas unitarias,
+ * que la crean con new y no necesitan base de datos.
+ */
 public class ReservaRepositoryEnMemoria extends AlmacenEnMemoria<CodigoReserva, Reserva>
         implements ReservaRepository {
 
