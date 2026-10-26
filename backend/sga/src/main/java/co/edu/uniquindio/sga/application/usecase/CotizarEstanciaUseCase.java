@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.entity.Ocupante;
 import co.edu.uniquindio.sga.domain.entity.Tarifa;
 import co.edu.uniquindio.sga.domain.entity.Temporada;
@@ -17,6 +20,7 @@ import co.edu.uniquindio.sga.domain.valueobject.ValorCongelado;
 import java.time.LocalDate;
 import java.util.List;
 
+ 
 public class CotizarEstanciaUseCase {
 
     private final TemporadaRepository temporadaRepository;
@@ -45,6 +49,7 @@ public class CotizarEstanciaUseCase {
      * @param ocupantes       Lista completa de ocupantes con sus fechas de nacimiento.
      * @return ValorCongelado con el desglose de tarifas noche por noche.
      */
+    @Transactional
     public ValorCongelado ejecutar(
             IdentificacionAlojamiento idAlojamiento,
             IdentificacionApartamento idApartamento,

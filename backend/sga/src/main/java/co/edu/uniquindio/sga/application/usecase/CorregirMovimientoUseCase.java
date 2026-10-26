@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.entity.Folio;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
@@ -11,6 +14,7 @@ import co.edu.uniquindio.sga.domain.entity.Pago;
  * Caso de uso: Corregir un movimiento (cargo o pago) del folio mediante la creación 
  * de un movimiento inverso, sin alterar ni eliminar el original (CU-13, RN-16).
  */
+ 
 public class CorregirMovimientoUseCase {
 
     private final FolioRepository folioRepository;
@@ -25,6 +29,7 @@ public class CorregirMovimientoUseCase {
      * @param codigoReserva Código de la reserva propietaria del folio.
      * @param cargoInverso  Objeto Cargo con valor negativo o concepto de reversión.
      */
+    @Transactional
     public void corregirCargo(CodigoReserva codigoReserva, Cargo cargoInverso) {
         if (codigoReserva == null) {
             throw new ReglaDominioException("El código de la reserva es obligatorio para corregir un movimiento");
@@ -48,6 +53,7 @@ public class CorregirMovimientoUseCase {
      * @param codigoReserva Código de la reserva propietaria del folio.
      * @param pagoInverso   Objeto Pago que compensa o revierte el pago erróneo.
      */
+    @Transactional
     public void corregirPago(CodigoReserva codigoReserva, Pago pagoInverso) {
         if (codigoReserva == null) {
             throw new ReglaDominioException("El código de la reserva es obligatorio para corregir un pago");

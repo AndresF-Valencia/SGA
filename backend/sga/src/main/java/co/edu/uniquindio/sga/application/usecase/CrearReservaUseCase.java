@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
 import co.edu.uniquindio.sga.application.exception.ApartamentoNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Alojamiento;
@@ -38,6 +41,7 @@ import java.util.List;
  * Solo coordina: busca en los repositorios, deja que los servicios de dominio
  * validen (7.5) y calculen el valor, crea la reserva y abre su folio (F-08).
  */
+ 
 public class CrearReservaUseCase {
 
         private final ReservaRepository reservaRepository;
@@ -76,6 +80,7 @@ public class CrearReservaUseCase {
          * @param horaEstimadaLlegada puede ser null: es requisito para confirmar
          *                            (RN-09), no para crear
          */
+        @Transactional
         public Reserva ejecutar(IdentificacionAlojamiento alojamientoId, IdentificacionApartamento apartamentoId,
                         Estancia estancia, LocalTime horaEstimadaLlegada,
                         Ocupante titular, List<Ocupante> ocupantes,

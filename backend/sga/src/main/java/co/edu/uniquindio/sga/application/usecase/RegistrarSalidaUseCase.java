@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.repository.ApartamentoRepository;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
@@ -22,6 +25,7 @@ import co.edu.uniquindio.sga.domain.valueobject.AutorizacionCierre;
  * La autorización del administrador llega desde afuera: el caso de uso no
  * decide si autorizar.
  */
+ 
 public class RegistrarSalidaUseCase {
 
     private final ReservaRepository reservaRepository;
@@ -57,7 +61,8 @@ public class RegistrarSalidaUseCase {
      * si la reserva no está EN_CURSO (RN-08) o si queda saldo sin autorización
      * (RN-17)
      */
-    public Reserva ejecutar(CodigoReserva codigo, AutorizacionCierre autorizacion,
+        @Transactional
+        public Reserva ejecutar(CodigoReserva codigo, AutorizacionCierre autorizacion,
             String autor, LocalDateTime ahora) {
         // 1. BUSCAR: de lo que llega (el código) a los objetos del dominio
         Reserva reserva = reservaRepository.buscarPorCodigo(codigo)

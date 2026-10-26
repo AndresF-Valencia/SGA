@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.entity.Temporada;
 import co.edu.uniquindio.sga.domain.entity.Tarifa;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
@@ -16,6 +19,7 @@ import java.util.List;
  * Caso de uso: Gestionar Temporadas y Tarifas (Módulo de Administración).
  * Permite registrar nuevas temporadas comerciales validando solapamientos y configurar sus tarifas.
  */
+ 
 public class GestionarTemporadasTarifasUseCase {
 
     private final TemporadaRepository temporadaRepository;
@@ -30,7 +34,8 @@ public class GestionarTemporadasTarifasUseCase {
     /**
      * Registra una nueva temporada comercial asegurando que no se solape con periodos existentes.
      */
-    public void registrarTemporada(IdentificacionTemporada identificacion, 
+    @Transactional
+    public Temporada registrarTemporada(IdentificacionTemporada identificacion,
                                    Periodo periodo, 
                                    String nombre, 
                                    TipoTemporada tipo, 
@@ -64,11 +69,13 @@ public class GestionarTemporadasTarifasUseCase {
 
         // 3. Persistir la nueva temporada si pasa todas las validaciones
         temporadaRepository.guardar(nuevaTemporada);
+        return nuevaTemporada;
     }
 
     /**
      * Configura o actualiza una tarifa en el sistema.
      */
+    @Transactional
     public void configurarTarifa(Tarifa tarifa) {
         if (tarifa == null) {
             throw new ReglaDominioException("La tarifa a configurar es obligatoria");
