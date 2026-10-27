@@ -40,7 +40,7 @@ Al arrancar, Hibernate crea las tablas solo (`ddl-auto=update`).
 | Usuario | `sa` |
 | Contraseña | *(vacía)* |
 
-> La base es **en memoria**: todo se borra al apagar la aplicación. Al arrancar se crean los usuarios de prueba; el resto de datos iniciales está pendiente.
+> La base es **en memoria**: todo se borra al apagar la aplicación, y al arrancar se vuelven a cargar los datos de prueba (sección 2.2).
 
 **Documentación interactiva (Swagger):** http://localhost:8080/swagger-ui.html. Para probar rutas protegidas: haz login, copia el `token` y pégalo en el botón **Authorize**.
 
@@ -72,7 +72,30 @@ curl -X POST http://localhost:8080/api/usuarios -H "Authorization: Bearer <token
 
 **Secreto del JWT:** no se versiona. Se configura con la variable de entorno `SGA_JWT_SECRETO` (mínimo 32 caracteres). Si no está, la aplicación arranca con una clave temporal y los tokens dejan de valer al reiniciar.
 
-## 2.2 Notificaciones por correo (integración de salida)
+## 2.2 Datos de prueba (12.3)
+
+Se cargan solos al arrancar, a partir de la Ficha del Alojamiento. Se apagan con `sga.datos-prueba.habilitado=false`.
+
+- **Alojamiento `SANROCCO`.** Es el valor del header `X-Alojamiento-Id` en las rutas de reservas.
+- **5 apartamentos:** AP001 Familiar 4 (10 personas), AP002 Parejas VIP (2), AP003 Familiar 3 (3), AP004 Familiar 2 (5) y AP005 Parejas (2).
+- **Temporadas sin huecos** desde el año pasado hasta el próximo: Baja, Media (fiestas de Armenia, +15 %) y Alta (fin de año, Semana Santa y mitad de año, +30 %, mínimo 3 noches). Cada apartamento tiene tarifa en todas.
+- **Tarifa base por persona y noche:** AP002 $120.000 · AP005 $90.000 · AP003 $70.000 · AP004 $65.000 · AP001 $60.000.
+- **Política v1:** 1 semana o más antes, se devuelve el 100 %; menos de una semana, se retiene el 100 %. No-show a partir de las 8:00 p. m.
+- **Canal externo** "Booking (simulado)", con credencial `clave-booking-demo`.
+- **Bloqueos y estados:** AP003 fuera de servicio con bloqueo vigente, AP004 con mantenimiento programado y AP002 ocupado ahora.
+
+Una reserva en cada estado y de los tres canales (las fechas son relativas a hoy):
+
+| Código | Estado | Canal | Apartamento | Titular |
+|---|---|---|---|---|
+| RES-AAAA-00001 | FINALIZADA | DIRECTO | AP001 | Carlos Ramírez (familia con una niña que no paga) |
+| RES-AAAA-00002 | EN_CURSO | PORTAL | AP002 | **Laura Gómez = `huesped@sanrocco.co`** (con 1 mascota) |
+| RES-AAAA-00003 | NO_SHOW | EXTERNO | AP004 | Jennifer Smith |
+| RES-AAAA-00004 | CANCELADA | DIRECTO | AP001 | Luis Herrera |
+| RES-AAAA-00005 | CONFIRMADA | EXTERNO | AP005 | Valentina Ruiz |
+| RES-AAAA-00006 | PENDIENTE | DIRECTO | AP001 | Diego Torres |
+
+## 2.3 Notificaciones por correo (integración de salida)
 
 Al **crear, confirmar o cancelar** una reserva se le avisa al titular, al correo que viene en `titular.email` (7.8).
 
@@ -102,7 +125,7 @@ Si el correo falla o tarda más de 5 segundos, **la reserva se crea igual** y el
 | Beans de Spring: `UseCaseConfig` y `DomainServiceConfig` | ✅ |
 | **Persistencia JPA en H2 de todos los repositorios** | ✅ |
 | Controllers REST, mappers REST y `GlobalExceptionHandler` | ✅ (faltan los endpoints de consulta GET) |
-| Datos iniciales (alojamiento, apartamentos, temporadas, política v1) | ⬜ |
+| Datos de prueba al iniciar (12.3): alojamiento, apartamentos, temporadas, tarifas, política, canal, bloqueos y reservas en todos los estados | ✅ |
 | Seguridad: usuarios, registro, login con JWT, roles por endpoint y verificación del propietario | ✅ |
 | Perfil, cambio y recuperación de contraseña, eliminación lógica de usuarios | ⬜ |
 | Credencial de canales (`X-Canal-Credencial`) | ⬜ |
@@ -228,7 +251,6 @@ Hay **278 pruebas**:
 ## 9. Pendientes
 
 - [ ] Endpoints de consulta (GET): reservas, folio, disponibilidad, cotizar, canales externos.
-- [ ] Datos iniciales al arrancar: el alojamiento San Rocco, los apartamentos, las temporadas y tarifas, y la política versión 1.
 - [ ] **RN-19:** la `Reserva` no guarda el identificador externo del canal, así que la idempotencia de reservas externas todavía no funciona.
 - [ ] Leer el plazo de confirmación desde `Alojamiento` en `VencerReservasPendientesUseCase`, en lugar de `application.properties`, para no tenerlo en dos lugares.
 - [ ] Ajustes de DTOs: tiempo de preparación en horas, gravedad de la novedad, autor y motivo en las autorizaciones (RN-17), y `horaEstimadaLlegada` en `CrearReservaRequest`.

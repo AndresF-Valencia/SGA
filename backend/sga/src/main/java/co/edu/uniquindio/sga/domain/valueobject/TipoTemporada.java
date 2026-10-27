@@ -7,5 +7,6 @@ package co.edu.uniquindio.sga.domain.valueobject;
 
 public enum TipoTemporada {
     BASE,
+    MEDIA,   // fiestas y conciertos: +15 % (Ficha A.3)
     ALTA
 }
