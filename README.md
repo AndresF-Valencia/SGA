@@ -5,7 +5,7 @@ Programación Avanzada · Universidad del Quindío.
 
 | Capa | Tecnología |
 |---|---|
-| Backend | Java 25 · Spring Boot 4.1 · Spring Data JPA (Hibernate) · Gradle 9.7 (wrapper) · Lombok |
+| Backend | Java 25 · Spring Boot 4.1 · Spring Data JPA (Hibernate) · Spring Security + JWT (jjwt) · Gradle 9.7 (wrapper) · Lombok · MapStruct |
 | Base de datos | H2 en memoria (`jdbc:h2:mem:sgadb`) |
 | Arquitectura | Hexagonal (puertos y adaptadores) + DDD |
 | API | REST · contrato OpenAPI 3.1 |
@@ -40,7 +40,37 @@ Al arrancar, Hibernate crea las tablas solo (`ddl-auto=update`).
 | Usuario | `sa` |
 | Contraseña | *(vacía)* |
 
-> La base es **en memoria**: todo se borra al apagar la aplicación, y arranca vacía. Todavía no hay datos iniciales (ver Pendientes).
+> La base es **en memoria**: todo se borra al apagar la aplicación. Al arrancar se crean los usuarios de prueba; el resto de datos iniciales está pendiente.
+
+**Documentación interactiva (Swagger):** http://localhost:8080/swagger-ui.html. Para probar rutas protegidas: haz login, copia el `token` y pégalo en el botón **Authorize**.
+
+## 2.1 Usuarios de prueba y login
+
+Se crean solos al arrancar (`sga.datos-prueba.habilitado=true`). Contraseña de todos: **`Sanrocco123`**
+
+| Rol | Correo |
+|---|---|
+| ADMINISTRADOR | admin@sanrocco.co |
+| RECEPCIONISTA | recepcion@sanrocco.co |
+| PERSONAL_SERVICIO | servicio@sanrocco.co |
+| HUESPED | huesped@sanrocco.co |
+
+```bash
+# 1) Login -> copia el "token" de la respuesta
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"correo":"admin@sanrocco.co","contrasena":"Sanrocco123"}'
+
+# 2) Llamar una ruta protegida con el token
+curl -X POST http://localhost:8080/api/usuarios -H "Authorization: Bearer <token>" ...
+```
+
+| Respuesta | Significa |
+|---|---|
+| **401** | No mandaste token, o venció (duran 120 minutos) |
+| **403** | Tu rol no tiene permiso, o el recurso no es tuyo (un huésped con la reserva de otro) |
+
+**Secreto del JWT:** no se versiona. Se configura con la variable de entorno `SGA_JWT_SECRETO` (mínimo 32 caracteres). Si no está, la aplicación arranca con una clave temporal y los tokens dejan de valer al reiniciar.
 
 ## 3. Estado del proyecto
 
@@ -53,9 +83,11 @@ Al arrancar, Hibernate crea las tablas solo (`ddl-auto=update`).
 | Contrato de la API: 34 operaciones en `docs/api/openapi.yaml` | ✅ |
 | Beans de Spring: `UseCaseConfig` y `DomainServiceConfig` | ✅ |
 | **Persistencia JPA en H2 de todos los repositorios** | ✅ |
-| Controllers REST, mappers REST y `GlobalExceptionHandler` | 🟡 En la rama `Desarrollo-Mateo`, falta unir |
+| Controllers REST, mappers REST y `GlobalExceptionHandler` | ✅ (faltan los endpoints de consulta GET) |
 | Datos iniciales (alojamiento, apartamentos, temporadas, política v1) | ⬜ |
-| Seguridad (usuarios, roles, JWT) y credencial de canales | ⬜ |
+| Seguridad: usuarios, registro, login con JWT, roles por endpoint y verificación del propietario | ✅ |
+| Perfil, cambio y recuperación de contraseña, eliminación lógica de usuarios | ⬜ |
+| Credencial de canales (`X-Canal-Credencial`) | ⬜ |
 | Frontend | ⬜ |
 
 ## 4. Arquitectura
@@ -153,11 +185,12 @@ git push
    - Regla de negocio violada → `ReglaDominioException`, que se responde como **409**.
    - Algo que no existe → la excepción de `application/exception`, que se responde como **404**.
    - Datos mal formados → Bean Validation en el DTO, que se responde como **400**.
-4. **El dominio y la aplicación no llevan anotaciones de Spring.** Los casos de uso se registran en `UseCaseConfig` y los servicios en `DomainServiceConfig`. No se les pone `@Service`: si una clase tiene `@Service` y además un `@Bean`, Spring no arranca.
-5. **Nunca devolver entidades por la API.** Se usan los DTOs (records) de `application/dto`.
-6. **Dinero siempre con `Dinero` (`BigDecimal`)**, nunca `double`.
-7. **Agregado nuevo que se guarda:** se crean sus 5 piezas JPA (sección 4) y su prueba en `RepositoriosJpaTest`. A la versión en memoria no se le pone `@Repository`.
-8. **Pruebas:** mínimo una prueba del camino feliz y una por cada regla que puede fallar.
+4. **El dominio no lleva anotaciones de Spring, y la aplicación solo `@Transactional`.** Los casos de uso se registran en `UseCaseConfig` y los servicios en `DomainServiceConfig`. No se les pone `@Service`: si una clase tiene `@Service` y además un `@Bean`, Spring no arranca.
+5. **El autor de cada operación sale del token,** no de un header: en el controller se recibe `@AuthenticationPrincipal UsuarioAutenticado usuario`. Si un huésped toca una reserva, se verifica que sea el titular con `VerificarAccesoReservaUseCase`.
+6. **Nunca devolver entidades por la API.** Se usan los DTOs (records) de `application/dto`.
+7. **Dinero siempre con `Dinero` (`BigDecimal`)**, nunca `double`.
+8. **Agregado nuevo que se guarda:** se crean sus 5 piezas JPA (sección 4) y su prueba en `RepositoriosJpaTest`. A la versión en memoria no se le pone `@Repository`.
+9. **Pruebas:** mínimo una prueba del camino feliz y una por cada regla que puede fallar.
 
 ## 8. Pruebas
 
@@ -167,19 +200,20 @@ sh ./gradlew test
 # reporte: backend/sga/build/reports/tests/test/index.html
 ```
 
-Hay **258 pruebas**:
+Hay **278 pruebas**:
 
 - **Unitarias** del dominio, los servicios, los value objects y los mappers. No arrancan Spring.
-- **De integración:** `SgaApplicationTests`, `ReservaRepositoryJpaTest` y `RepositoriosJpaTest`. Arrancan Spring con H2 y guardan y leen de verdad.
+- **De integración:** `SgaApplicationTests`, `ReservaRepositoryJpaTest`, `RepositoriosJpaTest` y `SeguridadTest`. Arrancan Spring con H2; `SeguridadTest` además levanta el servidor y hace peticiones HTTP de verdad (login, 401, 403, registro).
 
 ## 9. Pendientes
 
-- [ ] Unir los controllers de `Desarrollo-Mateo`. Antes hay que borrar su `UseCaseConfig` duplicado y quitar el `@Service` de los casos de uso (regla 4).
+- [ ] Endpoints de consulta (GET): reservas, folio, disponibilidad, cotizar, canales externos.
 - [ ] Datos iniciales al arrancar: el alojamiento San Rocco, los apartamentos, las temporadas y tarifas, y la política versión 1.
 - [ ] **RN-19:** la `Reserva` no guarda el identificador externo del canal, así que la idempotencia de reservas externas todavía no funciona.
 - [ ] Leer el plazo de confirmación desde `Alojamiento` en `VencerReservasPendientesUseCase`, en lugar de `application.properties`, para no tenerlo en dos lugares.
 - [ ] Ajustes de DTOs: tiempo de preparación en horas, gravedad de la novedad, autor y motivo en las autorizaciones (RN-17), y `horaEstimadaLlegada` en `CrearReservaRequest`.
-- [ ] Seguridad (roles, JWT) y la credencial `X-Canal-Credencial` para los canales.
+- [ ] Perfil, cambio y recuperación de contraseña (7.2) y la credencial `X-Canal-Credencial` para los canales.
+- [ ] Cambiar el header `X-Alojamiento-Id` por `obtenerUnico()` (hay un solo alojamiento).
 - [ ] Opcional: H2 en archivo para que los datos queden guardados entre reinicios.
 
 ## 10. Documentación

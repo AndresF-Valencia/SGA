@@ -1,6 +1,13 @@
 package co.edu.uniquindio.sga.infrastructure.config;
 
+import co.edu.uniquindio.sga.application.port.EmisorToken;
 import co.edu.uniquindio.sga.application.usecase.CambiarEstadoOperativoUseCase;
+import co.edu.uniquindio.sga.application.usecase.CrearUsuarioInternoUseCase;
+import co.edu.uniquindio.sga.application.usecase.IniciarSesionUseCase;
+import co.edu.uniquindio.sga.application.usecase.RegistrarHuespedUseCase;
+import co.edu.uniquindio.sga.application.usecase.VerificarAccesoReservaUseCase;
+import co.edu.uniquindio.sga.domain.port.CifradorContrasena;
+import co.edu.uniquindio.sga.domain.repository.UsuarioRepository;
 import co.edu.uniquindio.sga.application.usecase.CancelarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.CerrarFolioUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfigurarParametrosAlojamientoUseCase;
@@ -249,5 +256,30 @@ public class UseCaseConfig {
     @Bean
     public ResolverConflictoCanalUseCase resolverConflictoCanalUseCase(ReservaRepository reservaRepository) {
         return new ResolverConflictoCanalUseCase(reservaRepository);
+    }
+
+    // ---------- Usuarios y sesión (7.2) ----------
+
+    @Bean
+    public RegistrarHuespedUseCase registrarHuespedUseCase(UsuarioRepository usuarioRepository,
+            CifradorContrasena cifrador) {
+        return new RegistrarHuespedUseCase(usuarioRepository, cifrador);
+    }
+
+    @Bean
+    public CrearUsuarioInternoUseCase crearUsuarioInternoUseCase(UsuarioRepository usuarioRepository,
+            CifradorContrasena cifrador) {
+        return new CrearUsuarioInternoUseCase(usuarioRepository, cifrador);
+    }
+
+    @Bean
+    public IniciarSesionUseCase iniciarSesionUseCase(UsuarioRepository usuarioRepository,
+            CifradorContrasena cifrador, EmisorToken emisorToken) {
+        return new IniciarSesionUseCase(usuarioRepository, cifrador, emisorToken);
+    }
+
+    @Bean
+    public VerificarAccesoReservaUseCase verificarAccesoReservaUseCase(ReservaRepository reservaRepository) {
+        return new VerificarAccesoReservaUseCase(reservaRepository);
     }
 }

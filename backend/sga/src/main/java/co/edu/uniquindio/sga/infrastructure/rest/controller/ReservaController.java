@@ -5,6 +5,7 @@ import co.edu.uniquindio.sga.application.dto.request.CrearReservaRequest;
 import co.edu.uniquindio.sga.application.dto.request.ModificarReservaRequest;
 import co.edu.uniquindio.sga.application.dto.request.RegistrarSalidaRequest;
 import co.edu.uniquindio.sga.application.dto.response.ReservaResponse;
+import co.edu.uniquindio.sga.application.exception.AccesoDenegadoException;
 import co.edu.uniquindio.sga.application.usecase.CancelarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfirmarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.CotizarEstanciaUseCase;
@@ -13,6 +14,7 @@ import co.edu.uniquindio.sga.application.usecase.DeclararNoShowUseCase;
 import co.edu.uniquindio.sga.application.usecase.ModificarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarLlegadaUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarSalidaUseCase;
+import co.edu.uniquindio.sga.application.usecase.VerificarAccesoReservaUseCase;
 import co.edu.uniquindio.sga.domain.valueobject.AutorizacionCierre;
 import co.edu.uniquindio.sga.domain.valueobject.CanalOrigen;
 import co.edu.uniquindio.sga.domain.valueobject.CantidadMascota;
@@ -22,6 +24,7 @@ import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
 import co.edu.uniquindio.sga.domain.entity.Ocupante;
 import co.edu.uniquindio.sga.infrastructure.rest.mapper.ReservaMapper;
+import co.edu.uniquindio.sga.infrastructure.security.UsuarioAutenticado;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -38,12 +41,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
  * Adaptador HTTP para las operaciones de reservas.
  *
- * <p>Los headers {@code X-Alojamiento-Id} y {@code X-Autor} se usan porque
+ * <p>El autor de cada operación sale del token (usuario que inició sesión).
+ * El header {@code X-Alojamiento-Id} se usa porque
  * los casos de uso necesitan esos datos, pero los DTOs y algunas rutas del
  * contrato actual no los exponen. Son una adaptación temporal hasta alinear
  * el contrato OpenAPI con las firmas de aplicación.</p>
@@ -64,6 +69,7 @@ public class ReservaController {
     private final DeclararNoShowUseCase declararNoShowUseCase;
     private final RegistrarLlegadaUseCase registrarLlegadaUseCase;
     private final CotizarEstanciaUseCase cotizarEstanciaUseCase;
+    private final VerificarAccesoReservaUseCase verificarAccesoReservaUseCase;
     private final ReservaMapper reservaMapper;
 
     /**
@@ -101,7 +107,17 @@ public class ReservaController {
     @ApiResponse(responseCode = "409", description = "La reserva viola una regla de negocio")
     public ResponseEntity<ReservaResponse> crearReserva(
         @RequestHeader("X-Alojamiento-Id") String alojamientoId,
-        @Valid @RequestBody CrearReservaRequest request) {
+        @Valid @RequestBody CrearReservaRequest request,
+        @AuthenticationPrincipal UsuarioAutenticado usuario) {
+    // 7.1: el huésped reserva por el PORTAL y a su propio nombre
+    if (usuario.esHuesped()) {
+        if (!CanalOrigen.PORTAL.name().equals(request.canalOrigen())) {
+            throw new AccesoDenegadoException("Un huésped solo puede reservar por el canal PORTAL");
+        }
+        if (!usuario.documento().equals(request.titular().documento())) {
+            throw new AccesoDenegadoException("Un huésped solo puede reservar a su propio nombre");
+        }
+    }
     LocalDate fechaActual = LocalDate.now();
     Ocupante titular = new Ocupante(
         new DocumentoIdentidad(request.titular().documento()),
@@ -136,8 +152,9 @@ public class ReservaController {
     public ResponseEntity<ReservaResponse> modificarReserva(
         @PathVariable String codigo,
         @RequestHeader("X-Alojamiento-Id") String alojamientoId,
-        @RequestHeader("X-Autor") String autor,
+        @AuthenticationPrincipal UsuarioAutenticado usuario,
         @Valid @RequestBody ModificarReservaRequest request) {
+    String autor = usuario.correo(); // quién hace la operación, sacado del token
     var reserva = modificarReservaUseCase.ejecutar(
         new CodigoReserva(codigo),
         new IdentificacionAlojamiento(alojamientoId),
@@ -159,7 +176,8 @@ public class ReservaController {
     public ResponseEntity<ReservaResponse> confirmarReserva(
         @PathVariable String codigo,
         @RequestHeader("X-Alojamiento-Id") String alojamientoId,
-        @RequestHeader("X-Autor") String autor) {
+        @AuthenticationPrincipal UsuarioAutenticado usuario) {
+    String autor = usuario.correo(); // quién hace la operación, sacado del token
     var reserva = confirmarReservaUseCase.ejecutar(
         new CodigoReserva(codigo),
         new IdentificacionAlojamiento(alojamientoId),
@@ -178,8 +196,14 @@ public class ReservaController {
     public ResponseEntity<ReservaResponse> cancelarReserva(
         @PathVariable String codigo,
         @RequestHeader("X-Alojamiento-Id") String alojamientoId,
-        @RequestHeader("X-Autor") String autor,
+        @AuthenticationPrincipal UsuarioAutenticado usuario,
         @Valid @RequestBody CancelarReservaRequest request) {
+    String autor = usuario.correo(); // quién hace la operación, sacado del token
+    // 7.2: el huésped solo cancela SU reserva (se verifica el propietario, no solo el rol)
+    if (usuario.esHuesped()) {
+        verificarAccesoReservaUseCase.verificarTitular(new CodigoReserva(codigo),
+                new DocumentoIdentidad(usuario.documento()));
+    }
     var reserva = cancelarReservaUseCase.ejecutar(
         new CodigoReserva(codigo),
         new IdentificacionAlojamiento(alojamientoId),
@@ -198,7 +222,8 @@ public class ReservaController {
     public ResponseEntity<ReservaResponse> declararNoShow(
         @PathVariable String codigo,
         @RequestHeader("X-Alojamiento-Id") String alojamientoId,
-        @RequestHeader("X-Autor") String autor) {
+        @AuthenticationPrincipal UsuarioAutenticado usuario) {
+    String autor = usuario.correo(); // quién hace la operación, sacado del token
     var reserva = declararNoShowUseCase.ejecutar(
         new CodigoReserva(codigo),
         new IdentificacionAlojamiento(alojamientoId),
@@ -215,7 +240,8 @@ public class ReservaController {
     @ApiResponse(responseCode = "409", description = "La llegada no puede registrarse")
     public ResponseEntity<ReservaResponse> registrarLlegada(
         @PathVariable String codigo,
-        @RequestHeader("X-Autor") String autor) {
+        @AuthenticationPrincipal UsuarioAutenticado usuario) {
+    String autor = usuario.correo(); // quién hace la operación, sacado del token
     var reserva = registrarLlegadaUseCase.ejecutar(
         new CodigoReserva(codigo), autor, LocalDateTime.now());
     return ResponseEntity.ok(reservaMapper.aReserva(reserva));
