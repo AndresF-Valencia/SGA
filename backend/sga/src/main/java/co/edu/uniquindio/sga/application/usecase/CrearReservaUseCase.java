@@ -11,6 +11,7 @@ import co.edu.uniquindio.sga.domain.entity.Folio;
 import co.edu.uniquindio.sga.domain.entity.Ocupante;
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.entity.Temporada;
+import co.edu.uniquindio.sga.domain.port.NotificadorReserva;
 import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
 import co.edu.uniquindio.sga.domain.repository.ApartamentoRepository;
 import co.edu.uniquindio.sga.domain.repository.BloqueoRepository;
@@ -26,6 +27,7 @@ import co.edu.uniquindio.sga.domain.valueobject.CanalOrigen;
 import co.edu.uniquindio.sga.domain.valueobject.CantidadMascota;
 import co.edu.uniquindio.sga.domain.valueobject.Cargo;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
+import co.edu.uniquindio.sga.domain.valueobject.Correo;
 import co.edu.uniquindio.sga.domain.valueobject.Estancia;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
@@ -55,6 +57,7 @@ public class CrearReservaUseCase {
         private final DisponibilidadApartamentoService disponibilidadService;
         private final EstanciaMinimaTemporadaAltaService estanciaMinimaService;
         private final CotizadorEstanciaService cotizadorService;
+        private final NotificadorReserva notificador;
 
         public CrearReservaUseCase(ReservaRepository reservaRepository, ApartamentoRepository apartamentoRepository,
                         AlojamientoRepository alojamientoRepository, TemporadaRepository temporadaRepository,
@@ -62,7 +65,7 @@ public class CrearReservaUseCase {
                         FolioRepository folioRepository, GeneradorCodigoReserva generadorCodigo,
                         DisponibilidadApartamentoService disponibilidadService,
                         EstanciaMinimaTemporadaAltaService estanciaMinimaService,
-                        CotizadorEstanciaService cotizadorService) {
+                        CotizadorEstanciaService cotizadorService, NotificadorReserva notificador) {
                 this.reservaRepository = reservaRepository;
                 this.apartamentoRepository = apartamentoRepository;
                 this.alojamientoRepository = alojamientoRepository;
@@ -74,6 +77,7 @@ public class CrearReservaUseCase {
                 this.disponibilidadService = disponibilidadService;
                 this.estanciaMinimaService = estanciaMinimaService;
                 this.cotizadorService = cotizadorService;
+                this.notificador = notificador;
         }
 
         /**
@@ -84,7 +88,8 @@ public class CrearReservaUseCase {
         public Reserva ejecutar(IdentificacionAlojamiento alojamientoId, IdentificacionApartamento apartamentoId,
                         Estancia estancia, LocalTime horaEstimadaLlegada,
                         Ocupante titular, List<Ocupante> ocupantes,
-                        CanalOrigen canalOrigen, CantidadMascota mascotas, LocalDateTime ahora) {
+                        CanalOrigen canalOrigen, CantidadMascota mascotas, Correo correoContacto,
+                        LocalDateTime ahora) {
 
                 Apartamento apartamento = apartamentoRepository.buscarPorId(apartamentoId)
                                 .orElseThrow(() -> new ApartamentoNoEncontradoException(apartamentoId));
@@ -116,12 +121,17 @@ public class CrearReservaUseCase {
                 if (horaEstimadaLlegada != null) {
                         reserva.indicarHoraEstimadaLlegada(horaEstimadaLlegada, titular.getNombre());
                 }
+                if (correoContacto != null) {
+                        reserva.registrarCorreoContacto(correoContacto);
+                }
                 reservaRepository.guardar(reserva);
 
                 // F-08 y 7.7: el folio se abre con el cargo de alojamiento
                 folioRepository.guardar(new Folio(codigo,
                                 new Cargo(valor.total(), "Alojamiento", TipoCargo.ALOJAMIENTO, ahora)));
 
+                // 7.8: avisar al titular. Nunca falla: si el correo no sale, la reserva sigue creada (I-05)
+                notificador.reservaCreada(reserva);
                 return reserva;
         }
 }

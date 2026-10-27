@@ -72,6 +72,24 @@ curl -X POST http://localhost:8080/api/usuarios -H "Authorization: Bearer <token
 
 **Secreto del JWT:** no se versiona. Se configura con la variable de entorno `SGA_JWT_SECRETO` (mínimo 32 caracteres). Si no está, la aplicación arranca con una clave temporal y los tokens dejan de valer al reiniciar.
 
+## 2.2 Notificaciones por correo (integración de salida)
+
+Al **crear, confirmar o cancelar** una reserva se le avisa al titular, al correo que viene en `titular.email` (7.8).
+
+| Modo | Cómo se activa | Qué hace |
+|---|---|---|
+| `consola` (por defecto) | No hay que hacer nada | Escribe el correo en el log. Funciona sin internet (I-02). |
+| `correo` | Variables de entorno de abajo | Envía correos reales por SMTP (Gmail) |
+
+```bash
+export SGA_NOTIFICACIONES_MODO=correo
+export SGA_CORREO_USUARIO=tucorreo@gmail.com
+export SGA_CORREO_CLAVE="clave de aplicación de 16 letras"   # Google → Seguridad → Contraseñas de aplicaciones
+sh ./gradlew bootRun
+```
+
+Si el correo falla o tarda más de 5 segundos, **la reserva se crea igual** y el error queda en el log (I-03, I-04, I-05).
+
 ## 3. Estado del proyecto
 
 | Parte | Estado |
@@ -88,6 +106,8 @@ curl -X POST http://localhost:8080/api/usuarios -H "Authorization: Bearer <token
 | Seguridad: usuarios, registro, login con JWT, roles por endpoint y verificación del propietario | ✅ |
 | Perfil, cambio y recuperación de contraseña, eliminación lógica de usuarios | ⬜ |
 | Credencial de canales (`X-Canal-Credencial`) | ⬜ |
+| Notificación por correo al crear, confirmar y cancelar (integración de salida, 10.3.2) | ✅ |
+| Asistente con IA (10.2) | ⬜ |
 | Frontend | ⬜ |
 
 ## 4. Arquitectura

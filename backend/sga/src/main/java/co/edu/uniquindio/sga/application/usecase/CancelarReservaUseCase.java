@@ -15,6 +15,7 @@ import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
 import co.edu.uniquindio.sga.domain.repository.PoliticaCancelacionRepository;
 import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
+import co.edu.uniquindio.sga.domain.port.NotificadorReserva;
 import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
 import co.edu.uniquindio.sga.domain.service.CancelacionReservaService;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
@@ -30,16 +31,18 @@ public class CancelarReservaUseCase {
         private final PoliticaCancelacionRepository politicaRepository;
         private final CancelacionReservaService cancelacionReservaService;
         private final AlojamientoRepository alojamientoRepository;
+        private final NotificadorReserva notificador;
 
         public CancelarReservaUseCase(ReservaRepository reservaRepository, FolioRepository folioRepository,
                         PoliticaCancelacionRepository politicaRepository,
                         CancelacionReservaService cancelacionReservaService,
-                        AlojamientoRepository alojamientoRepository) {
+                        AlojamientoRepository alojamientoRepository, NotificadorReserva notificador) {
                 this.reservaRepository = reservaRepository;
                 this.folioRepository = folioRepository;
                 this.politicaRepository = politicaRepository;
                 this.cancelacionReservaService = cancelacionReservaService;
                 this.alojamientoRepository = alojamientoRepository;
+                this.notificador = notificador;
         }
 
         @Transactional
@@ -67,6 +70,7 @@ public class CancelarReservaUseCase {
                 // 3. GUARDAR
                 reservaRepository.guardar(reserva);
                 folioRepository.guardar(folio);
+                notificador.reservaCancelada(reserva);   // 7.8
                 return reserva;
         }
 }

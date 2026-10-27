@@ -19,6 +19,7 @@ import co.edu.uniquindio.sga.domain.valueobject.AutorizacionCierre;
 import co.edu.uniquindio.sga.domain.valueobject.CanalOrigen;
 import co.edu.uniquindio.sga.domain.valueobject.CantidadMascota;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
+import co.edu.uniquindio.sga.domain.valueobject.Correo;
 import co.edu.uniquindio.sga.domain.valueobject.DocumentoIdentidad;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
@@ -133,6 +134,7 @@ public class ReservaController {
         reservaMapper.aOcupantes(request.ocupantes(), fechaActual),
         CanalOrigen.valueOf(request.canalOrigen()),
         new CantidadMascota(request.cantidadMascotas()),
+        new Correo(request.titular().email()),   // a dónde se le avisa al titular (7.8)
         LocalDateTime.now());
     ReservaResponse response = reservaMapper.aReserva(reserva);
     URI location = ServletUriComponentsBuilder.fromCurrentRequest()
