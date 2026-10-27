@@ -61,6 +61,9 @@ public class ReservaEntity {
     @Column(name = "motivo_retraso", length = 300)
     private String motivoRetraso;
 
+    @Column(name = "correo_contacto", length = 150)
+    private String correoContacto;
+
     // --- Listas: cada una se guarda en su propia tabla ---
 
     @ElementCollection(fetch = FetchType.EAGER)

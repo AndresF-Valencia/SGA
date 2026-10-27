@@ -5,6 +5,7 @@ import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.valueobject.CantidadMascota;
 import co.edu.uniquindio.sga.domain.valueobject.CargoNoche;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
+import co.edu.uniquindio.sga.domain.valueobject.Correo;
 import co.edu.uniquindio.sga.domain.valueobject.Dinero;
 import co.edu.uniquindio.sga.domain.valueobject.DocumentoIdentidad;
 import co.edu.uniquindio.sga.domain.valueobject.Estancia;
@@ -60,6 +61,10 @@ public final class ReservaPersistenceMapper {
             entity.setFechaNotificacionRetraso(retraso.fechaHoraNotificacion());
             entity.setNuevaHoraEstimada(retraso.nuevaHoraEstimada());
             entity.setMotivoRetraso(retraso.motivo());
+        }
+
+        if (reserva.getCorreoContacto() != null) {
+            entity.setCorreoContacto(reserva.getCorreoContacto().valor());
         }
 
         // Listas: cada elemento del dominio se vuelve una fila de su tabla
@@ -149,7 +154,7 @@ public final class ReservaPersistenceMapper {
                         entity.getNuevaHoraEstimada(),
                         entity.getMotivoRetraso());
 
-        return Reserva.reconstruir(
+        Reserva reserva = Reserva.reconstruir(
                 new CodigoReserva(entity.getCodigo()),
                 new IdentificacionApartamento(entity.getApartamentoId()),
                 new Estancia(entity.getEstancia().getFechaEntrada(), entity.getEstancia().getFechaSalida()),
@@ -164,5 +169,9 @@ public final class ReservaPersistenceMapper {
                 hora,
                 retraso,
                 historial);
+        if (entity.getCorreoContacto() != null) {
+            reserva.registrarCorreoContacto(new Correo(entity.getCorreoContacto()));
+        }
+        return reserva;
     }
 }

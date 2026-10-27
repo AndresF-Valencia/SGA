@@ -7,6 +7,7 @@ import co.edu.uniquindio.sga.application.usecase.IniciarSesionUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarHuespedUseCase;
 import co.edu.uniquindio.sga.application.usecase.VerificarAccesoReservaUseCase;
 import co.edu.uniquindio.sga.domain.port.CifradorContrasena;
+import co.edu.uniquindio.sga.domain.port.NotificadorReserva;
 import co.edu.uniquindio.sga.domain.repository.UsuarioRepository;
 import co.edu.uniquindio.sga.application.usecase.CancelarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.CerrarFolioUseCase;
@@ -79,10 +80,11 @@ public class UseCaseConfig {
             GeneradorCodigoReserva generadorCodigo,
             DisponibilidadApartamentoService disponibilidadService,
             EstanciaMinimaTemporadaAltaService estanciaMinimaService,
-            CotizadorEstanciaService cotizadorService) {
+            CotizadorEstanciaService cotizadorService,
+            NotificadorReserva notificador) {
         return new CrearReservaUseCase(reservaRepository, apartamentoRepository, alojamientoRepository,
                 temporadaRepository, tarifaRepository, bloqueoRepository, folioRepository, generadorCodigo,
-                disponibilidadService, estanciaMinimaService, cotizadorService);
+                disponibilidadService, estanciaMinimaService, cotizadorService, notificador);
     }
 
     @Bean
@@ -100,9 +102,10 @@ public class UseCaseConfig {
             ReservaRepository reservaRepository,
             FolioRepository folioRepository,
             AlojamientoRepository alojamientoRepository,
-            ConfirmacionReservaService confirmacionService) {
+            ConfirmacionReservaService confirmacionService,
+            NotificadorReserva notificador) {
         return new ConfirmarReservaUseCase(reservaRepository, folioRepository, alojamientoRepository,
-                confirmacionService);
+                confirmacionService, notificador);
     }
 
     @Bean
@@ -127,9 +130,10 @@ public class UseCaseConfig {
             FolioRepository folioRepository,
             PoliticaCancelacionRepository politicaRepository,
             CancelacionReservaService cancelacionReservaService,
-            AlojamientoRepository alojamientoRepository) {
+            AlojamientoRepository alojamientoRepository,
+            NotificadorReserva notificador) {
         return new CancelarReservaUseCase(reservaRepository, folioRepository, politicaRepository,
-                cancelacionReservaService, alojamientoRepository);
+                cancelacionReservaService, alojamientoRepository, notificador);
     }
 
     @Bean

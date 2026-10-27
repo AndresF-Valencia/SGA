@@ -9,6 +9,7 @@ import co.edu.uniquindio.sga.application.exception.ReservaNoEncontradaException;
 import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 import co.edu.uniquindio.sga.domain.entity.Folio;
 import co.edu.uniquindio.sga.domain.entity.Reserva;
+import co.edu.uniquindio.sga.domain.port.NotificadorReserva;
 import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
 import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
@@ -28,14 +29,16 @@ public class ConfirmarReservaUseCase {
         private final FolioRepository folioRepository;
         private final AlojamientoRepository alojamientoRepository;
         private final ConfirmacionReservaService confirmacionService;
+        private final NotificadorReserva notificador;
 
         public ConfirmarReservaUseCase(ReservaRepository reservaRepository, FolioRepository folioRepository,
                         AlojamientoRepository alojamientoRepository,
-                        ConfirmacionReservaService confirmacionService) {
+                        ConfirmacionReservaService confirmacionService, NotificadorReserva notificador) {
                 this.reservaRepository = reservaRepository;
                 this.folioRepository = folioRepository;
                 this.alojamientoRepository = alojamientoRepository;
                 this.confirmacionService = confirmacionService;
+                this.notificador = notificador;
         }
 
         /**
@@ -56,6 +59,7 @@ public class ConfirmarReservaUseCase {
                 confirmacionService.autorizarConfirmacion(reserva, folio, alojamiento, ahora, autor);
 
                 reservaRepository.guardar(reserva);
+                notificador.reservaConfirmada(reserva);   // 7.8
                 return reserva;
         }
 }
