@@ -20,4 +20,6 @@ public interface ReservaJpaDataRepository extends JpaRepository<ReservaEntity, S
 
     // SELECT * FROM reserva WHERE canal_origen = ? LIMIT 1
     Optional<ReservaEntity> findFirstByCanalOrigen(CanalOrigen canalOrigen);
+
+    Optional<ReservaEntity> findByCodigoExterno(String codigoExterno);
 }

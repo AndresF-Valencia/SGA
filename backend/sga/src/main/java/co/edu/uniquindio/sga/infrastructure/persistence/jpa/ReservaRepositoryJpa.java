@@ -2,7 +2,6 @@ package co.edu.uniquindio.sga.infrastructure.persistence.jpa;
 
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
-import co.edu.uniquindio.sga.domain.valueobject.CanalOrigen;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.EstadoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
@@ -47,14 +46,16 @@ public class ReservaRepositoryJpa implements ReservaRepository {
     }
 
     /**
-     * TODO RN-19: la Reserva todavía no guarda el identificador externo del canal,
+     * RN-19: la Reserva todavía no guarda el identificador externo del canal,
      * así que, igual que la versión en memoria, solo filtra por canal.
      */
     @Override
-    public Optional<Reserva> buscarPorCanalYIdentificadorExterno(CanalOrigen canalOrigen, String identificadorExterno) {
-        return jpa.findFirstByCanalOrigen(canalOrigen).map(ReservaPersistenceMapper::aDominio);
+    public Optional<Reserva> buscarPorCodigoExterno(String codigoExterno) {
+        if (codigoExterno == null || codigoExterno.isBlank()) {
+            return Optional.empty();
+        }
+        return jpa.findByCodigoExterno(codigoExterno).map(ReservaPersistenceMapper::aDominio);
     }
-
     @Override
     public List<Reserva> buscarActivasPorApartamento(IdentificacionApartamento apartamento) {
         // Los estados que retienen noches (RN-12) los decide el dominio, no esta clase
