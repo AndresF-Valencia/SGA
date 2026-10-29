@@ -1,6 +1,5 @@
 package co.edu.uniquindio.sga.application.usecase;
 
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
@@ -30,7 +29,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
- 
 public class RecibirReservaExternaUseCase {
 
     private final ReservaRepository reservaRepository;
@@ -74,11 +72,10 @@ public class RecibirReservaExternaUseCase {
      * Procesa una solicitud de reserva enviada por un canal externo.
      * Garantiza idempotencia (RN-19) y manejo riguroso de conflictos (RN-18).
      */
-        @Transactional
-        public Reserva ejecutar(
+    @Transactional
+    public Reserva ejecutar(
             String identificadorExterno,
             CanalOrigen canalOrigen,
-            IdentificacionAlojamiento alojamientoId,
             IdentificacionApartamento idApartamento,
             LocalDate fechaEntrada,
             LocalDate fechaSalida,
@@ -91,17 +88,18 @@ public class RecibirReservaExternaUseCase {
             throw new ReglaDominioException("La reserva externa debe indicar su identificador de canal");
         }
 
-        // 1. Validar Idempotencia (RN-19): Si ya existe, se retorna la misma sin duplicar
-        Optional<Reserva> existente = reservaRepository.buscarPorCanalYIdentificadorExterno(canalOrigen, identificadorExterno);
+        // 1. Validar Idempotencia (RN-19)
+        Optional<Reserva> existente = reservaRepository.buscarPorCodigoExterno(identificadorExterno);
         if (existente.isPresent()) {
             return existente.get(); 
         }
 
-        // 2. Buscar entidades con excepciones personalizadas de aplicación
+        // 2. Obtener la configuración única del alojamiento y el apartamento
+        Alojamiento alojamiento = alojamientoRepository.obtenerUnico()
+                .orElseThrow(() -> new AlojamientoNoEncontradoException());
+
         Apartamento apartamento = apartamentoRepository.buscarPorId(idApartamento)
                 .orElseThrow(() -> new ApartamentoNoEncontradoException(idApartamento));
-        Alojamiento alojamiento = alojamientoRepository.buscarPorId(alojamientoId)
-                .orElseThrow(() -> new AlojamientoNoEncontradoException(alojamientoId));
 
         // 3. Construir la Estancia
         Estancia estancia = new Estancia(fechaEntrada, fechaSalida);
@@ -131,7 +129,7 @@ public class RecibirReservaExternaUseCase {
             throw new ReglaDominioException("Conflicto de canal: La reserva externa colisiona con una reserva o bloqueo vigente. Rechazada. Motivo: " + e.getMessage());
         }
 
-        // 5. Cotizar y congelar valores y políticas (idéntico a una reserva interna)
+        // 5. Cotizar y congelar valores y políticas
         List<Temporada> temporadasCotizacion = temporadaRepository.buscarEntre(
                 estancia.fechaEntrada(), estancia.fechaSalida().minusDays(1));
 
@@ -141,11 +139,12 @@ public class RecibirReservaExternaUseCase {
                 tarifaRepository.buscarPorApartamento(idApartamento)
         );
 
-        // 6. Generar código y crear la reserva en estado PENDIENTE
+        // 6. Generar código interno y crear la reserva externa con su código de Booking
         CodigoReserva codigoReserva = generadorCodigo.siguiente(ahora.getYear());
 
-        Reserva reservaExterna = Reserva.crear(
+        Reserva reservaExterna = Reserva.crearExterna(
                 codigoReserva,
+                identificadorExterno,
                 idApartamento,
                 estancia,
                 titular,

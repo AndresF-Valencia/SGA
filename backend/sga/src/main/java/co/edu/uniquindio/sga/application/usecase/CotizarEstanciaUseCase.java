@@ -1,18 +1,17 @@
 package co.edu.uniquindio.sga.application.usecase;
 
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
+import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 import co.edu.uniquindio.sga.domain.entity.Ocupante;
 import co.edu.uniquindio.sga.domain.entity.Tarifa;
 import co.edu.uniquindio.sga.domain.entity.Temporada;
-import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
 import co.edu.uniquindio.sga.domain.repository.TarifaRepository;
 import co.edu.uniquindio.sga.domain.repository.TemporadaRepository;
 import co.edu.uniquindio.sga.domain.service.CotizadorEstanciaService;
 import co.edu.uniquindio.sga.domain.valueobject.Estancia;
-import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
 import co.edu.uniquindio.sga.domain.valueobject.UmbralEdadFacturable;
 import co.edu.uniquindio.sga.domain.valueobject.ValorCongelado;
@@ -51,7 +50,6 @@ public class CotizarEstanciaUseCase {
      */
     @Transactional
     public ValorCongelado ejecutar(
-            IdentificacionAlojamiento idAlojamiento,
             IdentificacionApartamento idApartamento,
             LocalDate fechaEntrada,
             LocalDate fechaSalida,
@@ -60,10 +58,11 @@ public class CotizarEstanciaUseCase {
         // 1. Construir la Estancia (valida automáticamente RN-03)
         Estancia estancia = new Estancia(fechaEntrada, fechaSalida);
 
-        // 2. Obtener el umbral de edad facturable configurado en el alojamiento
-        UmbralEdadFacturable umbral = alojamientoRepository.buscarPorId(idAlojamiento)
-                .orElseThrow(() -> new ReglaDominioException("No se encontró el alojamiento especificado"))
-                .getUmbralEdadFacturable();
+        // 2. Obtener el alojamiento único del sistema y su umbral
+        Alojamiento alojamiento = alojamientoRepository.obtenerUnico()
+                .orElseThrow(() -> new AlojamientoNoEncontradoException());
+
+        UmbralEdadFacturable umbral = alojamiento.getUmbralEdadFacturable();
 
         // 3. Consultar las temporadas y las tarifas registradas para el apartamento
         List<Temporada> temporadas = temporadaRepository.listar();
