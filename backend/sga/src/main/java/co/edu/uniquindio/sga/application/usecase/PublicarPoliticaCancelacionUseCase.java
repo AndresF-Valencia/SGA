@@ -1,6 +1,5 @@
 package co.edu.uniquindio.sga.application.usecase;
 
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
