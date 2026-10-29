@@ -8,7 +8,6 @@ import co.edu.uniquindio.sga.application.dto.response.ReservaResponse;
 import co.edu.uniquindio.sga.application.exception.AccesoDenegadoException;
 import co.edu.uniquindio.sga.application.usecase.CancelarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfirmarReservaUseCase;
-import co.edu.uniquindio.sga.application.usecase.CotizarEstanciaUseCase;
 import co.edu.uniquindio.sga.application.usecase.CrearReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.DeclararNoShowUseCase;
 import co.edu.uniquindio.sga.application.usecase.ModificarReservaUseCase;
@@ -69,7 +68,6 @@ public class ReservaController {
     private final CancelarReservaUseCase cancelarReservaUseCase;
     private final DeclararNoShowUseCase declararNoShowUseCase;
     private final RegistrarLlegadaUseCase registrarLlegadaUseCase;
-    private final CotizarEstanciaUseCase cotizarEstanciaUseCase;
     private final VerificarAccesoReservaUseCase verificarAccesoReservaUseCase;
     private final ReservaMapper reservaMapper;
 

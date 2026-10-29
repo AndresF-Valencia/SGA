@@ -1,7 +1,6 @@
 package co.edu.uniquindio.sga.infrastructure.rest.mapper;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Objects;
 
 import org.mapstruct.Mapper;

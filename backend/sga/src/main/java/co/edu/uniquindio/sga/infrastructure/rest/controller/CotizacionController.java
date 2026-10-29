@@ -3,7 +3,6 @@ package co.edu.uniquindio.sga.infrastructure.rest.controller;
 import co.edu.uniquindio.sga.application.dto.request.CotizacionRequest;
 import co.edu.uniquindio.sga.application.usecase.CotizarEstanciaUseCase;
 import co.edu.uniquindio.sga.domain.entity.Ocupante;
-import co.edu.uniquindio.sga.domain.valueobject.CantidadMascota;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
 import co.edu.uniquindio.sga.domain.valueobject.ValorCongelado;
 import io.swagger.v3.oas.annotations.Operation;
