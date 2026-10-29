@@ -1252,6 +1252,20 @@ components:
           type: integer
           format: int32
           example: 10
+        caracteristicas:
+          type: array
+          items:
+            type: string
+          example:
+          - Wifi
+          - Lavadora
+          - Balcón
+        imagenes:
+          type: array
+          items:
+            type: string
+          example:
+          - https://img.ejemplo.com/ap001-1.jpg
         tarifaEstimadaPorNoche:
           type: integer
           format: int64
@@ -1354,16 +1368,16 @@ components:
     PublicarPoliticaCancelacionRequest.TramoPoliticaDto:
       type: object
       required:
-      - diasMinimos
-      - diasMaximos
+      - diasMinimo
+      - diasMaximo
       - porcentajeRetencion
       properties:
-        diasMinimos:
+        diasMinimo:
           type: integer
           format: int32
           minimum: 0
           example: 7
-        diasMaximos:
+        diasMaximo:
           type: integer
           format: int32
           minimum: 0
@@ -1378,6 +1392,7 @@ components:
       type: object
       required:
       - codigoExterno
+      - canalOrigen
       - horaEstimadaLlegada
       - identificacionApartamento
       - fechaEntrada
@@ -1389,6 +1404,10 @@ components:
           type: string
           minLength: 1
           example: BKG-998877
+        canalOrigen:
+          type: string
+          minLength: 1
+          example: EXTERNO
         horaEstimadaLlegada:
           type: string
           example: '15:00:00'
@@ -1412,6 +1431,10 @@ components:
           items:
             $ref: '#/components/schemas/RecibirReservaExternaRequest.OcupanteExternoDto'
           minItems: 1
+        cantidadMascotas:
+          type: integer
+          format: int32
+          example: 0
     RecibirReservaExternaRequest.OcupanteExternoDto:
       type: object
       required:
@@ -1438,6 +1461,7 @@ components:
       - documento
       - email
       - telefono
+      - fechaNacimiento
       properties:
         nombre:
           type: string
@@ -1455,6 +1479,10 @@ components:
           type: string
           minLength: 1
           example: '3100000000'
+        fechaNacimiento:
+          type: string
+          format: date
+          example: '1990-05-01'
     RegistrarCargoRequest:
       type: object
       required:
