@@ -3,12 +3,11 @@ package co.edu.uniquindio.sga.infrastructure.persistence.memoria;
 import co.edu.uniquindio.sga.domain.entity.Folio;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
-import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 /** Adaptador en memoria del puerto {@link FolioRepository}: un folio por reserva. */
-@Repository
+// Sin @Repository: la aplicación usa el adaptador JPA. Esta clase queda para las pruebas unitarias.
 public class FolioRepositoryEnMemoria extends AlmacenEnMemoria<CodigoReserva, Folio>
         implements FolioRepository {
 

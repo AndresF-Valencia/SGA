@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.entity.Apartamento;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.ApartamentoRepository;
@@ -10,6 +13,7 @@ import co.edu.uniquindio.sga.domain.valueobject.Novedad;
  * Caso de uso: Registrar una novedad (daño, faltante o situación) 
  * reportada por el personal de servicio en un apartamento (CU-15).
  */
+ 
 public class RegistrarNovedadUseCase {
 
     private final ApartamentoRepository apartamentoRepository;
@@ -24,6 +28,7 @@ public class RegistrarNovedadUseCase {
      * @param apartamentoId Identificador único del apartamento.
      * @param novedad       Objeto de valor con los datos validados de la novedad.
      */
+    @Transactional
     public void ejecutar(IdentificacionApartamento apartamentoId, Novedad novedad) {
         if (apartamentoId == null) {
             throw new ReglaDominioException("El identificador del apartamento es obligatorio para registrar una novedad");

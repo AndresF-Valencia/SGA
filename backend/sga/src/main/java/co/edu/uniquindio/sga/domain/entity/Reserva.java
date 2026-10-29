@@ -9,6 +9,7 @@ import java.util.List;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.valueobject.CanalOrigen;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
+import co.edu.uniquindio.sga.domain.valueobject.Correo;
 import co.edu.uniquindio.sga.domain.valueobject.Dinero;
 import co.edu.uniquindio.sga.domain.valueobject.Estancia;
 import co.edu.uniquindio.sga.domain.valueobject.EstadoReserva;
@@ -53,6 +54,7 @@ public class Reserva {
     private HoraEstimadaLlegada horaEstimadaLlegada; // Encapsulado en VO
     private NotificacionRetraso notificacionRetraso; // Encapsulado en VO
     private CantidadMascota cantidadMascotas; // Encapsulado en VO
+    private Correo correoContacto; // a dónde se notifica al titular (opcional: un canal externo puede no darlo)
     private ValorCongelado valor;
 
     private Reserva(CodigoReserva codigo, IdentificacionApartamento apartamento,
@@ -134,7 +136,35 @@ public class Reserva {
         return reserva;
     }
 
+    /**
+     * Vuelve a armar una reserva que ya estaba guardada (la usa la persistencia).
+     * NO valida como si fuera nueva ni registra el evento de creación: el estado,
+     * los datos opcionales y el historial vienen tal cual de la base de datos.
+     */
+    public static Reserva reconstruir(CodigoReserva codigo, IdentificacionApartamento apartamento,
+            Estancia estancia, Ocupante titular, List<Ocupante> ocupantes,
+            CanalOrigen canalOrigen, ValorCongelado valor, VersionPolitica politica,
+            LocalDateTime creadaEn, CantidadMascota cantidadMascotas, EstadoReserva estado,
+            HoraEstimadaLlegada horaEstimadaLlegada, NotificacionRetraso notificacionRetraso,
+            List<EventoReserva> historial) {
+        Reserva reserva = new Reserva(codigo, apartamento, estancia, titular, ocupantes,
+                canalOrigen, valor, politica, creadaEn, cantidadMascotas);
+        reserva.estado = estado;
+        reserva.horaEstimadaLlegada = horaEstimadaLlegada;
+        reserva.notificacionRetraso = notificacionRetraso;
+        reserva.historial.addAll(historial);
+        return reserva;
+    }
+
     // ---------- Comportamiento del negocio ----------
+
+    /** 7.8: correo al que se le notifica al titular la creación, confirmación y cancelación. */
+    public void registrarCorreoContacto(Correo correo) {
+        if (correo == null) {
+            throw new ReglaDominioException("El correo de contacto no puede ser nulo");
+        }
+        this.correoContacto = correo;
+    }
 
     /** RN-09: la hora estimada de llegada es requisito para confirmar. */
     public void indicarHoraEstimadaLlegada(LocalTime hora, String autor) {
@@ -407,6 +437,11 @@ public class Reserva {
 
     public CantidadMascota getCantidadMascotas() {
         return cantidadMascotas;
+    }
+
+    /** null si la reserva no tiene correo de contacto (por ejemplo, llegó por un canal externo). */
+    public Correo getCorreoContacto() {
+        return correoContacto;
     }
 
 

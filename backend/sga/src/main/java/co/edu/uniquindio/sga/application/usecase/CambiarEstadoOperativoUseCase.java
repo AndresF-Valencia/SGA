@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.entity.Apartamento;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.ApartamentoRepository;
@@ -10,6 +13,7 @@ import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
  * Caso de uso: Actualiza el estado operativo de un apartamento 
  * (por ejemplo, a PREPARADO al terminar la preparación) (CU-16).
  */
+ 
 public class CambiarEstadoOperativoUseCase {
 
     private final ApartamentoRepository apartamentoRepository;
@@ -24,7 +28,8 @@ public class CambiarEstadoOperativoUseCase {
      * @param apartamentoId     Identificador único del apartamento.
      * @param nuevoEstado       El estado operativo al que se desea transicionar.
      */
-    public void ejecutar(IdentificacionApartamento apartamentoId, EstadoOperativo nuevoEstado) {
+    @Transactional
+    public Apartamento ejecutar(IdentificacionApartamento apartamentoId, EstadoOperativo nuevoEstado) {
         if (apartamentoId == null) {
             throw new ReglaDominioException("El identificador del apartamento es obligatorio");
         }
@@ -41,5 +46,6 @@ public class CambiarEstadoOperativoUseCase {
 
         // 3. Persistir el agregado actualizado
         apartamentoRepository.guardar(apartamento);
+        return apartamento;
     }
 }

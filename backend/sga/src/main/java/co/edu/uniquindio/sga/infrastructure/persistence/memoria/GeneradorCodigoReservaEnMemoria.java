@@ -2,12 +2,11 @@ package co.edu.uniquindio.sga.infrastructure.persistence.memoria;
 
 import co.edu.uniquindio.sga.domain.repository.GeneradorCodigoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
-import org.springframework.stereotype.Repository;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Consecutivo en memoria: RES-2026-00001, RES-2026-00002, ... */
-@Repository
+// Sin @Repository: la aplicación usa el adaptador JPA. Esta clase queda para las pruebas unitarias.
 public class GeneradorCodigoReservaEnMemoria implements GeneradorCodigoReserva {
 
     private final AtomicInteger consecutivo = new AtomicInteger();

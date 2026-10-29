@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 
 import co.edu.uniquindio.sga.application.exception.FolioNoEncontradoException;
@@ -12,6 +15,7 @@ import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
 import co.edu.uniquindio.sga.domain.repository.PoliticaCancelacionRepository;
 import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
+import co.edu.uniquindio.sga.domain.port.NotificadorReserva;
 import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
 import co.edu.uniquindio.sga.domain.service.CancelacionReservaService;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
@@ -19,6 +23,7 @@ import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.domain.valueobject.PoliticaCancelacion;
 
 /** Caso de uso (Guía 06). Se vuelve servicio de Spring en la Guía 09. */
+ 
 public class CancelarReservaUseCase {
 
         private final ReservaRepository reservaRepository;
@@ -26,19 +31,22 @@ public class CancelarReservaUseCase {
         private final PoliticaCancelacionRepository politicaRepository;
         private final CancelacionReservaService cancelacionReservaService;
         private final AlojamientoRepository alojamientoRepository;
+        private final NotificadorReserva notificador;
 
         public CancelarReservaUseCase(ReservaRepository reservaRepository, FolioRepository folioRepository,
                         PoliticaCancelacionRepository politicaRepository,
                         CancelacionReservaService cancelacionReservaService,
-                        AlojamientoRepository alojamientoRepository) {
+                        AlojamientoRepository alojamientoRepository, NotificadorReserva notificador) {
                 this.reservaRepository = reservaRepository;
                 this.folioRepository = folioRepository;
                 this.politicaRepository = politicaRepository;
                 this.cancelacionReservaService = cancelacionReservaService;
                 this.alojamientoRepository = alojamientoRepository;
+                this.notificador = notificador;
         }
 
-        public void ejecutar(CodigoReserva codigoReserva, IdentificacionAlojamiento identificacionAlojamiento,
+        @Transactional
+        public Reserva ejecutar(CodigoReserva codigoReserva, IdentificacionAlojamiento identificacionAlojamiento,
                         String motivo, LocalDateTime momentoActual, String autor) {
                 // 1. BUSCAR
                 Reserva reserva = reservaRepository.buscarPorCodigo(codigoReserva)
@@ -62,5 +70,7 @@ public class CancelarReservaUseCase {
                 // 3. GUARDAR
                 reservaRepository.guardar(reserva);
                 folioRepository.guardar(folio);
+                notificador.reservaCancelada(reserva);   // 7.8
+                return reserva;
         }
 }

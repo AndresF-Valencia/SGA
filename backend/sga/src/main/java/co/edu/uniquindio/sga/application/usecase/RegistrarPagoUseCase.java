@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.entity.Folio;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
@@ -9,6 +12,7 @@ import co.edu.uniquindio.sga.domain.entity.Pago;
 /**
  * Caso de uso: Registrar un pago con su medio y fecha contra el folio de una reserva (CU-12, RN-15).
  */
+ 
 public class RegistrarPagoUseCase {
 
     private final FolioRepository folioRepository;
@@ -23,7 +27,8 @@ public class RegistrarPagoUseCase {
      * @param codigoReserva Código de la reserva propietaria del folio.
      * @param pago          Objeto que encapsula los detalles del pago (monto, medio de pago, fecha, etc.).
      */
-    public void ejecutar(CodigoReserva codigoReserva, Pago pago) {
+    @Transactional
+    public Folio ejecutar(CodigoReserva codigoReserva, Pago pago) {
         if (codigoReserva == null) {
             throw new ReglaDominioException("El código de la reserva es obligatorio para registrar un pago");
         }
@@ -41,5 +46,6 @@ public class RegistrarPagoUseCase {
 
         // 3. Persistir el agregado actualizado
         folioRepository.guardar(folio);
+        return folio;
     }
 }

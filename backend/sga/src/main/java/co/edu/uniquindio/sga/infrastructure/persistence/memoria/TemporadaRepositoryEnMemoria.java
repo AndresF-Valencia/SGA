@@ -3,14 +3,13 @@ package co.edu.uniquindio.sga.infrastructure.persistence.memoria;
 import co.edu.uniquindio.sga.domain.entity.Temporada;
 import co.edu.uniquindio.sga.domain.repository.TemporadaRepository;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionTemporada;
-import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 /** Adaptador en memoria del puerto {@link TemporadaRepository}. */
-@Repository
+// Sin @Repository: la aplicación usa el adaptador JPA. Esta clase queda para las pruebas unitarias.
 public class TemporadaRepositoryEnMemoria extends AlmacenEnMemoria<IdentificacionTemporada, Temporada>
         implements TemporadaRepository {
 

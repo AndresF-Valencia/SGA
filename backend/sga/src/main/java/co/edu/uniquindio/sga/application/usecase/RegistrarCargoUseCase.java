@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniquindio.sga.domain.entity.Folio;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
@@ -9,6 +12,7 @@ import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
 /**
  * Caso de uso: Registrar un nuevo cargo (adicional o de consumo) en el folio de una reserva.
  */
+ 
 public class RegistrarCargoUseCase {
 
     private final FolioRepository folioRepository;
@@ -23,7 +27,8 @@ public class RegistrarCargoUseCase {
      * @param codigoReserva Código de la reserva propietaria del folio.
      * @param cargo         Objeto de valor que representa el cargo a registrar (tipo, valor, descripción).
      */
-    public void ejecutar(CodigoReserva codigoReserva, Cargo cargo) {
+    @Transactional
+    public Folio ejecutar(CodigoReserva codigoReserva, Cargo cargo) {
         if (codigoReserva == null) {
             throw new ReglaDominioException("El código de la reserva es obligatorio para registrar un cargo");
         }
@@ -40,5 +45,6 @@ public class RegistrarCargoUseCase {
 
         // 3. Persistir los cambios actualizados del folio
         folioRepository.guardar(folio);
+        return folio;
     }
 }
