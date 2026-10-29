@@ -5,8 +5,10 @@ import co.edu.uniquindio.sga.application.dto.request.RegistrarCargoRequest;
 import co.edu.uniquindio.sga.application.dto.request.RegistrarPagoRequest;
 import co.edu.uniquindio.sga.application.dto.response.FolioResponse;
 import co.edu.uniquindio.sga.application.usecase.CerrarFolioUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarFolioUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarCargoUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarPagoUseCase;
+import co.edu.uniquindio.sga.domain.entity.Folio;
 import co.edu.uniquindio.sga.domain.entity.Pago;
 import co.edu.uniquindio.sga.domain.valueobject.AutorizacionCierre;
 import co.edu.uniquindio.sga.domain.valueobject.Cargo;
@@ -23,6 +25,7 @@ import java.net.URI;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,6 +41,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 public class FolioController {
 
     private final RegistrarCargoUseCase registrarCargoUseCase;
+    private final ConsultarFolioUseCase consultarFolioUseCase;
     private final RegistrarPagoUseCase registrarPagoUseCase;
     private final CerrarFolioUseCase cerrarFolioUseCase;
     private final FolioMapper folioMapper;
@@ -58,7 +62,10 @@ public class FolioController {
                 request.concepto(),
                 TipoCargo.SERVICIO_ADICIONAL,
                 ahora);
-        var folio = registrarCargoUseCase.ejecutar(new CodigoReserva(codigo), cargo);
+        
+        CodigoReserva codigoReserva = resolverCodigoReserva(codigo); 
+
+        var folio = registrarCargoUseCase.ejecutar(codigoReserva, cargo);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().build().toUri();
         return ResponseEntity.created(location).body(folioMapper.aFolio(folio));
     }
@@ -77,7 +84,9 @@ public class FolioController {
                 Dinero.de(request.monto()),
                 MedioPago.valueOf(request.medioPago()),
                 request.fechaPago().atStartOfDay());
-        var folio = registrarPagoUseCase.ejecutar(new CodigoReserva(codigo), pago);
+        
+        CodigoReserva codigoReserva = resolverCodigoReserva(codigo);
+        var folio = registrarPagoUseCase.ejecutar(codigoReserva, pago);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().build().toUri();
         return ResponseEntity.created(location).body(folioMapper.aFolio(folio));
     }
@@ -94,7 +103,33 @@ public class FolioController {
             @Valid @RequestBody CerrarFolioRequest request) {
         AutorizacionCierre autorizacion = new AutorizacionCierre(
                 request.autor(), request.motivo(), LocalDateTime.now());
-        var folio = cerrarFolioUseCase.ejecutar(new CodigoReserva(codigo), autorizacion);
+        
+        CodigoReserva codigoReserva = resolverCodigoReserva(codigo);
+        var folio = cerrarFolioUseCase.ejecutar(codigoReserva, autorizacion);
         return ResponseEntity.ok(folioMapper.aFolio(folio));
+    }
+
+    /** Consultar el folio de una reserva (cargos, pagos y saldo pendiente) */
+    @GetMapping
+    @Operation(summary = "Consultar folio", description = "Obtiene el estado financiero, cargos y pagos del folio.")
+    @ApiResponse(responseCode = "200", description = "Folio encontrado")
+    @ApiResponse(responseCode = "404", description = "Folio no encontrado")
+    public ResponseEntity<FolioResponse> consultarFolio(@PathVariable String codigo) {
+        // Ejecutamos el caso de uso pasando el String (soporta código interno o externo de Booking)
+        Folio folio = consultarFolioUseCase.ejecutar(codigo);
+        return ResponseEntity.ok(folioMapper.aFolio(folio));
+    }
+
+    /**
+     * Helper privado para soportar tanto códigos internos (RES-...) como externos en los POST/PUT del folio.
+     * Si deseas simplificarlo, puedes inyectar el ReservaRepository o crear un método auxiliar.
+     */
+    private CodigoReserva resolverCodigoReserva(String codigo) {
+        if (codigo.startsWith("RES-")) {
+            return new CodigoReserva(codigo);
+        }
+        // Si es externo, consultamos el folio usando el caso de uso de consulta que ya resuelve ambos mundos
+        Folio folio = consultarFolioUseCase.ejecutar(codigo);
+        return folio.getReserva();
     }
 }
