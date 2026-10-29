@@ -41,6 +41,7 @@ public final class ReservaPersistenceMapper {
     public static ReservaEntity aEntity(Reserva reserva) {
         ReservaEntity entity = new ReservaEntity();
         entity.setCodigo(reserva.getCodigo().valor());
+        entity.setCodigoExterno(reserva.getCodigoExterno()); 
         entity.setApartamentoId(reserva.getApartamento().valor());
         entity.setEstado(reserva.getEstado());
         entity.setEstancia(new EstanciaEmbeddable(
@@ -156,6 +157,7 @@ public final class ReservaPersistenceMapper {
 
         Reserva reserva = Reserva.reconstruir(
                 new CodigoReserva(entity.getCodigo()),
+                entity.getCodigoExterno(), // 👈 Se pasa el código externo reconstruido
                 new IdentificacionApartamento(entity.getApartamentoId()),
                 new Estancia(entity.getEstancia().getFechaEntrada(), entity.getEstancia().getFechaSalida()),
                 titular,

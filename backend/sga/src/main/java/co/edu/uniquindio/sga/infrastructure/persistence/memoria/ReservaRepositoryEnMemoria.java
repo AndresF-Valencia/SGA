@@ -2,7 +2,6 @@ package co.edu.uniquindio.sga.infrastructure.persistence.memoria;
 
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
-import co.edu.uniquindio.sga.domain.valueobject.CanalOrigen;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.EstadoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
@@ -35,9 +34,11 @@ public class ReservaRepositoryEnMemoria extends AlmacenEnMemoria<CodigoReserva, 
     }
 
     @Override
-    public Optional<Reserva> buscarPorCanalYIdentificadorExterno(CanalOrigen canalOrigen, String identificadorExterno) {
-        // Valida consultando el canal de origen tal como lo define la entidad Reserva
-        return filtrar(r -> r.getCanalOrigen() != null && r.getCanalOrigen().equals(canalOrigen))
+    public Optional<Reserva> buscarPorCodigoExterno(String codigoExterno) {
+        if (codigoExterno == null || codigoExterno.isBlank()) {
+            return Optional.empty();
+        }
+        return filtrar(r -> r.getCodigoExterno() != null && r.getCodigoExterno().equals(codigoExterno))
                 .stream()
                 .findFirst();
     }

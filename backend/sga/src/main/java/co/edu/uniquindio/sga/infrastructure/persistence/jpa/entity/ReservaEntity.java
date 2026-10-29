@@ -22,6 +22,9 @@ public class ReservaEntity {
     @Column(name = "codigo", length = 20)
     private String codigo;
 
+    @Column(name = "codigo_externo", length = 50)
+    private String codigoExterno;
+
     @Column(name = "apartamento_id", nullable = false, length = 20)
     private String apartamentoId;
 
