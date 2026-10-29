@@ -7,4 +7,8 @@ public class ReservaNoEncontradaException extends RuntimeException {
     public ReservaNoEncontradaException(CodigoReserva codigo) {
         super("No se encontró la reserva con código: " + codigo.valor());
     }
+
+    public ReservaNoEncontradaException(String codigoExterno) {
+        super("No se encontró la reserva externa con código: " + codigoExterno);
+    }
 }

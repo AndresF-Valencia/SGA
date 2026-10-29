@@ -1,7 +1,6 @@
 package co.edu.uniquindio.sga.domain.repository;
 
 import co.edu.uniquindio.sga.domain.entity.Reserva;
-import co.edu.uniquindio.sga.domain.valueobject.CanalOrigen;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
 
@@ -22,20 +21,17 @@ public interface ReservaRepository {
      */
     void guardar(Reserva reserva);
 
+
+     /**
+     * Busca una reserva por su identificador EXTERNO dentro del dominio.
+     */
+    Optional<Reserva> buscarPorCodigoExterno(String codigoExterno);
+
     /**
      * Busca una reserva por su identificador único dentro del dominio.
      */
     Optional<Reserva> buscarPorCodigo(CodigoReserva codigo);
 
-    /**
-     * RN-19 (Idempotencia en Integraciones Externas):
-     * Busca si ya existe una reserva generada a través de un canal externo específico
-     * asociada al identificador propio provisto por dicho canal.
-     *
-     * @param canalOrigen          Canal de procedencia (ej. EXTERNO).
-     * @param identificadorExterno Identificador único assigned por la plataforma de terceros.
-     */
-    Optional<Reserva> buscarPorCanalYIdentificadorExterno(CanalOrigen canalOrigen, String identificadorExterno);
 
     /**
      * RN-01, RN-07, RN-14:

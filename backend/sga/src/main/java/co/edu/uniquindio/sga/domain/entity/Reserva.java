@@ -40,28 +40,30 @@ import co.edu.uniquindio.sga.domain.valueobject.VersionPolitica;
  */
 public class Reserva {
 
-    private final CodigoReserva codigo; // identidad
-    private final CanalOrigen canalOrigen; // por dónde entró: no cambia nunca
+    private final CodigoReserva codigo;
+    private final String codigoExterno; 
+    private final CanalOrigen canalOrigen;
     private final LocalDateTime creadaEn;
     private final Ocupante titular;
-    private final IdentificacionApartamento apartamento; // referencia a OTRO agregado
-    private final VersionPolitica politica; // RN-13: congelada de por vida
+    private final IdentificacionApartamento apartamento;
+    private final VersionPolitica politica;
     private final List<EventoReserva> historial = new ArrayList<>();
 
     private Estancia estancia;
     private List<Ocupante> ocupantes;
     private EstadoReserva estado;
-    private HoraEstimadaLlegada horaEstimadaLlegada; // Encapsulado en VO
-    private NotificacionRetraso notificacionRetraso; // Encapsulado en VO
-    private CantidadMascota cantidadMascotas; // Encapsulado en VO
-    private Correo correoContacto; // a dónde se notifica al titular (opcional: un canal externo puede no darlo)
+    private HoraEstimadaLlegada horaEstimadaLlegada;
+    private NotificacionRetraso notificacionRetraso;
+    private CantidadMascota cantidadMascotas;
+    private Correo correoContacto;
     private ValorCongelado valor;
 
-    private Reserva(CodigoReserva codigo, IdentificacionApartamento apartamento,
+    private Reserva(CodigoReserva codigo, String codigoExterno, IdentificacionApartamento apartamento,
             Estancia estancia, Ocupante titular, List<Ocupante> ocupantes,
             CanalOrigen canalOrigen, ValorCongelado valor,
             VersionPolitica politica, LocalDateTime creadaEn, CantidadMascota cantidadMascotas) {
         this.codigo = codigo;
+        this.codigoExterno = codigoExterno;
         this.apartamento = apartamento;
         this.estancia = estancia;
         this.titular = titular;
@@ -71,83 +73,60 @@ public class Reserva {
         this.politica = politica;
         this.creadaEn = creadaEn;
         this.cantidadMascotas = cantidadMascotas;
-        this.estado = EstadoReserva.PENDIENTE; // toda reserva nace PENDIENTE
+        this.estado = EstadoReserva.PENDIENTE;
     }
 
     /**
-     * Única puerta de entrada para crear una reserva.
-     * El valor ya llega calculado y la disponibilidad ya fue verificada.
+     * Creación de reserva interna / directa (código externo nulo).
      */
     public static Reserva crear(CodigoReserva codigo, IdentificacionApartamento apartamento,
             Estancia estancia, Ocupante titular, List<Ocupante> ocupantes,
             CanalOrigen canalOrigen, ValorCongelado valor,
             VersionPolitica politica, LocalDateTime ahora, CantidadMascota cantidadMascotas) {
-        if (codigo == null) {
-            throw new ReglaDominioException("La reserva debe tener un código");
-        }
-        if (apartamento == null) {
-            throw new ReglaDominioException("La reserva debe indicar el apartamento");
-        }
-        if (estancia == null) {
-            throw new ReglaDominioException("La reserva debe tener una estancia");
-        }
-        if (titular == null) {
-            throw new ReglaDominioException("La reserva debe tener un titular");
-        }
-        if (canalOrigen == null) {
-            throw new ReglaDominioException("La reserva debe indicar su canal de origen");
-        }
-        if (valor == null || politica == null) {
-            throw new ReglaDominioException(
-                    "La reserva debe nacer con su valor y su política congelados");
-        }
-        if (ocupantes == null || ocupantes.isEmpty()) {
-            throw new ReglaDominioException("La reserva debe tener al menos un ocupante");
-        }
-        if (!ocupantes.contains(titular)) {
-            throw new ReglaDominioException("El titular debe ser uno de los ocupantes");
-        }
-        if (ocupantes.stream().distinct().count() != ocupantes.size()) {
-            throw new ReglaDominioException("No se puede repetir un ocupante en la reserva");
-        }
-        if (cantidadMascotas == null) {
-            throw new ReglaDominioException("La reserva debe indicar la cantidad de mascotas (0 si no trae)");
-        }
-        if (ahora == null) {
-            throw new ReglaDominioException("La reserva debe indicar el momento de creación");
-        }
-
-        // RN-04: no se crean reservas hacia el pasado
-        if (estancia.fechaEntrada().isBefore(ahora.toLocalDate())) {
-            throw new ReglaDominioException(
-                    "La fecha de entrada no puede ser anterior a la fecha actual");
-        }
-
-        // El desglose congelado debe corresponder a la estancia que se está reservando
-        if (valor.noches() != estancia.noches()) {
-            throw new ReglaDominioException(
-                    "El desglose del valor no corresponde al número de noches de la estancia");
-        }
-
-        Reserva reserva = new Reserva(codigo, apartamento, estancia, titular, ocupantes,
+        return crearExterna(codigo, null, apartamento, estancia, titular, ocupantes,
                 canalOrigen, valor, politica, ahora, cantidadMascotas);
-        reserva.registrarEvento("CREACION", titular.getNombre(), null,
-                EstadoReserva.PENDIENTE, "Reserva creada por el canal " + canalOrigen, ahora);
-        return reserva;
     }
 
     /**
-     * Vuelve a armar una reserva que ya estaba guardada (la usa la persistencia).
-     * NO valida como si fuera nueva ni registra el evento de creación: el estado,
-     * los datos opcionales y el historial vienen tal cual de la base de datos.
+     * Creación de reserva externa (RN-19) proveniente de Booking / OTAs.
      */
-    public static Reserva reconstruir(CodigoReserva codigo, IdentificacionApartamento apartamento,
+    public static Reserva crearExterna(CodigoReserva codigo, String codigoExterno, IdentificacionApartamento apartamento,
+            Estancia estancia, Ocupante titular, List<Ocupante> ocupantes,
+            CanalOrigen canalOrigen, ValorCongelado valor,
+            VersionPolitica politica, LocalDateTime ahora, CantidadMascota cantidadMascotas) {
+        if (codigo == null) throw new ReglaDominioException("La reserva debe tener un código");
+        if (apartamento == null) throw new ReglaDominioException("La reserva debe indicar el apartamento");
+        if (estancia == null) throw new ReglaDominioException("La reserva debe tener una estancia");
+        if (titular == null) throw new ReglaDominioException("La reserva debe tener un titular");
+        if (canalOrigen == null) throw new ReglaDominioException("La reserva debe indicar su canal de origen");
+        if (valor == null || politica == null) throw new ReglaDominioException("La reserva debe nacer con su valor y política congelados");
+        if (ocupantes == null || ocupantes.isEmpty()) throw new ReglaDominioException("La reserva debe tener al menos un ocupante");
+        if (!ocupantes.contains(titular)) throw new ReglaDominioException("El titular debe ser uno de los ocupantes");
+        if (ocupantes.stream().distinct().count() != ocupantes.size()) throw new ReglaDominioException("No se puede repetir un ocupante");
+        if (cantidadMascotas == null) throw new ReglaDominioException("La reserva debe indicar la cantidad de mascotas");
+        if (ahora == null) throw new ReglaDominioException("La reserva debe indicar el momento de creación");
+
+        if (estancia.fechaEntrada().isBefore(ahora.toLocalDate())) {
+            throw new ReglaDominioException("La fecha de entrada no puede ser anterior a la fecha actual");
+        }
+        if (valor.noches() != estancia.noches()) {
+            throw new ReglaDominioException("El desglose del valor no corresponde al número de noches de la estancia");
+        }
+
+        Reserva reserva = new Reserva(codigo, codigoExterno, apartamento, estancia, titular, ocupantes,
+                canalOrigen, valor, politica, ahora, cantidadMascotas);
+        reserva.registrarEvento("CREACION", titular.getNombre(), null,
+                EstadoReserva.PENDIENTE, "Reserva creada por el canal " + canalOrigen + (codigoExterno != null ? " (Ext: " + codigoExterno + ")" : ""), ahora);
+        return reserva;
+    }
+
+    public static Reserva reconstruir(CodigoReserva codigo, String codigoExterno, IdentificacionApartamento apartamento,
             Estancia estancia, Ocupante titular, List<Ocupante> ocupantes,
             CanalOrigen canalOrigen, ValorCongelado valor, VersionPolitica politica,
             LocalDateTime creadaEn, CantidadMascota cantidadMascotas, EstadoReserva estado,
             HoraEstimadaLlegada horaEstimadaLlegada, NotificacionRetraso notificacionRetraso,
             List<EventoReserva> historial) {
-        Reserva reserva = new Reserva(codigo, apartamento, estancia, titular, ocupantes,
+        Reserva reserva = new Reserva(codigo, codigoExterno, apartamento, estancia, titular, ocupantes,
                 canalOrigen, valor, politica, creadaEn, cantidadMascotas);
         reserva.estado = estado;
         reserva.horaEstimadaLlegada = horaEstimadaLlegada;
@@ -385,6 +364,10 @@ public class Reserva {
 
     public List<Ocupante> getOcupantes() {
         return ocupantes;
+    }
+
+    public String getCodigoExterno() {
+        return codigoExterno;
     }
 
     public int totalOcupantes() {

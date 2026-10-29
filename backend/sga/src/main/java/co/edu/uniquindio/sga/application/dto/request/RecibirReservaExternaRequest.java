@@ -21,6 +21,9 @@ public record RecibirReservaExternaRequest(
         @NotBlank(message = "El código externo de la reserva es obligatorio para la idempotencia")
         String codigoExterno,
 
+        @NotBlank(message = "El canal de origen es obligatorio")
+        String canalOrigen,
+
         @NotNull(message = "La hora estimada de llegada es obligatoria")
         LocalTime horaEstimadaLlegada,
         
@@ -40,7 +43,9 @@ public record RecibirReservaExternaRequest(
 
         @NotEmpty(message = "La reserva debe incluir al menos un ocupante")
         @Valid
-        List<OcupanteExternoDto> ocupantes
+        List<OcupanteExternoDto> ocupantes,
+
+        int cantidadMascotas
 
 ) {
     public record TitularExternoDto(
@@ -54,7 +59,10 @@ public record RecibirReservaExternaRequest(
             String email,
 
             @NotBlank(message = "El teléfono del titular es obligatorio")
-            String telefono
+            String telefono,
+
+            @NotNull(message = "La fecha de nacimiento del titular es obligatoria")
+            LocalDate fechaNacimiento
     ) {}
 
     public record OcupanteExternoDto(
