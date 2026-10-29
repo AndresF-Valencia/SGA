@@ -13,6 +13,9 @@ import co.edu.uniquindio.sga.application.usecase.CancelarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.CerrarFolioUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfigurarParametrosAlojamientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfirmarReservaUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarDisponibilidadUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarFolioUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.CorregirMovimientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.CotizarEstanciaUseCase;
 import co.edu.uniquindio.sga.application.usecase.CrearReservaUseCase;
@@ -252,9 +255,19 @@ public class UseCaseConfig {
             DisponibilidadApartamentoService disponibilidadService,
             EstanciaMinimaTemporadaAltaService estanciaMinimaService,
             CotizadorEstanciaService cotizadorService) {
-        return new RecibirReservaExternaUseCase(reservaRepository, apartamentoRepository, alojamientoRepository,
-                temporadaRepository, tarifaRepository, bloqueoRepository, folioRepository, generadorCodigo,
-                disponibilidadService, estanciaMinimaService, cotizadorService);
+        return new RecibirReservaExternaUseCase(
+                reservaRepository,
+                apartamentoRepository,
+                alojamientoRepository,
+                temporadaRepository,
+                tarifaRepository,
+                bloqueoRepository,
+                folioRepository,
+                generadorCodigo,
+                disponibilidadService,
+                estanciaMinimaService,
+                cotizadorService
+        );
     }
 
     @Bean
@@ -285,5 +298,35 @@ public class UseCaseConfig {
     @Bean
     public VerificarAccesoReservaUseCase verificarAccesoReservaUseCase(ReservaRepository reservaRepository) {
         return new VerificarAccesoReservaUseCase(reservaRepository);
+    }
+
+    // ---------- Consultas (Reservas y Folios) ----------
+
+    @Bean
+    public ConsultarReservaUseCase consultarReservaUseCase(ReservaRepository reservaRepository) {
+        return new ConsultarReservaUseCase(reservaRepository);
+    }
+
+    @Bean
+    public ConsultarDisponibilidadUseCase consultarDisponibilidadUseCase(
+            ApartamentoRepository apartamentoRepository,
+            AlojamientoRepository alojamientoRepository,
+            ReservaRepository reservaRepository,
+            BloqueoRepository bloqueoRepository,
+            DisponibilidadApartamentoService disponibilidadService) {
+        return new ConsultarDisponibilidadUseCase(
+                apartamentoRepository,
+                alojamientoRepository,
+                reservaRepository,
+                bloqueoRepository,
+                disponibilidadService
+        );
+    }
+
+    @Bean
+    public ConsultarFolioUseCase consultarFolioUseCase(
+            FolioRepository folioRepository,
+            ReservaRepository reservaRepository) {
+        return new ConsultarFolioUseCase(folioRepository, reservaRepository);
     }
 }
