@@ -467,6 +467,47 @@ paths:
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
 
+  /api/apartamentos:
+    get:
+      tags:
+      - Apartamentos y Operación
+      summary: Listar los apartamentos (7.3)
+      operationId: listarApartamentos
+      description: Devuelve todos los apartamentos, activos e inactivos.
+      responses:
+        '200':
+          description: Listado de apartamentos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApartamentoDetalleResponse'
+    post:
+      tags:
+      - Apartamentos y Operación
+      summary: Crear un apartamento (7.3)
+      operationId: crearApartamento
+      description: Solo el administrador. El apartamento se crea inactivo y se activa cuando tenga tarifa en todas
+        las temporadas.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearApartamentoRequest'
+      responses:
+        '201':
+          description: Apartamento creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartamentoDetalleResponse'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+
   /api/apartamentos/estado:
     get:
       tags:
@@ -501,6 +542,77 @@ paths:
                 $ref: '#/components/schemas/ApartamentoDetalleResponse'
         '404':
           $ref: '#/components/responses/NoEncontrado'
+
+    put:
+      tags:
+      - Apartamentos y Operación
+      summary: Actualizar un apartamento (7.3)
+      operationId: actualizarApartamento
+      description: Solo el administrador. Cambia los datos descriptivos; no modifica la identificación, el estado
+        operativo ni si está activo.
+      parameters:
+      - $ref: '#/components/parameters/IdentificacionApartamento'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActualizarApartamentoRequest'
+      responses:
+        '200':
+          description: Apartamento actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartamentoDetalleResponse'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+    delete:
+      tags:
+      - Apartamentos y Operación
+      summary: Deshabilitar un apartamento (7.3)
+      operationId: deshabilitarApartamento
+      description: Solo el administrador. Eliminación lógica, el apartamento no se borra. Falla con 409 si tiene
+        reservas activas (PENDIENTE, CONFIRMADA o EN_CURSO).
+      parameters:
+      - $ref: '#/components/parameters/IdentificacionApartamento'
+      responses:
+        '200':
+          description: Apartamento deshabilitado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartamentoDetalleResponse'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+
+  /api/apartamentos/{identificacion}/activar:
+    post:
+      tags:
+      - Apartamentos y Operación
+      summary: Activar un apartamento (7.3)
+      operationId: activarApartamento
+      description: Solo el administrador. Falla con 409 si el apartamento no tiene tarifa en todas las temporadas
+        registradas.
+      parameters:
+      - $ref: '#/components/parameters/IdentificacionApartamento'
+      responses:
+        '200':
+          description: Apartamento activado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartamentoDetalleResponse'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
 
   /api/apartamentos/{identificacion}/estado-operativo:
     post:
@@ -986,6 +1098,104 @@ components:
           - EN_PREPARACION
           - FUERA_DE_SERVICIO
           example: PREPARADO
+    ActualizarApartamentoRequest:
+      type: object
+      required:
+      - nombre
+      - dormitorios
+      - capacidadMaxima
+      - limiteMascotas
+      - tiempoPreparacionHoras
+      - caracteristicas
+      - imagenes
+      properties:
+        nombre:
+          type: string
+          example: Familiar
+        dormitorios:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 4
+        capacidadMaxima:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 10
+        limiteMascotas:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 2
+        tiempoPreparacionHoras:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 24
+          example: 3
+        caracteristicas:
+          type: array
+          items:
+            type: string
+          example:
+          - Wifi
+          - Balcón
+        imagenes:
+          type: array
+          items:
+            type: string
+          example: []
+    CrearApartamentoRequest:
+      type: object
+      required:
+      - identificacion
+      - nombre
+      - dormitorios
+      - capacidadMaxima
+      - limiteMascotas
+      - tiempoPreparacionHoras
+      - caracteristicas
+      - imagenes
+      properties:
+        identificacion:
+          type: string
+          example: AP001
+        nombre:
+          type: string
+          example: Familiar
+        dormitorios:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 4
+        capacidadMaxima:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 10
+        limiteMascotas:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 2
+        tiempoPreparacionHoras:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 24
+          example: 3
+        caracteristicas:
+          type: array
+          items:
+            type: string
+          example:
+          - Wifi
+          - Balcón
+        imagenes:
+          type: array
+          items:
+            type: string
+          example: []
     CancelarReservaRequest:
       type: object
       required:

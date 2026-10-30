@@ -20,6 +20,7 @@ import co.edu.uniquindio.sga.application.usecase.CorregirMovimientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.CotizarEstanciaUseCase;
 import co.edu.uniquindio.sga.application.usecase.CrearReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.DeclararNoShowUseCase;
+import co.edu.uniquindio.sga.application.usecase.GestionarApartamentoUseCase;
 import co.edu.uniquindio.sga.application.usecase.GestionarBloqueoUseCase;
 import co.edu.uniquindio.sga.application.usecase.GestionarTemporadasTarifasUseCase;
 import co.edu.uniquindio.sga.application.usecase.ModificarReservaUseCase;
@@ -204,6 +205,17 @@ public class UseCaseConfig {
     @Bean
     public CambiarEstadoOperativoUseCase cambiarEstadoOperativoUseCase(ApartamentoRepository apartamentoRepository) {
         return new CambiarEstadoOperativoUseCase(apartamentoRepository);
+    }
+
+    @Bean
+    public GestionarApartamentoUseCase gestionarApartamentoUseCase(
+            ApartamentoRepository apartamentoRepository,
+            AlojamientoRepository alojamientoRepository,
+            ReservaRepository reservaRepository,
+            TarifaRepository tarifaRepository,
+            TemporadaRepository temporadaRepository) {
+        return new GestionarApartamentoUseCase(apartamentoRepository, alojamientoRepository,
+                reservaRepository, tarifaRepository, temporadaRepository);
     }
 
     @Bean

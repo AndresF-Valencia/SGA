@@ -43,7 +43,6 @@ public interface ApartamentoMapper {
     // Convierte un apartamento disponible en el detalle de disponibilidad.
     @Mapping(target = "identificacionApartamento", source = "identificacion.valor")
     @Mapping(target = "nombre", source = "nombre")
-    @Mapping(target = "descripcion", ignore = true)
     @Mapping(target = "capacidadMaxima", source = "capacidad.cantidad")
     @Mapping(target = "tarifaEstimadaPorNoche", ignore = true)
     DisponibilidadResponse.ApartamentoDisponibleDto aDisponible(Apartamento apartamento);

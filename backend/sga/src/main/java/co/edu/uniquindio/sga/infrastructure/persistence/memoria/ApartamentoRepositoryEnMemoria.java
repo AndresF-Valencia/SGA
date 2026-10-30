@@ -27,6 +27,11 @@ public class ApartamentoRepositoryEnMemoria extends AlmacenEnMemoria<Identificac
     }
 
     @Override
+    public boolean existePorId(IdentificacionApartamento id) {
+        return porId(id).isPresent();
+    }
+
+    @Override
     public List<Apartamento> listarActivos() {
         return filtrar(Apartamento::estaActivo);
     }
