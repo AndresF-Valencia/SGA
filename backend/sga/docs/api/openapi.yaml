@@ -1228,12 +1228,35 @@ components:
     ConfigurarParametrosAlojamientoRequest:
       type: object
       required:
+      - direccion
+      - latitud
+      - longitud
       - horaEntrada
       - horaSalida
       - horasPreparacion
       - horasPlazoConfirmacion
       - edadUmbralFacturable
       properties:
+        direccion:
+          type: string
+          example: Calle 14 No. 20-30, Armenia
+        latitud:
+          type: number
+          minimum: -90
+          maximum: 90
+          example: 4.5339
+        longitud:
+          type: number
+          minimum: -180
+          maximum: 180
+          example: -75.6811
+        normasConvivencia:
+          type: string
+          example: Silencio de 10 p. m. a 7 a. m.
+        serviciosAdicionales:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServicioAdicional'
         horaEntrada:
           type: string
           format: time
@@ -2122,6 +2145,19 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/TemporadaResponse'
+    ServicioAdicional:
+      type: object
+      required:
+      - nombre
+      - valor
+      properties:
+        nombre:
+          type: string
+          example: Parqueadero
+        valor:
+          type: number
+          minimum: 0
+          example: 15000
     ParametrosAlojamientoResponse:
       type: object
       properties:
@@ -2136,6 +2172,26 @@ components:
         descripcion:
           type: string
           example: Apartamento familiar con balcón
+        direccion:
+          type: string
+          example: Calle 14 No. 20-30, Armenia
+        latitud:
+          type: number
+          minimum: -90
+          maximum: 90
+          example: 4.5339
+        longitud:
+          type: number
+          minimum: -180
+          maximum: 180
+          example: -75.6811
+        normasConvivencia:
+          type: string
+          example: Silencio de 10 p. m. a 7 a. m.
+        serviciosAdicionales:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServicioAdicional'
         horaEntrada:
           type: string
           format: time

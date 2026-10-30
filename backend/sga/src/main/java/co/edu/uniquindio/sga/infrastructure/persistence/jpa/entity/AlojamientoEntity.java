@@ -5,7 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Tabla del alojamiento (F-13: hay uno solo) con sus parámetros configurables (sección 6). */
 @Entity
@@ -27,6 +30,23 @@ public class AlojamientoEntity {
 
     @Column(name = "descripcion", length = 1000)
     private String descripcion;
+
+    @Column(name = "direccion", length = 250)
+    private String direccion;
+
+    @Column(name = "latitud", precision = 10, scale = 7)
+    private BigDecimal latitud;
+
+    @Column(name = "longitud", precision = 10, scale = 7)
+    private BigDecimal longitud;
+
+    @Column(name = "normas_convivencia", length = 2000)
+    private String normasConvivencia;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "alojamiento_servicio_adicional", joinColumns = @JoinColumn(name = "alojamiento_id"))
+    @OrderColumn(name = "orden")
+    private List<ServicioAdicionalEmbeddable> serviciosAdicionales = new ArrayList<>();
 
     @Column(name = "hora_entrada", nullable = false)
     private LocalTime horaEntrada;

@@ -13,6 +13,7 @@ import co.edu.uniquindio.sga.application.usecase.CancelarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.CerrarFolioUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfigurarParametrosAlojamientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfirmarReservaUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarAlojamientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarDisponibilidadUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarFolioUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarReservaUseCase;
@@ -237,6 +238,11 @@ public class UseCaseConfig {
     public ConfigurarParametrosAlojamientoUseCase configurarParametrosAlojamientoUseCase(
             AlojamientoRepository alojamientoRepository) {
         return new ConfigurarParametrosAlojamientoUseCase(alojamientoRepository);
+    }
+
+    @Bean
+    public ConsultarAlojamientoUseCase consultarAlojamientoUseCase(AlojamientoRepository alojamientoRepository) {
+        return new ConsultarAlojamientoUseCase(alojamientoRepository);
     }
 
     @Bean

@@ -2,12 +2,16 @@ package co.edu.uniquindio.sga.domain.entity;
 
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
+import co.edu.uniquindio.sga.domain.valueobject.NormasConvivencia;
 import co.edu.uniquindio.sga.domain.valueobject.PlazoConfirmacion;
+import co.edu.uniquindio.sga.domain.valueobject.ServicioAdicional;
 import co.edu.uniquindio.sga.domain.valueobject.TiempoPreparacion;
 import co.edu.uniquindio.sga.domain.valueobject.UmbralEdadFacturable;
 import co.edu.uniquindio.sga.domain.valueobject.VersionPolitica;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.List;
 
 /**
  * Raíz del agregado Alojamiento: representa el negocio completo (F-13).
@@ -19,6 +23,13 @@ public class Alojamiento {
     private final String nombre;
     private final String ciudad;
     private final String descripcion;
+
+    // 7.3: ubicación, normas de convivencia y servicios adicionales con su valor
+    private String direccion;
+    private BigDecimal latitud;
+    private BigDecimal longitud;
+    private NormasConvivencia normasConvivencia = NormasConvivencia.VACIAS;
+    private List<ServicioAdicional> serviciosAdicionales = List.of();
 
     private LocalTime horaEntrada;
     private LocalTime horaSalida;
@@ -94,6 +105,24 @@ public class Alojamiento {
 
     // ----- COMPORTAMIENTO DE CONFIGURACIÓN -----
 
+    public void actualizarFichaDescriptiva(String direccion, BigDecimal latitud, BigDecimal longitud,
+            NormasConvivencia normasConvivencia, List<ServicioAdicional> serviciosAdicionales) {
+        if (direccion == null || direccion.isBlank()) {
+            throw new ReglaDominioException("El alojamiento debe indicar su dirección");
+        }
+        if (latitud == null || latitud.abs().compareTo(BigDecimal.valueOf(90)) > 0) {
+            throw new ReglaDominioException("La latitud debe estar entre -90 y 90");
+        }
+        if (longitud == null || longitud.abs().compareTo(BigDecimal.valueOf(180)) > 0) {
+            throw new ReglaDominioException("La longitud debe estar entre -180 y 180");
+        }
+        this.direccion = direccion;
+        this.latitud = latitud;
+        this.longitud = longitud;
+        this.normasConvivencia = normasConvivencia == null ? NormasConvivencia.VACIAS : normasConvivencia;
+        this.serviciosAdicionales = serviciosAdicionales == null ? List.of() : List.copyOf(serviciosAdicionales);
+    }
+
     public void actualizarParametrosOperativos(LocalTime horaEntrada, LocalTime horaSalida,
             TiempoPreparacion tiempoPreparacion,
             PlazoConfirmacion plazoConfirmacion) {
@@ -138,6 +167,26 @@ public class Alojamiento {
 
     public String getDescripcion() {
         return descripcion;
+    }
+
+    public String getDireccion() {
+        return direccion;
+    }
+
+    public BigDecimal getLatitud() {
+        return latitud;
+    }
+
+    public BigDecimal getLongitud() {
+        return longitud;
+    }
+
+    public NormasConvivencia getNormasConvivencia() {
+        return normasConvivencia;
+    }
+
+    public List<ServicioAdicional> getServiciosAdicionales() {
+        return serviciosAdicionales;
     }
 
     public LocalTime getHoraEntrada() {

@@ -1,6 +1,8 @@
 package co.edu.uniquindio.sga.application.dto.response;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.List;
 
 /**
  * DTO de respuesta que encapsula la configuración y los parámetros generales del alojamiento (CU-20).
@@ -18,6 +20,11 @@ public record ParametrosAlojamientoResponse(
         String nombre,
         String ciudad,
         String descripcion,
+        String direccion,
+        BigDecimal latitud,
+        BigDecimal longitud,
+        String normasConvivencia,
+        List<ServicioAdicionalResponse> serviciosAdicionales,
         LocalTime horaEntrada,
         LocalTime horaSalida,
         LocalTime horaLimiteNoShow,

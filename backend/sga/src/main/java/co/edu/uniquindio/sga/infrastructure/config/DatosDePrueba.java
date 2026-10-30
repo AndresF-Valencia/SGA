@@ -46,8 +46,10 @@ import co.edu.uniquindio.sga.domain.valueobject.LimiteMascota;
 import co.edu.uniquindio.sga.domain.valueobject.MedioPago;
 import co.edu.uniquindio.sga.domain.valueobject.MotivoBloqueo;
 import co.edu.uniquindio.sga.domain.valueobject.Periodo;
+import co.edu.uniquindio.sga.domain.valueobject.NormasConvivencia;
 import co.edu.uniquindio.sga.domain.valueobject.PlazoConfirmacion;
 import co.edu.uniquindio.sga.domain.valueobject.PoliticaCancelacion;
+import co.edu.uniquindio.sga.domain.valueobject.ServicioAdicional;
 import co.edu.uniquindio.sga.domain.valueobject.TiempoPreparacion;
 import co.edu.uniquindio.sga.domain.valueobject.TipoCargo;
 import co.edu.uniquindio.sga.domain.valueobject.TipoTemporada;
@@ -62,6 +64,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -171,6 +174,12 @@ public class DatosDePrueba implements ApplicationRunner {
                 new TiempoPreparacion(3),             // 3 h entre salida (11:00) y entrada (14:00)
                 new PlazoConfirmacion(1),             // 1 h para pagar el anticipo
                 true, 50);                            // anticipo del 50 % (RNP-03)
+        alojamiento.actualizarFichaDescriptiva("Armenia, Quindío", new BigDecimal("4.5339000"),
+                new BigDecimal("-75.6811000"),
+                new NormasConvivencia("Mascotas permitidas según el límite de cada apartamento. Silencio de 10 p. m. a 7 a. m. "
+                        + "No fumar dentro de los apartamentos."),
+                List.of(new ServicioAdicional("Parqueadero", Dinero.de(15000)),
+                        new ServicioAdicional("Lavandería", Dinero.de(20000))));
         alojamientos.guardar(alojamiento);
 
         // 1 semana o más de anticipación: se devuelve el 100 %; menos: se retiene el 100 %
