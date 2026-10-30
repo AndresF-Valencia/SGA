@@ -765,23 +765,27 @@ paths:
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
 
-  /api/alojamiento/parametros:
+  /api/alojamiento:
     get:
       tags:
       - Alojamiento
-      summary: Consultar los parámetros del alojamiento (7.3)
-      operationId: consultarParametrosAlojamiento
+      summary: Consultar el alojamiento (7.3)
+      operationId: consultarAlojamiento
+      security: []
       responses:
         '200':
-          description: Parámetros vigentes
+          description: Alojamiento con su configuración vigente
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ParametrosAlojamientoResponse'
+        '404':
+          description: No hay alojamiento configurado
+  /api/alojamiento/parametros:
     put:
       tags:
       - Alojamiento
-      summary: Configurar los parámetros del alojamiento (sección 6)
+      summary: Configurar los parámetros del alojamiento (sección 6). Para leerlos, GET /api/alojamiento
       operationId: configurarParametrosAlojamiento
       requestBody:
         required: true
