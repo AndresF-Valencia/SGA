@@ -1,0 +1,138 @@
+###############################################################################
+# SIMULADOR DEL CANAL EXTERNO (10.3.1)  ·  "Booking (simulado)"
+#
+# Cómo usarlo (VS Code):
+#   1. Instala la extensión "REST Client" (de Huachao Mao).
+#   2. Arranca la aplicación:  cd backend/sga && ./gradlew bootRun
+#   3. Da clic en "Send Request" encima de cada petición, EN ORDEN.
+#
+# El canal NO usa token: se autentica con su credencial en el encabezado
+# X-Canal-Credencial. La de los datos de prueba es "clave-booking-demo".
+#
+# Las fechas se calculan solas a partir de hoy, así que funciona cualquier día.
+# Escenarios que exige el enunciado:
+#   1. Reserva externa aceptada
+#   2. Reserva externa en conflicto: rechazada y registrada
+#   3. Mensaje repetido que NO duplica la reserva
+###############################################################################
+
+@base = http://localhost:8080
+@credencial = clave-booking-demo
+
+### 0a. Sin credencial → 401
+GET {{base}}/api/canales/disponibilidad?fechaEntrada={{$datetime "YYYY-MM-DD" 50 d}}&fechaSalida={{$datetime "YYYY-MM-DD" 53 d}}&personas=2
+
+### 0b. Consultar disponibilidad (en 50 días, 3 noches, 2 personas) → 200
+GET {{base}}/api/canales/disponibilidad?fechaEntrada={{$datetime "YYYY-MM-DD" 50 d}}&fechaSalida={{$datetime "YYYY-MM-DD" 53 d}}&personas=2
+X-Canal-Credencial: {{credencial}}
+
+
+### ESCENARIO 1 · Reserva externa ACEPTADA → 201
+# AP002 en 50 días está libre. Fíjate en "codigoExterno" y "canalOrigen": EXTERNO.
+# Si ya la habías enviado antes (misma app encendida), responde 200: eso es el escenario 3.
+# @name aceptada
+POST {{base}}/api/canales/reservas-externas
+Content-Type: application/json
+X-Canal-Credencial: {{credencial}}
+
+{
+  "codigoExterno": "BKG-DEMO-001",
+  "canalOrigen": "EXTERNO",
+  "horaEstimadaLlegada": "15:00:00",
+  "identificacionApartamento": "AP002",
+  "fechaEntrada": "{{$datetime "YYYY-MM-DD" 50 d}}",
+  "fechaSalida": "{{$datetime "YYYY-MM-DD" 53 d}}",
+  "titular": {
+    "nombre": "Sofía Herrera",
+    "documento": "1094777001",
+    "email": "sofia.herrera@example.com",
+    "telefono": "3157770001",
+    "fechaNacimiento": "1992-04-18"
+  },
+  "ocupantes": [
+    { "nombre": "Sofía Herrera", "documento": "1094777001", "fechaNacimiento": "1992-04-18" },
+    { "nombre": "Andrés Mejía",  "documento": "1094777002", "fechaNacimiento": "1990-09-02" }
+  ],
+  "cantidadMascotas": 0
+}
+
+
+### ESCENARIO 3 · MENSAJE REPETIDO → 200 con la MISMA reserva (mismo codigoReserva), no crea otra
+# Es exactamente el mismo mensaje del escenario 1 (el canal lo reintenta).
+POST {{base}}/api/canales/reservas-externas
+Content-Type: application/json
+X-Canal-Credencial: {{credencial}}
+
+{
+  "codigoExterno": "BKG-DEMO-001",
+  "canalOrigen": "EXTERNO",
+  "horaEstimadaLlegada": "15:00:00",
+  "identificacionApartamento": "AP002",
+  "fechaEntrada": "{{$datetime "YYYY-MM-DD" 50 d}}",
+  "fechaSalida": "{{$datetime "YYYY-MM-DD" 53 d}}",
+  "titular": {
+    "nombre": "Sofía Herrera",
+    "documento": "1094777001",
+    "email": "sofia.herrera@example.com",
+    "telefono": "3157770001",
+    "fechaNacimiento": "1992-04-18"
+  },
+  "ocupantes": [
+    { "nombre": "Sofía Herrera", "documento": "1094777001", "fechaNacimiento": "1992-04-18" },
+    { "nombre": "Andrés Mejía",  "documento": "1094777002", "fechaNacimiento": "1990-09-02" }
+  ],
+  "cantidadMascotas": 0
+}
+
+
+### ESCENARIO 2 · Reserva externa en CONFLICTO → 409, y queda REGISTRADA
+# AP005 ya tiene una reserva CONFIRMADA de Valentina Ruiz que llega en 10 días (datos de prueba).
+# Esta choca con ella: se rechaza, la de Valentina NO se toca y el mensaje trae el id "CONF-...".
+POST {{base}}/api/canales/reservas-externas
+Content-Type: application/json
+X-Canal-Credencial: {{credencial}}
+
+{
+  "codigoExterno": "BKG-DEMO-002",
+  "canalOrigen": "EXTERNO",
+  "horaEstimadaLlegada": "16:00:00",
+  "identificacionApartamento": "AP005",
+  "fechaEntrada": "{{$datetime "YYYY-MM-DD" 11 d}}",
+  "fechaSalida": "{{$datetime "YYYY-MM-DD" 13 d}}",
+  "titular": {
+    "nombre": "Mateo Ríos",
+    "documento": "1094777101",
+    "email": "mateo.rios@example.com",
+    "telefono": "3157770101",
+    "fechaNacimiento": "1988-12-01"
+  },
+  "ocupantes": [
+    { "nombre": "Mateo Ríos", "documento": "1094777101", "fechaNacimiento": "1988-12-01" }
+  ],
+  "cantidadMascotas": 0
+}
+
+
+### Ver el conflicto registrado (lo revisa el ADMINISTRADOR, con token)
+# @name loginAdmin
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{ "correo": "admin@sanrocco.co", "contrasena": "Sanrocco123" }
+
+###
+# @name conflictos
+GET {{base}}/api/conflictos-canal?resuelto=false
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+### El administrador lo resuelve (deja por escrito qué hizo)
+PUT {{base}}/api/conflictos-canal/{{conflictos.response.body.contenido[0].id}}/resolver
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+{ "resolucion": "Se le ofreció AP004 en las mismas fechas por el canal" }
+
+
+### Cancelar la reserva externa del escenario 1 → 200 (CANCELADA, con la política congelada)
+PUT {{base}}/api/canales/reservas-externas/BKG-DEMO-001/cancelar?motivo=Cancelada%20por%20el%20huesped%20en%20Booking
+X-Canal-Credencial: {{credencial}}

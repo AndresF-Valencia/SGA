@@ -1,5 +1,10 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import java.util.UUID;
+import co.edu.uniquindio.sga.domain.repository.ConflictoCanalRepository;
+import co.edu.uniquindio.sga.domain.entity.ConflictoCanal;
+import co.edu.uniquindio.sga.domain.entity.Canal;
+import co.edu.uniquindio.sga.application.exception.ConflictoCanalException;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
@@ -42,6 +47,7 @@ public class RecibirReservaExternaUseCase {
     private final DisponibilidadApartamentoService disponibilidadService;
     private final EstanciaMinimaTemporadaAltaService estanciaMinimaService;
     private final CotizadorEstanciaService cotizadorService;
+    private final ConflictoCanalRepository conflictoRepository;
 
     public RecibirReservaExternaUseCase(
             ReservaRepository reservaRepository,
@@ -54,7 +60,8 @@ public class RecibirReservaExternaUseCase {
             GeneradorCodigoReserva generadorCodigo,
             DisponibilidadApartamentoService disponibilidadService,
             EstanciaMinimaTemporadaAltaService estanciaMinimaService,
-            CotizadorEstanciaService cotizadorService) {
+            CotizadorEstanciaService cotizadorService,
+            ConflictoCanalRepository conflictoRepository) {
         this.reservaRepository = reservaRepository;
         this.apartamentoRepository = apartamentoRepository;
         this.alojamientoRepository = alojamientoRepository;
@@ -66,16 +73,17 @@ public class RecibirReservaExternaUseCase {
         this.disponibilidadService = disponibilidadService;
         this.estanciaMinimaService = estanciaMinimaService;
         this.cotizadorService = cotizadorService;
+        this.conflictoRepository = conflictoRepository;
     }
 
     /**
      * Procesa una solicitud de reserva enviada por un canal externo.
      * Garantiza idempotencia (RN-19) y manejo riguroso de conflictos (RN-18).
      */
-    @Transactional
+    @Transactional(noRollbackFor = ConflictoCanalException.class)   // el conflicto registrado se conserva
     public Reserva ejecutar(
             String identificadorExterno,
-            CanalOrigen canalOrigen,
+            Canal canal,
             IdentificacionApartamento idApartamento,
             LocalDate fechaEntrada,
             LocalDate fechaSalida,
@@ -125,8 +133,18 @@ public class RecibirReservaExternaUseCase {
             estanciaMinimaService.verificarEstanciaMinima(estancia, temporadas);
 
         } catch (ReglaDominioException e) {
-            // RN-18: Si colisiona con reservas, bloqueos o reglas, se rechaza limpiamente
-            throw new ReglaDominioException("Conflicto de canal: La reserva externa colisiona con una reserva o bloqueo vigente. Rechazada. Motivo: " + e.getMessage());
+            // Capacidad, mascotas, apartamento inactivo o estancia mínima: se rechaza sin más (409).
+            // Si lo que falla es la ocupación (choca con una reserva, un bloqueo o el tiempo de
+            // preparación), es un CONFLICTO DE CANAL: se rechaza y se registra (RN-18).
+            boolean esChoque = apartamento.estaActivo()
+                    && apartamento.admite(totalOcupantes)
+                    && apartamento.admiteMascotas(cantidadMascotas.cantidad())
+                    && !e.getMessage().toLowerCase().contains("estancia m");
+            if (!esChoque) {
+                throw e;
+            }
+            throw registrarConflicto(identificadorExterno, canal, idApartamento, fechaEntrada, fechaSalida,
+                    titular, e.getMessage(), ahora);
         }
 
         // 5. Cotizar y congelar valores y políticas
@@ -149,7 +167,7 @@ public class RecibirReservaExternaUseCase {
                 estancia,
                 titular,
                 ocupantes,
-                canalOrigen,
+                canal.getTipoCanal(),
                 valorCongelado,
                 alojamiento.getVersionPoliticaVigente(),
                 ahora,
@@ -163,5 +181,23 @@ public class RecibirReservaExternaUseCase {
                 new Cargo(valorCongelado.total(), "Alojamiento", TipoCargo.ALOJAMIENTO, ahora)));
 
         return reservaExterna;
+    }
+
+    /** Un mensaje repetido que ya causó un conflicto pendiente no crea otro registro. */
+    private ConflictoCanalException registrarConflicto(String codigoExterno, Canal canal,
+            IdentificacionApartamento apartamento, LocalDate entrada, LocalDate salida, Ocupante titular,
+            String motivo, LocalDateTime ahora) {
+        ConflictoCanal conflicto = conflictoRepository.buscarPendientePorCodigoExterno(codigoExterno)
+                .orElseGet(() -> {
+                    ConflictoCanal nuevo = ConflictoCanal.registrar(
+                            "CONF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(),
+                            canal.getNombre(), codigoExterno, apartamento.valor(), entrada, salida,
+                            titular == null ? null : titular.getNombre(),
+                            titular == null ? null : titular.getDocumento().numero(),
+                            motivo, ahora);
+                    conflictoRepository.guardar(nuevo);
+                    return nuevo;
+                });
+        return new ConflictoCanalException(conflicto.getId(), conflicto.getMotivo());
     }
 }

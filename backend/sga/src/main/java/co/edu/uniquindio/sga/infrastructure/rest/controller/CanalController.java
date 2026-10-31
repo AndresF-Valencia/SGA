@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga.infrastructure.rest.controller;
 
 import co.edu.uniquindio.sga.application.dto.request.RecibirReservaExternaRequest;
 import co.edu.uniquindio.sga.application.dto.request.ResolverConflictoCanalRequest;
+import co.edu.uniquindio.sga.application.dto.response.ConflictoCanalResponse;
 import co.edu.uniquindio.sga.application.dto.response.DisponibilidadResponse;
 import co.edu.uniquindio.sga.application.dto.response.PaginaResponse;
 import co.edu.uniquindio.sga.application.dto.response.ReservaResponse;
@@ -14,13 +15,14 @@ import co.edu.uniquindio.sga.application.usecase.ConsultarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.RecibirReservaExternaUseCase;
 import co.edu.uniquindio.sga.application.usecase.ResolverConflictoCanalUseCase;
 import co.edu.uniquindio.sga.domain.entity.Canal;
+import co.edu.uniquindio.sga.domain.entity.ConflictoCanal;
 import co.edu.uniquindio.sga.domain.entity.Ocupante;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.valueobject.CantidadMascota;
-import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.DocumentoIdentidad;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
 import co.edu.uniquindio.sga.infrastructure.rest.mapper.ReservaMapper;
+import co.edu.uniquindio.sga.infrastructure.security.UsuarioAutenticado;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -106,7 +109,7 @@ public class CanalController {
     @ApiResponse(responseCode = "201", description = "Reserva externa creada")
     @ApiResponse(responseCode = "200", description = "Mensaje repetido: se devuelve la reserva que ya existía (RN-19)")
     @ApiResponse(responseCode = "401", description = "Credencial de canal inválida")
-    @ApiResponse(responseCode = "409", description = "Choca con una reserva o bloqueo vigente (RN-18)")
+    @ApiResponse(responseCode = "409", description = "Choca con una reserva o bloqueo vigente: se rechaza y queda registrada como conflicto (RN-18)")
     public ResponseEntity<ReservaResponse> recibirReservaExterna(
             @RequestHeader(value = CREDENCIAL, required = false) String credencial,
             @Valid @RequestBody RecibirReservaExternaRequest request) {
@@ -122,7 +125,7 @@ public class CanalController {
 
         var reserva = recibirReservaExternaUseCase.ejecutar(
                 request.codigoExterno(),
-                canal.getTipoCanal(),           // el canal sale de la credencial, no de lo que diga la petición
+                canal,                          // el canal sale de la credencial, no de lo que diga la petición
                 new IdentificacionApartamento(request.identificacionApartamento()),
                 request.fechaEntrada(),
                 request.fechaSalida(),
@@ -151,14 +154,34 @@ public class CanalController {
         return ResponseEntity.ok(reservaMapper.aReserva(reserva));
     }
 
-    /** Resolver un conflicto de canal (administrador, 7.8 / CU-21). Este sí usa JWT. */
+    /** Conflictos de canal registrados (administrador, 7.8). Este sí usa JWT. */
+    @GetMapping("/conflictos-canal")
+    @Operation(summary = "Listar los conflictos de canal")
+    public ResponseEntity<PaginaResponse<ConflictoCanalResponse>> listarConflictos(
+            @RequestParam(required = false) Boolean resuelto,
+            @RequestParam(name = "page", defaultValue = "0") int pagina,
+            @RequestParam(name = "size", defaultValue = "10") int tamano) {
+        var conflictos = resolverConflictoUseCase.listar(resuelto).stream().map(CanalController::aRespuesta).toList();
+        return ResponseEntity.ok(PaginaResponse.de(conflictos, pagina, tamano));
+    }
+
+    /** Resolver un conflicto de canal (administrador, 7.8 / CU-21): deja por escrito qué se hizo. */
     @PutMapping("/conflictos-canal/{id}/resolver")
     @Operation(summary = "Resolver un conflicto de canal")
-    public ResponseEntity<ReservaResponse> resolverConflicto(
+    public ResponseEntity<ConflictoCanalResponse> resolverConflicto(
             @PathVariable String id,
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
             @Valid @RequestBody ResolverConflictoCanalRequest request) {
-        var reserva = resolverConflictoUseCase.rechazarReservaCanal(new CodigoReserva(id), request.resolucion());
-        return ResponseEntity.ok(reservaMapper.aReserva(reserva));
+        var conflicto = resolverConflictoUseCase.resolver(id, request.resolucion(),
+                usuario == null ? "ADMINISTRADOR" : usuario.correo(), LocalDateTime.now());
+        return ResponseEntity.ok(aRespuesta(conflicto));
+    }
+
+    private static ConflictoCanalResponse aRespuesta(ConflictoCanal c) {
+        return new ConflictoCanalResponse(c.getId(), c.getCanal(), c.getCodigoExterno(), c.getApartamento(),
+                c.getFechaEntrada(), c.getFechaSalida(), c.getTitularNombre(), c.getTitularDocumento(),
+                c.getMotivo(), c.getRecibidoEn(), c.estaResuelto() ? "RESUELTO" : "PENDIENTE",
+                c.getResolucion(), c.getResueltoPor(), c.getResueltoEn());
     }
 
     private boolean existe(String codigoExterno) {
