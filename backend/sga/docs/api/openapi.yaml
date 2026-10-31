@@ -1,4 +1,5 @@
 openapi: 3.1.0
+
 info:
   title: API SGA — Hotel Sanrocco
   description: |
@@ -11,7 +12,14 @@ info:
     - RNP-02: Límite de mascotas por apartamento y recargo por limpieza ($70.000 COP).
     - RNP-03: Exigencia del 50% de anticipo para confirmar la reserva.
     - RNP-04: La notificación formal de retraso condona y bloquea la declaración de No-Show.
-  version: 1.0.0
+
+    Seguridad (7.1 y 7.2):
+    - Los usuarios inician sesión en POST /api/auth/login y envían el token en `Authorization: Bearer <token>`.
+    - Las rutas marcadas con `security: []` son públicas (registro, login, catálogo, disponibilidad y cotización).
+    - Los canales externos no usan token: envían su credencial en el encabezado `X-Canal-Credencial`.
+    - 401 = falta el token o no es válido. 403 = el rol no tiene permiso, o la reserva es de otro huésped.
+    - El alojamiento es único (F-13): ninguna operación pide su identificador.
+  version: 1.1.0
   contact:
     name: Grupo Niche
     email: andresf.valenciaa1@uqvirtual.edu.co
@@ -21,6 +29,10 @@ servers:
   description: Servidor de desarrollo local
 
 tags:
+- name: Autenticación
+  description: Registro de huéspedes e inicio de sesión (JWT)
+- name: Usuarios
+  description: Gestión de usuarios internos (solo administrador)
 - name: Reservas
   description: Ciclo de vida de la reserva, cotización y disponibilidad
 - name: Folio y Finanzas
@@ -38,13 +50,94 @@ tags:
 
 paths:
 
+  /api/auth/registro:
+    post:
+      tags:
+      - Autenticación
+      summary: Registrarse como huésped
+      operationId: registrarHuesped
+      description: 'Crea una cuenta con rol HUESPED. El correo no puede estar registrado (409). Pública: no requiere token.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroUsuarioRequest'
+      responses:
+        '201':
+          description: Huésped registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+
+  /api/auth/login:
+    post:
+      tags:
+      - Autenticación
+      summary: Iniciar sesión y obtener el token
+      operationId: iniciarSesion
+      description: 'Devuelve un JWT que se envía en Authorization: Bearer. Correo o contraseña incorrectos → 401. Pública: no requiere token.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+
+  /api/usuarios:
+    post:
+      tags:
+      - Usuarios
+      summary: Crear un usuario interno
+      operationId: crearUsuario
+      description: 'Solo el administrador. Crea recepcionistas, administradores o personal de servicio. Roles: Administrador.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearUsuarioRequest'
+      responses:
+        '201':
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+
   /api/reservas:
     post:
       tags:
       - Reservas
       summary: Crear una reserva por el canal portal o directo (CU-01)
       operationId: crearReserva
-      description: Valida, en orden, las seis condiciones de 7.5. El valor y la política quedan congelados (RN-22).
+      description: 'Valida, en orden, las seis condiciones de 7.5. El valor y la política quedan congelados (RN-22). Roles: Huésped, Recepcionista, Administrador.'
       requestBody:
         required: true
         content:
@@ -66,6 +159,10 @@ paths:
                 example: /api/reservas/RES-2026-00001
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -134,13 +231,18 @@ paths:
                 $ref: '#/components/schemas/PaginaReservaResumen'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+      description: 'Roles: Recepcionista, Administrador.'
 
   /api/reservas/mis-reservas:
     get:
       tags:
       - Reservas
       summary: Listar las reservas del huésped autenticado
-      description: El titular sale del token; no se acepta otro documento. De la más reciente a la más antigua.
+      description: 'El titular sale del token; no se acepta otro documento. De la más reciente a la más antigua. Roles: Huésped.'
       operationId: misReservas
       parameters:
       - name: estado
@@ -164,6 +266,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginaReservaResumen'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
 
   /api/reservas/{codigo}:
     get:
@@ -180,10 +286,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReservaResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
         '403':
-          description: La reserva pertenece a otro huésped (7.2).
+          description: '403: el rol no tiene permiso, o la reserva pertenece a otro huésped (7.2).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NoEncontrado'
+      description: 'Roles: Huésped, Recepcionista, Administrador.'
     put:
       tags:
       - Reservas
@@ -206,10 +319,15 @@ paths:
                 $ref: '#/components/schemas/ReservaResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
+      description: 'Roles: Recepcionista, Administrador.'
 
   /api/reservas/{codigo}/confirmar:
     put:
@@ -217,7 +335,7 @@ paths:
       - Reservas
       summary: Confirmar una reserva PENDIENTE (RN-08, RN-09, RNP-03)
       operationId: confirmarReserva
-      description: Exige hora estimada de llegada y el anticipo del 50 % registrado en el folio.
+      description: 'Exige hora estimada de llegada y el anticipo del 50 % registrado en el folio. Roles: Recepcionista, Administrador.'
       parameters:
       - $ref: '#/components/parameters/CodigoReserva'
       responses:
@@ -227,6 +345,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReservaResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -238,7 +360,7 @@ paths:
       - Reservas
       summary: Cancelar una reserva PENDIENTE o CONFIRMADA (RN-12, RN-13)
       operationId: cancelarReserva
-      description: La retención se calcula con la política congelada en la reserva y se registra en el folio.
+      description: 'La retención se calcula con la política congelada en la reserva y se registra en el folio. Roles: Huésped, Recepcionista, Administrador.'
       parameters:
       - $ref: '#/components/parameters/CodigoReserva'
       requestBody:
@@ -256,6 +378,10 @@ paths:
                 $ref: '#/components/schemas/ReservaResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -267,7 +393,7 @@ paths:
       - Reservas
       summary: Declarar que el titular no se presentó (7.5, RNP-04)
       operationId: declararNoShow
-      description: Solo desde CONFIRMADA y pasada la hora límite configurada (L-15). Retiene el anticipo.
+      description: 'Solo desde CONFIRMADA y pasada la hora límite configurada (L-15). Retiene el anticipo. Roles: Recepcionista, Administrador.'
       parameters:
       - $ref: '#/components/parameters/CodigoReserva'
       responses:
@@ -277,6 +403,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReservaResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -288,7 +418,7 @@ paths:
       - Reservas
       summary: Registrar la llegada del grupo (check-in) (RN-10, RN-11, RNP-03)
       operationId: registrarLlegada
-      description: Exige reserva CONFIRMADA, fecha de entrada alcanzada, apartamento PREPARADO y folio pagado.
+      description: 'Exige reserva CONFIRMADA, fecha de entrada alcanzada, apartamento PREPARADO y folio pagado. Roles: Recepcionista, Administrador.'
       parameters:
       - $ref: '#/components/parameters/CodigoReserva'
       responses:
@@ -298,6 +428,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReservaResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -309,8 +443,7 @@ paths:
       - Reservas
       summary: Registrar la salida del grupo (check-out) (RN-17)
       operationId: registrarSalida
-      description: Cierra el folio (con autorización del administrador si queda saldo), finaliza la reserva y deja
-        el apartamento PENDIENTE_PREPARACION.
+      description: 'Cierra el folio (con autorización del administrador si queda saldo), finaliza la reserva y deja el apartamento PENDIENTE_PREPARACION. Roles: Recepcionista, Administrador.'
       parameters:
       - $ref: '#/components/parameters/CodigoReserva'
       requestBody:
@@ -328,6 +461,10 @@ paths:
                 $ref: '#/components/schemas/ReservaResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -347,8 +484,7 @@ paths:
               $ref: '#/components/schemas/CotizacionRequest'
       responses:
         '200':
-          description: 'Cotización calculada. Responde 200 y no 201: no se crea ningún recurso ni se retienen noches
-            (Guía 07, 4.5).'
+          description: 'Cotización calculada. Responde 200 y no 201: no se crea ningún recurso ni se retienen noches (Guía 07, 4.5).'
           content:
             application/json:
               schema:
@@ -359,6 +495,8 @@ paths:
           $ref: '#/components/responses/NoEncontrado'
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
+      security: []
+      description: 'Pública: no requiere token.'
 
   /api/disponibilidad:
     get:
@@ -439,6 +577,8 @@ paths:
                 $ref: '#/components/schemas/DisponibilidadResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+      security: []
+      description: 'Pública: no requiere token.'
 
   /api/reservas/{codigo}/folio:
     get:
@@ -455,8 +595,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FolioResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          description: '403: el rol no tiene permiso, o la reserva pertenece a otro huésped (7.2).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NoEncontrado'
+      description: 'Roles: Huésped, Recepcionista, Administrador.'
 
   /api/reservas/{codigo}/folio/cargos:
     post:
@@ -481,10 +630,15 @@ paths:
                 $ref: '#/components/schemas/FolioResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
+      description: 'Roles: Recepcionista, Administrador.'
 
   /api/reservas/{codigo}/folio/pagos:
     post:
@@ -509,10 +663,15 @@ paths:
                 $ref: '#/components/schemas/FolioResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
+      description: 'Roles: Recepcionista, Administrador.'
 
   /api/reservas/{codigo}/folio/correcciones:
     post:
@@ -530,18 +689,22 @@ paths:
               $ref: '#/components/schemas/CorregirMovimientoRequest'
       responses:
         '201':
-          description: 'Movimiento inverso registrado. Es POST porque crea un movimiento nuevo: los cargos y pagos
-            no se editan.'
+          description: 'Movimiento inverso registrado. Es POST porque crea un movimiento nuevo: los cargos y pagos no se editan.'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FolioResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
+      description: 'Roles: Recepcionista, Administrador. Pendiente de implementar (Corte 3).'
 
   /api/reservas/{codigo}/folio/cerrar:
     put:
@@ -566,10 +729,15 @@ paths:
                 $ref: '#/components/schemas/FolioResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
+      description: 'Roles: Recepcionista, Administrador.'
 
   /api/apartamentos:
     get:
@@ -577,7 +745,7 @@ paths:
       - Apartamentos y Operación
       summary: Listar los apartamentos (7.3)
       operationId: listarApartamentos
-      description: Devuelve todos los apartamentos, activos e inactivos.
+      description: 'Devuelve todos los apartamentos, activos e inactivos. Pública: no requiere token.'
       responses:
         '200':
           description: Listado de apartamentos
@@ -587,13 +755,13 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ApartamentoDetalleResponse'
+      security: []
     post:
       tags:
       - Apartamentos y Operación
       summary: Crear un apartamento (7.3)
       operationId: crearApartamento
-      description: Solo el administrador. El apartamento se crea inactivo y se activa cuando tenga tarifa en todas
-        las temporadas.
+      description: 'Solo el administrador. El apartamento se crea inactivo y se activa cuando tenga tarifa en todas las temporadas. Roles: Administrador.'
       requestBody:
         required: true
         content:
@@ -609,6 +777,10 @@ paths:
                 $ref: '#/components/schemas/ApartamentoDetalleResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
 
@@ -628,6 +800,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApartamentoEstadoResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+      description: 'Roles: Recepcionista, Administrador, Personal de servicio. Pendiente de implementar (Corte 3).'
 
   /api/apartamentos/{identificacion}:
     get:
@@ -646,14 +823,14 @@ paths:
                 $ref: '#/components/schemas/ApartamentoDetalleResponse'
         '404':
           $ref: '#/components/responses/NoEncontrado'
-
+      security: []
+      description: 'Pública: no requiere token.'
     put:
       tags:
       - Apartamentos y Operación
       summary: Actualizar un apartamento (7.3)
       operationId: actualizarApartamento
-      description: Solo el administrador. Cambia los datos descriptivos; no modifica la identificación, el estado
-        operativo ni si está activo.
+      description: 'Solo el administrador. Cambia los datos descriptivos; no modifica la identificación, el estado operativo ni si está activo. Roles: Administrador.'
       parameters:
       - $ref: '#/components/parameters/IdentificacionApartamento'
       requestBody:
@@ -671,6 +848,10 @@ paths:
                 $ref: '#/components/schemas/ApartamentoDetalleResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -680,8 +861,7 @@ paths:
       - Apartamentos y Operación
       summary: Deshabilitar un apartamento (7.3)
       operationId: deshabilitarApartamento
-      description: Solo el administrador. Eliminación lógica, el apartamento no se borra. Falla con 409 si tiene
-        reservas activas (PENDIENTE, CONFIRMADA o EN_CURSO).
+      description: 'Solo el administrador. Eliminación lógica, el apartamento no se borra. Falla con 409 si tiene reservas activas (PENDIENTE, CONFIRMADA o EN_CURSO). Roles: Administrador.'
       parameters:
       - $ref: '#/components/parameters/IdentificacionApartamento'
       responses:
@@ -691,6 +871,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApartamentoDetalleResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -702,8 +886,7 @@ paths:
       - Apartamentos y Operación
       summary: Activar un apartamento (7.3)
       operationId: activarApartamento
-      description: Solo el administrador. Falla con 409 si el apartamento no tiene tarifa en todas las temporadas
-        registradas.
+      description: 'Solo el administrador. Falla con 409 si el apartamento no tiene tarifa en todas las temporadas registradas. Roles: Administrador.'
       parameters:
       - $ref: '#/components/parameters/IdentificacionApartamento'
       responses:
@@ -713,6 +896,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApartamentoDetalleResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -724,8 +911,7 @@ paths:
       - Apartamentos y Operación
       summary: Cambiar el estado operativo de un apartamento (7.6)
       operationId: cambiarEstadoOperativo
-      description: El dominio solo acepta las transiciones de 7.6. FUERA_DE_SERVICIO es exclusiva del administrador
-        (7.1).
+      description: 'El dominio solo acepta las transiciones de 7.6. FUERA_DE_SERVICIO es exclusiva del administrador (7.1). Roles: Personal de servicio, Administrador.'
       parameters:
       - $ref: '#/components/parameters/IdentificacionApartamento'
       requestBody:
@@ -743,6 +929,10 @@ paths:
                 $ref: '#/components/schemas/ApartamentoDetalleResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -771,8 +961,13 @@ paths:
                 $ref: '#/components/schemas/NovedadResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
+      description: 'Roles: Personal de servicio, Administrador. Pendiente de implementar (Corte 3).'
     get:
       tags:
       - Apartamentos y Operación
@@ -789,8 +984,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginaNovedad'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
+      description: 'Roles: Personal de servicio, Administrador. Pendiente de implementar (Corte 3).'
 
   /api/apartamentos/{identificacion}/bloqueos:
     get:
@@ -809,8 +1009,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginaBloqueo'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
+      description: 'Roles: Administrador. Pendiente de implementar (Corte 3).'
 
   /api/bloqueos:
     post:
@@ -818,7 +1023,7 @@ paths:
       - Apartamentos y Operación
       summary: Registrar un bloqueo administrativo (7.3, RN-07)
       operationId: crearBloqueo
-      description: No se permite sobre noches que ya tengan reservas activas (7.3).
+      description: 'No se permite sobre noches que ya tengan reservas activas (7.3). Roles: Administrador.'
       requestBody:
         required: true
         content:
@@ -834,6 +1039,10 @@ paths:
                 $ref: '#/components/schemas/BloqueoResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -864,10 +1073,15 @@ paths:
           description: Tarifa registrada
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
+      description: 'Roles: Administrador.'
 
   /api/alojamiento:
     get:
@@ -885,6 +1099,8 @@ paths:
                 $ref: '#/components/schemas/ParametrosAlojamientoResponse'
         '404':
           description: No hay alojamiento configurado
+      description: 'Pública: no requiere token.'
+
   /api/alojamiento/parametros:
     put:
       tags:
@@ -906,6 +1122,11 @@ paths:
                 $ref: '#/components/schemas/ParametrosAlojamientoResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+      description: 'Roles: Administrador.'
 
   /api/temporadas:
     post:
@@ -913,7 +1134,7 @@ paths:
       - Temporadas y Tarifas
       summary: Registrar una temporada (7.4)
       operationId: registrarTemporada
-      description: Las temporadas no pueden solaparse entre sí (7.4).
+      description: 'Las temporadas no pueden solaparse entre sí (7.4). Roles: Administrador.'
       requestBody:
         required: true
         content:
@@ -929,6 +1150,10 @@ paths:
                 $ref: '#/components/schemas/TemporadaResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
     get:
@@ -946,6 +1171,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginaTemporada'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+      description: 'Roles: Administrador.'
 
   /api/politicas-cancelacion:
     post:
@@ -968,8 +1198,13 @@ paths:
                 $ref: '#/components/schemas/PoliticaCancelacionResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
+      description: 'Roles: Administrador.'
     get:
       tags:
       - Políticas de Cancelación
@@ -985,37 +1220,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginaPoliticaCancelacion'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+      description: 'Roles: Administrador.'
 
   /api/canales/disponibilidad:
     get:
       tags:
-        - Canal Externo
+      - Canal Externo
       summary: 'Canal externo: consultar disponibilidad (10.3.1)'
       operationId: consultarDisponibilidadCanal
       parameters:
-        - name: fechaEntrada
-          in: query
-          required: true
-          schema:
-            type: string
-            format: date
-            example: '2026-11-01'
-        - name: fechaSalida
-          in: query
-          required: true
-          schema:
-            type: string
-            format: date
-            example: '2026-11-04'
-        - name: personas
-          in: query
-          required: true
-          description: Total de personas del grupo (todos cuentan para la capacidad, RN-02).
-          schema:
-            type: integer
-            format: int32
-            minimum: 1
-            example: 2
+      - name: fechaEntrada
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          example: '2026-11-01'
+      - name: fechaSalida
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          example: '2026-11-04'
+      - name: personas
+        in: query
+        required: true
+        description: Total de personas del grupo (todos cuentan para la capacidad, RN-02).
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 2
       responses:
         '200':
           description: Apartamentos disponibles
@@ -1028,7 +1268,7 @@ paths:
         '401':
           $ref: '#/components/responses/NoAutenticado'
       security:
-        - canalCredencial: []
+      - canalCredencial: []
 
   /api/canales/reservas-externas:
     post:
@@ -1036,8 +1276,7 @@ paths:
       - Canal Externo
       summary: 'Canal externo: crear una reserva externa (RN-18, RN-19)'
       operationId: recibirReservaExterna
-      description: Si colisiona con una reserva vigente se rechaza con 409 y queda registrada como conflicto para
-        el administrador; nunca sobrescribe la reserva existente (RN-18).
+      description: Si colisiona con una reserva vigente se rechaza con 409 y queda registrada como conflicto para el administrador; nunca sobrescribe la reserva existente (RN-18).
       requestBody:
         required: true
         content:
@@ -1058,8 +1297,7 @@ paths:
                 type: string
                 example: /api/reservas/RES-2026-00001
         '200':
-          description: 'Mensaje repetido: ya existía una reserva con este canal y código externo; se devuelve la
-            misma, sin duplicarla (RN-19).'
+          description: 'Mensaje repetido: ya existía una reserva con este canal y código externo; se devuelve la misma, sin duplicarla (RN-19).'
           content:
             application/json:
               schema:
@@ -1130,13 +1368,19 @@ paths:
                 $ref: '#/components/schemas/ReservaResponse'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
+      description: 'Roles: Administrador.'
 
 components:
   parameters:
+
     CodigoReserva:
       name: codigo
       in: path
@@ -1146,6 +1390,7 @@ components:
         type: string
         pattern: ^RES-\d{4}-\d{5}$
         example: RES-2026-00001
+
     IdentificacionApartamento:
       name: identificacion
       in: path
@@ -1153,6 +1398,7 @@ components:
       schema:
         type: string
         example: AP001
+
     Pagina:
       name: page
       in: query
@@ -1163,6 +1409,7 @@ components:
         format: int32
         minimum: 0
         default: 0
+
     Tamano:
       name: size
       in: query
@@ -1175,6 +1422,7 @@ components:
         maximum: 10
         default: 10
   schemas:
+
     ApartamentoEstadoResponse.ApartamentoEstadoDetalleDto:
       type: object
       properties:
@@ -1187,11 +1435,18 @@ components:
         estadoOperativo:
           type: string
           example: PREPARADO
+          enum: &id003
+          - PREPARADO
+          - OCUPADO
+          - PENDIENTE_PREPARACION
+          - EN_PREPARACION
+          - FUERA_DE_SERVICIO
         codigoReservaActual:
           type: string
         observaciones:
           type: string
           example: Sin novedades
+
     CambiarEstadoOperativoRequest:
       type: object
       required:
@@ -1206,6 +1461,7 @@ components:
           - EN_PREPARACION
           - FUERA_DE_SERVICIO
           example: PREPARADO
+
     ActualizarApartamentoRequest:
       type: object
       required:
@@ -1253,6 +1509,7 @@ components:
           items:
             type: string
           example: []
+
     CrearApartamentoRequest:
       type: object
       required:
@@ -1304,6 +1561,7 @@ components:
           items:
             type: string
           example: []
+
     CancelarReservaRequest:
       type: object
       required:
@@ -1314,6 +1572,7 @@ components:
           minLength: 5
           maxLength: 300
           example: Mantenimiento de la cocina
+
     CerrarFolioRequest:
       type: object
       required:
@@ -1333,6 +1592,7 @@ components:
           type: string
           maxLength: 300
           example: Sin novedades
+
     ConfigurarParametrosAlojamientoRequest:
       type: object
       required:
@@ -1364,7 +1624,7 @@ components:
         serviciosAdicionales:
           type: array
           items:
-            $ref: '#/components/schemas/ServicioAdicional'
+            $ref: '#/components/schemas/ServicioAdicionalRequest'
         horaEntrada:
           type: string
           format: time
@@ -1398,6 +1658,7 @@ components:
           minimum: 0
           maximum: 100
           example: 50
+
     CorregirMovimientoRequest:
       type: object
       required:
@@ -1412,6 +1673,7 @@ components:
           minLength: 5
           maxLength: 300
           example: Mantenimiento de la cocina
+
     CotizacionRequest:
       type: object
       required:
@@ -1438,6 +1700,7 @@ components:
           items:
             $ref: '#/components/schemas/CotizacionRequest.OcupanteCotizacionDto'
           minItems: 1
+
     CotizacionRequest.OcupanteCotizacionDto:
       type: object
       required:
@@ -1447,6 +1710,7 @@ components:
           type: string
           format: date
           example: '1990-05-01'
+
     CotizacionResponse.DetalleTarifaNocheDto:
       type: object
       properties:
@@ -1458,9 +1722,21 @@ components:
           type: integer
           format: int64
           example: 100000
+          description: Tarifa por ocupante facturable y noche.
         nombreTemporada:
           type: string
           example: Alta
+        ocupantesFacturables:
+          type: integer
+          format: int32
+          description: Ocupantes que pagan esa noche (los menores del umbral no pagan).
+          example: 2
+        subtotal:
+          type: integer
+          format: int64
+          description: tarifaAplicada × ocupantesFacturables.
+          example: 200000
+
     CrearBloqueoRequest:
       type: object
       required:
@@ -1487,6 +1763,7 @@ components:
           minLength: 5
           maxLength: 300
           example: Mantenimiento de la cocina
+
     CrearReservaRequest:
       type: object
       required:
@@ -1518,6 +1795,10 @@ components:
           type: string
           minLength: 1
           example: DIRECTO
+          enum: &id001
+          - PORTAL
+          - DIRECTO
+          - EXTERNO
         titular:
           $ref: '#/components/schemas/CrearReservaRequest.TitularDto'
         ocupantes:
@@ -1529,6 +1810,7 @@ components:
           type: integer
           format: int32
           example: 0
+
     CrearReservaRequest.OcupanteDto:
       type: object
       required:
@@ -1548,6 +1830,7 @@ components:
           type: string
           format: date
           example: '1990-05-01'
+
     CrearReservaRequest.TitularDto:
       type: object
       required:
@@ -1577,6 +1860,7 @@ components:
           type: string
           format: date
           example: '1990-05-01'
+
     DisponibilidadResponse.ApartamentoDisponibleDto:
       type: object
       properties:
@@ -1586,9 +1870,6 @@ components:
         nombre:
           type: string
           example: Familiar
-        descripcion:
-          type: string
-          example: Apartamento familiar con balcón
         capacidadMaxima:
           type: integer
           format: int32
@@ -1611,6 +1892,7 @@ components:
           type: integer
           format: int64
           example: 100000
+
     FolioResponse.CargoResumenDto:
       type: object
       properties:
@@ -1631,6 +1913,7 @@ components:
         registradoPor:
           type: string
           example: recepcion
+
     FolioResponse.PagoResumenDto:
       type: object
       properties:
@@ -1640,6 +1923,10 @@ components:
         medioPago:
           type: string
           example: EFECTIVO
+          enum: &id002
+          - EFECTIVO
+          - TARJETA_CREDITO
+          - TARJETA_DEBITO
         monto:
           type: integer
           format: int64
@@ -1651,6 +1938,7 @@ components:
         referencia:
           type: string
           example: TX-99887766
+
     ModificarReservaRequest:
       type: object
       required:
@@ -1676,6 +1964,7 @@ components:
           format: int32
           minimum: 0
           example: 0
+
     PoliticaCancelacionResponse.TramoPoliticaDto:
       type: object
       properties:
@@ -1691,6 +1980,7 @@ components:
           type: number
           format: double
           example: 100
+
     PublicarPoliticaCancelacionRequest:
       type: object
       required:
@@ -1706,6 +1996,7 @@ components:
           items:
             $ref: '#/components/schemas/PublicarPoliticaCancelacionRequest.TramoPoliticaDto'
           minItems: 1
+
     PublicarPoliticaCancelacionRequest.TramoPoliticaDto:
       type: object
       required:
@@ -1729,6 +2020,7 @@ components:
           minimum: 0
           maximum: 100
           example: 100
+
     RecibirReservaExternaRequest:
       type: object
       required:
@@ -1749,6 +2041,8 @@ components:
           type: string
           minLength: 1
           example: EXTERNO
+          description: 'Informativo: el canal real se toma de la credencial X-Canal-Credencial.'
+          enum: *id001
         horaEstimadaLlegada:
           type: string
           example: '15:00:00'
@@ -1776,6 +2070,7 @@ components:
           type: integer
           format: int32
           example: 0
+
     RecibirReservaExternaRequest.OcupanteExternoDto:
       type: object
       required:
@@ -1795,6 +2090,7 @@ components:
           type: string
           format: date
           example: '1990-05-01'
+
     RecibirReservaExternaRequest.TitularExternoDto:
       type: object
       required:
@@ -1824,6 +2120,7 @@ components:
           type: string
           format: date
           example: '1990-05-01'
+
     RegistrarCargoRequest:
       type: object
       required:
@@ -1839,6 +2136,7 @@ components:
           format: int64
           minimum: 1
           example: 300000
+
     RegistrarNovedadRequest:
       type: object
       required:
@@ -1854,6 +2152,7 @@ components:
           type: string
           minLength: 1
           example: ALTA
+
     RegistrarPagoRequest:
       type: object
       required:
@@ -1870,10 +2169,12 @@ components:
           type: string
           minLength: 1
           example: EFECTIVO
+          enum: *id002
         fechaPago:
           type: string
           format: date
           example: '2026-10-22'
+
     RegistrarSalidaRequest:
       type: object
       required:
@@ -1893,6 +2194,7 @@ components:
           type: string
           maxLength: 300
           example: Sin novedades
+
     RegistrarTarifaRequest:
       type: object
       required:
@@ -1903,6 +2205,7 @@ components:
           format: int64
           minimum: 1
           example: 100000
+
     RegistrarTemporadaRequest:
       type: object
       required:
@@ -1927,6 +2230,16 @@ components:
           format: int32
           minimum: 1
           example: 3
+        tipo:
+          type: string
+          enum:
+          - BASE
+          - MEDIA
+          - ALTA
+          default: BASE
+          description: Si no se envía, la temporada queda como BASE.
+          example: ALTA
+
     ReservaResponse.OcupanteResumenDto:
       type: object
       properties:
@@ -1940,6 +2253,7 @@ components:
           type: string
           format: date
           example: '1990-05-01'
+
     ReservaResponse.TitularResumenDto:
       type: object
       properties:
@@ -1955,6 +2269,7 @@ components:
         telefono:
           type: string
           example: '3100000000'
+
     ResolverConflictoCanalRequest:
       type: object
       required:
@@ -1965,6 +2280,7 @@ components:
           minLength: 5
           maxLength: 300
           example: Se rechaza la reserva externa por colisión con RES-2026-00001
+
     ApartamentoDetalleResponse:
       type: object
       properties:
@@ -1992,6 +2308,7 @@ components:
         estadoOperativo:
           type: string
           example: PREPARADO
+          enum: *id003
         activo:
           type: boolean
         caracteristicas:
@@ -2008,6 +2325,7 @@ components:
             type: string
           example:
           - https://img.ejemplo.com/ap001-1.jpg
+
     ApartamentoEstadoResponse:
       type: object
       properties:
@@ -2019,6 +2337,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ApartamentoEstadoResponse.ApartamentoEstadoDetalleDto'
+
     BloqueoResponse:
       type: object
       properties:
@@ -2045,6 +2364,7 @@ components:
         fechaCreacion:
           type: string
           format: date-time
+
     CotizacionResponse:
       type: object
       properties:
@@ -2075,6 +2395,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CotizacionResponse.DetalleTarifaNocheDto'
+
     DisponibilidadResponse:
       type: object
       properties:
@@ -2106,6 +2427,7 @@ components:
           type: integer
           format: int32
           example: 1
+
     ErrorResponse:
       type: object
       properties:
@@ -2131,6 +2453,7 @@ components:
           items:
             type: string
           example: []
+
     FolioResponse:
       type: object
       properties:
@@ -2140,6 +2463,9 @@ components:
         estadoFolio:
           type: string
           example: ABIERTO
+          enum:
+          - ABIERTO
+          - CERRADO
         subtotalCargos:
           type: integer
           format: int64
@@ -2160,6 +2486,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FolioResponse.PagoResumenDto'
+
     NovedadResponse:
       type: object
       properties:
@@ -2184,6 +2511,7 @@ components:
           example: '2026-10-22T10:00:00-05:00'
         reportadoPor:
           type: string
+
     PaginaBloqueo:
       allOf:
       - $ref: '#/components/schemas/PaginaResponse'
@@ -2195,6 +2523,7 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/BloqueoResponse'
+
     PaginaNovedad:
       allOf:
       - $ref: '#/components/schemas/PaginaResponse'
@@ -2206,6 +2535,7 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/NovedadResponse'
+
     PaginaPoliticaCancelacion:
       allOf:
       - $ref: '#/components/schemas/PaginaResponse'
@@ -2217,6 +2547,7 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/PoliticaCancelacionResponse'
+
     PaginaReservaResumen:
       allOf:
       - $ref: '#/components/schemas/PaginaResponse'
@@ -2228,6 +2559,7 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/ReservaResumenResponse'
+
     PaginaResponse:
       type: object
       description: 'Datos de paginación comunes a todos los listados (12.4: 10 por página).'
@@ -2254,6 +2586,7 @@ components:
           type: integer
           format: int32
           example: 5
+
     PaginaTemporada:
       allOf:
       - $ref: '#/components/schemas/PaginaResponse'
@@ -2265,19 +2598,7 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/TemporadaResponse'
-    ServicioAdicional:
-      type: object
-      required:
-      - nombre
-      - valor
-      properties:
-        nombre:
-          type: string
-          example: Parqueadero
-        valor:
-          type: number
-          minimum: 0
-          example: 15000
+
     ParametrosAlojamientoResponse:
       type: object
       properties:
@@ -2311,7 +2632,7 @@ components:
         serviciosAdicionales:
           type: array
           items:
-            $ref: '#/components/schemas/ServicioAdicional'
+            $ref: '#/components/schemas/ServicioAdicionalResponse'
         horaEntrada:
           type: string
           format: time
@@ -2324,10 +2645,6 @@ components:
           type: string
           format: time
           example: '20:00:00'
-        horasPreparacion:
-          type: integer
-          format: int32
-          example: 3
         horasPlazoConfirmacion:
           type: integer
           format: int32
@@ -2347,6 +2664,12 @@ components:
           type: integer
           format: int32
           example: 1
+        minutosPreparacion:
+          type: integer
+          format: int32
+          description: Tiempo de preparación entre estancias, en minutos.
+          example: 180
+
     PoliticaCancelacionResponse:
       type: object
       properties:
@@ -2368,6 +2691,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PoliticaCancelacionResponse.TramoPoliticaDto'
+
     ReservaResponse:
       type: object
       properties:
@@ -2377,12 +2701,21 @@ components:
         codigoExterno:
           type: string
           example: BKG-998877
+          description: Solo en reservas que llegaron por un canal externo.
         estadoReserva:
           type: string
           example: PENDIENTE
+          enum: &id004
+          - PENDIENTE
+          - CONFIRMADA
+          - EN_CURSO
+          - FINALIZADA
+          - CANCELADA
+          - NO_SHOW
         canalOrigen:
           type: string
           example: DIRECTO
+          enum: *id001
         apartamentoId:
           type: string
           example: AP001
@@ -2397,6 +2730,8 @@ components:
         horaEstimadaLlegada:
           type: string
           example: '15:00:00'
+          format: time
+          description: Null si el huésped aún no la indicó.
         fechaCreacion:
           type: string
           format: date-time
@@ -2418,6 +2753,7 @@ components:
           type: integer
           format: int32
           example: 0
+
     ReservaResumenResponse:
       type: object
       properties:
@@ -2438,9 +2774,11 @@ components:
         estadoReserva:
           type: string
           example: PENDIENTE
+          enum: *id004
         canalOrigen:
           type: string
           example: DIRECTO
+          enum: *id001
         nombreTitular:
           type: string
           example: Laura Gómez
@@ -2448,6 +2786,7 @@ components:
           type: integer
           format: int64
           example: 600000
+
     TemporadaResponse:
       type: object
       properties:
@@ -2468,31 +2807,182 @@ components:
         tipoTemporada:
           type: string
           example: ALTA
+          enum:
+          - BASE
+          - MEDIA
+          - ALTA
         estanciaMinima:
           type: integer
           format: int64
           example: 3
+
+    LoginRequest:
+      type: object
+      required:
+      - correo
+      - contrasena
+      properties:
+        correo:
+          type: string
+          format: email
+          example: admin@sanrocco.co
+        contrasena:
+          type: string
+          format: password
+          example: Sanrocco123
+
+    RegistroUsuarioRequest:
+      type: object
+      required:
+      - nombre
+      - correo
+      - contrasena
+      - telefono
+      - documento
+      - fechaNacimiento
+      properties:
+        nombre: &id005
+          type: string
+          example: Laura Gómez
+        correo: &id006
+          type: string
+          format: email
+          example: laura@example.com
+        contrasena: &id007
+          type: string
+          format: password
+          minLength: 8
+          example: Sanrocco123
+        telefono: &id008
+          type: string
+          example: '3001234567'
+        documento: &id009
+          type: string
+          example: '1094000001'
+        fechaNacimiento: &id010
+          type: string
+          format: date
+          description: Debe ser una fecha pasada.
+          example: '1990-05-01'
+
+    CrearUsuarioRequest:
+      type: object
+      required:
+      - nombre
+      - correo
+      - contrasena
+      - telefono
+      - documento
+      - fechaNacimiento
+      - rol
+      properties:
+        nombre: *id005
+        correo: *id006
+        contrasena: *id007
+        telefono: *id008
+        documento: *id009
+        fechaNacimiento: *id010
+        rol:
+          type: string
+          enum: &id011
+          - HUESPED
+          - RECEPCIONISTA
+          - ADMINISTRADOR
+          - PERSONAL_SERVICIO
+          example: RECEPCIONISTA
+
+    UsuarioResponse:
+      type: object
+      properties:
+        correo:
+          type: string
+          example: laura@example.com
+        nombre:
+          type: string
+          example: Laura Gómez
+        telefono:
+          type: string
+          example: '3001234567'
+        documento:
+          type: string
+          example: '1094000001'
+        fechaNacimiento:
+          type: string
+          format: date
+          example: '1990-05-01'
+        rol:
+          type: string
+          enum: *id011
+          example: HUESPED
+        activo:
+          type: boolean
+          example: true
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiJ9...
+        tipo:
+          type: string
+          example: Bearer
+        expiraEn:
+          type: string
+          format: date-time
+          example: '2026-11-02T12:00:00Z'
+        usuario:
+          $ref: '#/components/schemas/UsuarioResponse'
+
+    ServicioAdicionalRequest:
+      type: object
+      required:
+      - nombre
+      - valor
+      properties: &id012
+        nombre:
+          type: string
+          example: Parqueadero
+        valor:
+          type: number
+          minimum: 0
+          example: 15000
+
+    ServicioAdicionalResponse:
+      type: object
+      properties: *id012
   responses:
+
     DatosInvalidos:
       description: '400: el mensaje está mal formado o le falta un campo (lo detecta Bean Validation).'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+
     NoAutenticado:
-      description: '401: falta la credencial o no es válida.'
+      description: '401: falta el token (o la credencial del canal) o no es válido.'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+
     NoEncontrado:
       description: '404: el identificador no existe (excepciones de application.exception).'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+
     ReglaDeNegocio:
       description: '409: el mensaje es válido pero una regla del negocio lo impide (ReglaDominioException).'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    SinPermiso:
+      description: '403: el rol del usuario no tiene permiso para esta operación.'
       content:
         application/json:
           schema:
