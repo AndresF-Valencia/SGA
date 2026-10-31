@@ -39,6 +39,8 @@ import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
 import co.edu.uniquindio.sga.domain.repository.ApartamentoRepository;
 import co.edu.uniquindio.sga.domain.repository.BloqueoRepository;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
+import co.edu.uniquindio.sga.domain.repository.CanalRepository;
+import co.edu.uniquindio.sga.application.usecase.AutenticarCanalUseCase;
 import co.edu.uniquindio.sga.domain.repository.GeneradorCodigoReserva;
 import co.edu.uniquindio.sga.domain.repository.PoliticaCancelacionRepository;
 import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
@@ -124,10 +126,11 @@ public class UseCaseConfig {
             BloqueoRepository bloqueoRepository,
             DisponibilidadApartamentoService disponibilidadService,
             EstanciaMinimaTemporadaAltaService estanciaMinimaService,
-            CotizadorEstanciaService cotizadorService) {
+            CotizadorEstanciaService cotizadorService,
+            FolioRepository folioRepository) {
         return new ModificarReservaUseCase(reservaRepository, apartamentoRepository, alojamientoRepository,
                 temporadaRepository, tarifaRepository, bloqueoRepository, disponibilidadService,
-                estanciaMinimaService, cotizadorService);
+                estanciaMinimaService, cotizadorService, folioRepository);
     }
 
     @Bean
@@ -358,5 +361,12 @@ public class UseCaseConfig {
             FolioRepository folioRepository,
             ReservaRepository reservaRepository) {
         return new ConsultarFolioUseCase(folioRepository, reservaRepository);
+    }
+
+    // ---------- Canal externo (7.8) ----------
+
+    @Bean
+    public AutenticarCanalUseCase autenticarCanalUseCase(CanalRepository canalRepository) {
+        return new AutenticarCanalUseCase(canalRepository);
     }
 }
