@@ -39,13 +39,13 @@ Content-Type: application/json
 
 ### 4. Mi perfil
 GET {{base}}/api/usuarios/me
-Authorization: Bearer {{huesped.response.body.token}}
+Authorization: Bearer {{huesped.response.body.$.token}}
 
 ### 5. Crear una reserva por el PORTAL, a su nombre → 201
 # @name reserva
 POST {{base}}/api/reservas
 Content-Type: application/json
-Authorization: Bearer {{huesped.response.body.token}}
+Authorization: Bearer {{huesped.response.body.$.token}}
 
 {
   "apartamentoId": "AP001",
@@ -69,16 +69,16 @@ Authorization: Bearer {{huesped.response.body.token}}
 
 ### 6. Mis reservas (solo las suyas)
 GET {{base}}/api/reservas/mis-reservas
-Authorization: Bearer {{huesped.response.body.token}}
+Authorization: Bearer {{huesped.response.body.$.token}}
 
 ### 7. Su folio (cuenta de la reserva)
-GET {{base}}/api/reservas/{{reserva.response.body.codigoReserva}}/folio
-Authorization: Bearer {{huesped.response.body.token}}
+GET {{base}}/api/reservas/{{reserva.response.body.$.codigoReserva}}/folio
+Authorization: Bearer {{huesped.response.body.$.token}}
 
 ### 8. Seguridad: el huésped NO puede tocar la configuración → 403
 PUT {{base}}/api/alojamiento/parametros
 Content-Type: application/json
-Authorization: Bearer {{huesped.response.body.token}}
+Authorization: Bearer {{huesped.response.body.$.token}}
 
 {}
 
@@ -94,19 +94,19 @@ Content-Type: application/json
 { "correo": "recepcion@sanrocco.co", "contrasena": "Sanrocco123" }
 
 ### Primero registra el pago (RNP-03 exige el 50 % de anticipo; aquí se paga todo)
-POST {{base}}/api/reservas/{{reserva.response.body.codigoReserva}}/folio/pagos
+POST {{base}}/api/reservas/{{reserva.response.body.$.codigoReserva}}/folio/pagos
 Content-Type: application/json
-Authorization: Bearer {{recepcion.response.body.token}}
+Authorization: Bearer {{recepcion.response.body.$.token}}
 
-{ "monto": {{reserva.response.body.valorTotal}}, "medioPago": "EFECTIVO", "fechaPago": "{{$datetime "YYYY-MM-DD"}}" }
+{ "monto": {{reserva.response.body.$.valorTotal}}, "medioPago": "EFECTIVO", "fechaPago": "{{$datetime "YYYY-MM-DD"}}" }
 
 ### Ahora sí: confirmar → 200, estado CONFIRMADA
-PUT {{base}}/api/reservas/{{reserva.response.body.codigoReserva}}/confirmar
-Authorization: Bearer {{recepcion.response.body.token}}
+PUT {{base}}/api/reservas/{{reserva.response.body.$.codigoReserva}}/confirmar
+Authorization: Bearer {{recepcion.response.body.$.token}}
 
 ### 11. Listado de reservas del personal (paginado de a 10)
 GET {{base}}/api/reservas?page=0&size=10
-Authorization: Bearer {{recepcion.response.body.token}}
+Authorization: Bearer {{recepcion.response.body.$.token}}
 
 
 ### 12. Recuperar contraseña: pide el código (sin token) → 202
@@ -132,4 +132,4 @@ Content-Type: application/json
 
 ###
 GET {{base}}/api/usuarios?rol=HUESPED
-Authorization: Bearer {{admin.response.body.token}}
+Authorization: Bearer {{admin.response.body.$.token}}
