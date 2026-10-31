@@ -35,6 +35,11 @@ public class ApartamentoRepositoryJpa implements ApartamentoRepository {
     }
 
     @Override
+    public boolean existePorId(IdentificacionApartamento id) {
+        return id != null && jpa.existsById(id.valor());
+    }
+
+    @Override
     public List<Apartamento> listarActivos() {
         return jpa.findByActivoTrue().stream().map(ApartamentoPersistenceMapper::aDominio).toList();
     }

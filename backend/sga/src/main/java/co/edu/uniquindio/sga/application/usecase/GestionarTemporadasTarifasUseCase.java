@@ -13,6 +13,7 @@ import co.edu.uniquindio.sga.domain.valueobject.IdentificacionTemporada;
 import co.edu.uniquindio.sga.domain.valueobject.Periodo;
 import co.edu.uniquindio.sga.domain.valueobject.TipoTemporada;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -81,5 +82,15 @@ public class GestionarTemporadasTarifasUseCase {
             throw new ReglaDominioException("La tarifa a configurar es obligatoria");
         }
         tarifaRepository.guardar(tarifa);
+    }
+
+    /**
+     * Lista todas las temporadas ordenadas por fecha de inicio.
+     */
+    @Transactional(readOnly = true)
+    public List<Temporada> listarTemporadas() {
+        return temporadaRepository.listar().stream()
+                .sorted(Comparator.comparing(t -> t.getPeriodo().desde()))
+                .toList();
     }
 }

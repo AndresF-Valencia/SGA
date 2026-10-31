@@ -73,8 +73,8 @@ paths:
     get:
       tags:
       - Reservas
-      summary: Listar reservas por estado (ConsultarReservasPorEstadoUseCase)
-      operationId: consultarReservasPorEstado
+      summary: Listar reservas con filtros (solo recepción y administración)
+      operationId: listarReservas
       parameters:
       - name: estado
         in: query
@@ -89,6 +89,40 @@ paths:
           - FINALIZADA
           - CANCELADA
           - NO_SHOW
+      - name: apartamentoId
+        in: query
+        required: false
+        schema:
+          type: string
+          example: APTO-101
+      - name: canalOrigen
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - PORTAL
+          - DIRECTO
+          - EXTERNO
+      - name: fechaEntradaDesde
+        in: query
+        required: false
+        description: Fecha de entrada mínima, incluida.
+        schema:
+          type: string
+          format: date
+      - name: fechaEntradaHasta
+        in: query
+        required: false
+        description: Fecha de entrada máxima, incluida.
+        schema:
+          type: string
+          format: date
+      - name: documentoTitular
+        in: query
+        required: false
+        schema:
+          type: string
       - $ref: '#/components/parameters/Pagina'
       - $ref: '#/components/parameters/Tamano'
       responses:
@@ -100,6 +134,36 @@ paths:
                 $ref: '#/components/schemas/PaginaReservaResumen'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+
+  /api/reservas/mis-reservas:
+    get:
+      tags:
+      - Reservas
+      summary: Listar las reservas del huésped autenticado
+      description: El titular sale del token; no se acepta otro documento. De la más reciente a la más antigua.
+      operationId: misReservas
+      parameters:
+      - name: estado
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - PENDIENTE
+          - CONFIRMADA
+          - EN_CURSO
+          - FINALIZADA
+          - CANCELADA
+          - NO_SHOW
+      - $ref: '#/components/parameters/Pagina'
+      - $ref: '#/components/parameters/Tamano'
+      responses:
+        '200':
+          description: Página de reservas del huésped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaReservaResumen'
 
   /api/reservas/{codigo}:
     get:
@@ -116,6 +180,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReservaResponse'
+        '403':
+          description: La reserva pertenece a otro huésped (7.2).
         '404':
           $ref: '#/components/responses/NoEncontrado'
     put:
@@ -324,6 +390,44 @@ paths:
           format: int32
           minimum: 1
           example: 2
+      - name: mascotas
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: capacidadMinima
+        in: query
+        required: false
+        description: Capacidad máxima mínima del apartamento.
+        schema:
+          type: integer
+          format: int32
+      - name: precioMin
+        in: query
+        required: false
+        description: Tarifa estimada mínima por noche para el grupo, en pesos. Excluye apartamentos sin tarifa.
+        schema:
+          type: integer
+          format: int64
+      - name: precioMax
+        in: query
+        required: false
+        description: Tarifa estimada máxima por noche para el grupo, en pesos. Excluye apartamentos sin tarifa.
+        schema:
+          type: integer
+          format: int64
+      - name: caracteristicas
+        in: query
+        required: false
+        description: Características que el apartamento debe tener todas (sin distinguir mayúsculas). Repetir el parámetro para varias.
+        schema:
+          type: array
+          items:
+            type: string
+        explode: true
       - $ref: '#/components/parameters/Pagina'
       - $ref: '#/components/parameters/Tamano'
       responses:
@@ -467,6 +571,47 @@ paths:
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
 
+  /api/apartamentos:
+    get:
+      tags:
+      - Apartamentos y Operación
+      summary: Listar los apartamentos (7.3)
+      operationId: listarApartamentos
+      description: Devuelve todos los apartamentos, activos e inactivos.
+      responses:
+        '200':
+          description: Listado de apartamentos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApartamentoDetalleResponse'
+    post:
+      tags:
+      - Apartamentos y Operación
+      summary: Crear un apartamento (7.3)
+      operationId: crearApartamento
+      description: Solo el administrador. El apartamento se crea inactivo y se activa cuando tenga tarifa en todas
+        las temporadas.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearApartamentoRequest'
+      responses:
+        '201':
+          description: Apartamento creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartamentoDetalleResponse'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+
   /api/apartamentos/estado:
     get:
       tags:
@@ -501,6 +646,77 @@ paths:
                 $ref: '#/components/schemas/ApartamentoDetalleResponse'
         '404':
           $ref: '#/components/responses/NoEncontrado'
+
+    put:
+      tags:
+      - Apartamentos y Operación
+      summary: Actualizar un apartamento (7.3)
+      operationId: actualizarApartamento
+      description: Solo el administrador. Cambia los datos descriptivos; no modifica la identificación, el estado
+        operativo ni si está activo.
+      parameters:
+      - $ref: '#/components/parameters/IdentificacionApartamento'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActualizarApartamentoRequest'
+      responses:
+        '200':
+          description: Apartamento actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartamentoDetalleResponse'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+    delete:
+      tags:
+      - Apartamentos y Operación
+      summary: Deshabilitar un apartamento (7.3)
+      operationId: deshabilitarApartamento
+      description: Solo el administrador. Eliminación lógica, el apartamento no se borra. Falla con 409 si tiene
+        reservas activas (PENDIENTE, CONFIRMADA o EN_CURSO).
+      parameters:
+      - $ref: '#/components/parameters/IdentificacionApartamento'
+      responses:
+        '200':
+          description: Apartamento deshabilitado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartamentoDetalleResponse'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+
+  /api/apartamentos/{identificacion}/activar:
+    post:
+      tags:
+      - Apartamentos y Operación
+      summary: Activar un apartamento (7.3)
+      operationId: activarApartamento
+      description: Solo el administrador. Falla con 409 si el apartamento no tiene tarifa en todas las temporadas
+        registradas.
+      parameters:
+      - $ref: '#/components/parameters/IdentificacionApartamento'
+      responses:
+        '200':
+          description: Apartamento activado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApartamentoDetalleResponse'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
 
   /api/apartamentos/{identificacion}/estado-operativo:
     post:
@@ -653,23 +869,27 @@ paths:
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
 
-  /api/alojamiento/parametros:
+  /api/alojamiento:
     get:
       tags:
       - Alojamiento
-      summary: Consultar los parámetros del alojamiento (7.3)
-      operationId: consultarParametrosAlojamiento
+      summary: Consultar el alojamiento (7.3)
+      operationId: consultarAlojamiento
+      security: []
       responses:
         '200':
-          description: Parámetros vigentes
+          description: Alojamiento con su configuración vigente
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ParametrosAlojamientoResponse'
+        '404':
+          description: No hay alojamiento configurado
+  /api/alojamiento/parametros:
     put:
       tags:
       - Alojamiento
-      summary: Configurar los parámetros del alojamiento (sección 6)
+      summary: Configurar los parámetros del alojamiento (sección 6). Para leerlos, GET /api/alojamiento
       operationId: configurarParametrosAlojamiento
       requestBody:
         required: true
@@ -986,6 +1206,104 @@ components:
           - EN_PREPARACION
           - FUERA_DE_SERVICIO
           example: PREPARADO
+    ActualizarApartamentoRequest:
+      type: object
+      required:
+      - nombre
+      - dormitorios
+      - capacidadMaxima
+      - limiteMascotas
+      - tiempoPreparacionHoras
+      - caracteristicas
+      - imagenes
+      properties:
+        nombre:
+          type: string
+          example: Familiar
+        dormitorios:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 4
+        capacidadMaxima:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 10
+        limiteMascotas:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 2
+        tiempoPreparacionHoras:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 24
+          example: 3
+        caracteristicas:
+          type: array
+          items:
+            type: string
+          example:
+          - Wifi
+          - Balcón
+        imagenes:
+          type: array
+          items:
+            type: string
+          example: []
+    CrearApartamentoRequest:
+      type: object
+      required:
+      - identificacion
+      - nombre
+      - dormitorios
+      - capacidadMaxima
+      - limiteMascotas
+      - tiempoPreparacionHoras
+      - caracteristicas
+      - imagenes
+      properties:
+        identificacion:
+          type: string
+          example: AP001
+        nombre:
+          type: string
+          example: Familiar
+        dormitorios:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 4
+        capacidadMaxima:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 10
+        limiteMascotas:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 2
+        tiempoPreparacionHoras:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 24
+          example: 3
+        caracteristicas:
+          type: array
+          items:
+            type: string
+          example:
+          - Wifi
+          - Balcón
+        imagenes:
+          type: array
+          items:
+            type: string
+          example: []
     CancelarReservaRequest:
       type: object
       required:
@@ -1018,12 +1336,35 @@ components:
     ConfigurarParametrosAlojamientoRequest:
       type: object
       required:
+      - direccion
+      - latitud
+      - longitud
       - horaEntrada
       - horaSalida
       - horasPreparacion
       - horasPlazoConfirmacion
       - edadUmbralFacturable
       properties:
+        direccion:
+          type: string
+          example: Calle 14 No. 20-30, Armenia
+        latitud:
+          type: number
+          minimum: -90
+          maximum: 90
+          example: 4.5339
+        longitud:
+          type: number
+          minimum: -180
+          maximum: 180
+          example: -75.6811
+        normasConvivencia:
+          type: string
+          example: Silencio de 10 p. m. a 7 a. m.
+        serviciosAdicionales:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServicioAdicional'
         horaEntrada:
           type: string
           format: time
@@ -1753,6 +2094,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DisponibilidadResponse.ApartamentoDisponibleDto'
+        pagina:
+          type: integer
+          format: int32
+          example: 0
+        tamano:
+          type: integer
+          format: int32
+          example: 10
+        totalPaginas:
+          type: integer
+          format: int32
+          example: 1
     ErrorResponse:
       type: object
       properties:
@@ -1912,6 +2265,19 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/TemporadaResponse'
+    ServicioAdicional:
+      type: object
+      required:
+      - nombre
+      - valor
+      properties:
+        nombre:
+          type: string
+          example: Parqueadero
+        valor:
+          type: number
+          minimum: 0
+          example: 15000
     ParametrosAlojamientoResponse:
       type: object
       properties:
@@ -1926,6 +2292,26 @@ components:
         descripcion:
           type: string
           example: Apartamento familiar con balcón
+        direccion:
+          type: string
+          example: Calle 14 No. 20-30, Armenia
+        latitud:
+          type: number
+          minimum: -90
+          maximum: 90
+          example: 4.5339
+        longitud:
+          type: number
+          minimum: -180
+          maximum: 180
+          example: -75.6811
+        normasConvivencia:
+          type: string
+          example: Silencio de 10 p. m. a 7 a. m.
+        serviciosAdicionales:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServicioAdicional'
         horaEntrada:
           type: string
           format: time

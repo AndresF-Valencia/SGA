@@ -1,9 +1,11 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import co.edu.uniquindio.sga.application.exception.AccesoDenegadoException;
 import co.edu.uniquindio.sga.application.exception.ReservaNoEncontradaException;
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
+import co.edu.uniquindio.sga.domain.valueobject.DocumentoIdentidad;
 
 public class ConsultarReservaUseCase {
 
@@ -32,5 +34,17 @@ public class ConsultarReservaUseCase {
         // Si no, se procesa como un código externo (canal de terceros / Booking)
         return reservaRepository.buscarPorCodigoExterno(identificador)
                 .orElseThrow(() -> new ReservaNoEncontradaException(identificador));
+    }
+
+    /**
+     * 7.2: igual que {@link #ejecutar}, pero el huésped solo ve reservas de las que es titular.
+     * Se verifica sobre la reserva ya cargada para cubrir también los códigos externos.
+     */
+    public Reserva ejecutarComoHuesped(String identificador, DocumentoIdentidad documentoHuesped) {
+        Reserva reserva = ejecutar(identificador);
+        if (!reserva.getTitular().getDocumento().equals(documentoHuesped)) {
+            throw new AccesoDenegadoException("La reserva " + identificador + " no pertenece a este usuario");
+        }
+        return reserva;
     }
 }

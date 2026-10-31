@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga.infrastructure.rest.controller;
 import co.edu.uniquindio.sga.application.dto.request.ConfigurarParametrosAlojamientoRequest;
 import co.edu.uniquindio.sga.application.dto.response.ParametrosAlojamientoResponse;
 import co.edu.uniquindio.sga.application.usecase.ConfigurarParametrosAlojamientoUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarAlojamientoUseCase;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.infrastructure.rest.mapper.AlojamientoMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -24,9 +26,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class AlojamientoController {
 
     private final ConfigurarParametrosAlojamientoUseCase configurarParametrosUseCase;
+    private final ConsultarAlojamientoUseCase consultarAlojamientoUseCase;
     private final AlojamientoMapper alojamientoMapper;
 
-    /** Actualiza los parámetros operativos y comerciales del alojamiento. */
+    /**
+     * /parametros es la ruta de ESCRITURA (solo administrador): reemplaza la configuración del
+     * alojamiento (horarios, anticipo, no-show, plazos, ubicación, normas y servicios adicionales).
+     * Para LEER esa misma configuración se usa GET /api/alojamiento. Lleva el header
+     * X-Alojamiento-Id porque la ruta no identifica el alojamiento.
+     */
     @PutMapping("/parametros")
     @Operation(summary = "Configurar los parámetros del alojamiento")
     @ApiResponse(responseCode = "200", description = "Parámetros actualizados")
@@ -43,12 +51,24 @@ public class AlojamientoController {
                 alojamientoMapper.aPlazoConfirmacion(request),
                 alojamientoMapper.aUmbralEdadFacturable(request),
                 request.exigeAnticipo(),
-                request.porcentajeAnticipo());
+                request.porcentajeAnticipo(),
+                request.direccion(),
+                request.latitud(),
+                request.longitud(),
+                alojamientoMapper.aNormasConvivencia(request),
+                alojamientoMapper.aServiciosAdicionales(request));
         return ResponseEntity.ok(alojamientoMapper.aParametrosAlojamiento(alojamiento));
     }
 
     /**
-     * Pendiente: consultar parámetros porque no existe un caso de uso de lectura.
-     * El header X-Alojamiento-Id se usa porque la ruta OpenAPI no identifica el alojamiento.
+     * Consulta el alojamiento único con su ubicación, normas, servicios adicionales y parámetros.
+     * Es pública (ver SecurityConfig): el huésped la usa para ver la ficha antes de reservar.
      */
+    @GetMapping
+    @Operation(summary = "Consultar el alojamiento")
+    @ApiResponse(responseCode = "200", description = "Alojamiento con su configuración vigente")
+    @ApiResponse(responseCode = "404", description = "No hay alojamiento configurado")
+    public ResponseEntity<ParametrosAlojamientoResponse> consultar() {
+        return ResponseEntity.ok(alojamientoMapper.aParametrosAlojamiento(consultarAlojamientoUseCase.ejecutar()));
+    }
 }

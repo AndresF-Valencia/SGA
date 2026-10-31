@@ -13,13 +13,16 @@ import co.edu.uniquindio.sga.application.usecase.CancelarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.CerrarFolioUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfigurarParametrosAlojamientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfirmarReservaUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarAlojamientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarDisponibilidadUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarFolioUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarReservaUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarReservasUseCase;
 import co.edu.uniquindio.sga.application.usecase.CorregirMovimientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.CotizarEstanciaUseCase;
 import co.edu.uniquindio.sga.application.usecase.CrearReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.DeclararNoShowUseCase;
+import co.edu.uniquindio.sga.application.usecase.GestionarApartamentoUseCase;
 import co.edu.uniquindio.sga.application.usecase.GestionarBloqueoUseCase;
 import co.edu.uniquindio.sga.application.usecase.GestionarTemporadasTarifasUseCase;
 import co.edu.uniquindio.sga.application.usecase.ModificarReservaUseCase;
@@ -207,6 +210,17 @@ public class UseCaseConfig {
     }
 
     @Bean
+    public GestionarApartamentoUseCase gestionarApartamentoUseCase(
+            ApartamentoRepository apartamentoRepository,
+            AlojamientoRepository alojamientoRepository,
+            ReservaRepository reservaRepository,
+            TarifaRepository tarifaRepository,
+            TemporadaRepository temporadaRepository) {
+        return new GestionarApartamentoUseCase(apartamentoRepository, alojamientoRepository,
+                reservaRepository, tarifaRepository, temporadaRepository);
+    }
+
+    @Bean
     public RegistrarNovedadUseCase registrarNovedadUseCase(ApartamentoRepository apartamentoRepository) {
         return new RegistrarNovedadUseCase(apartamentoRepository);
     }
@@ -225,6 +239,11 @@ public class UseCaseConfig {
     public ConfigurarParametrosAlojamientoUseCase configurarParametrosAlojamientoUseCase(
             AlojamientoRepository alojamientoRepository) {
         return new ConfigurarParametrosAlojamientoUseCase(alojamientoRepository);
+    }
+
+    @Bean
+    public ConsultarAlojamientoUseCase consultarAlojamientoUseCase(AlojamientoRepository alojamientoRepository) {
+        return new ConsultarAlojamientoUseCase(alojamientoRepository);
     }
 
     @Bean
@@ -308,18 +327,29 @@ public class UseCaseConfig {
     }
 
     @Bean
+    public ConsultarReservasUseCase consultarReservasUseCase(ReservaRepository reservaRepository) {
+        return new ConsultarReservasUseCase(reservaRepository);
+    }
+
+    @Bean
     public ConsultarDisponibilidadUseCase consultarDisponibilidadUseCase(
             ApartamentoRepository apartamentoRepository,
             AlojamientoRepository alojamientoRepository,
             ReservaRepository reservaRepository,
             BloqueoRepository bloqueoRepository,
-            DisponibilidadApartamentoService disponibilidadService) {
+            DisponibilidadApartamentoService disponibilidadService,
+            TemporadaRepository temporadaRepository,
+            TarifaRepository tarifaRepository,
+            CotizadorEstanciaService cotizadorService) {
         return new ConsultarDisponibilidadUseCase(
                 apartamentoRepository,
                 alojamientoRepository,
                 reservaRepository,
                 bloqueoRepository,
-                disponibilidadService
+                disponibilidadService,
+                temporadaRepository,
+                tarifaRepository,
+                cotizadorService
         );
     }
 

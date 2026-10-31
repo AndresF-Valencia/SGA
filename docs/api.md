@@ -39,10 +39,11 @@ Todas las rutas del sistema están prefijadas con el segmento `/api`:
 
 ### A. Módulo de Reservas
 Maneja el ciclo de vida completo de la reserva, disponibilidad y cotizaciones:
-* **`GET /api/disponibilidad`**: Consulta de apartamentos libres según rango de fechas y ocupación.
+* **`GET /api/disponibilidad`**: Consulta pública de apartamentos libres según fechas y ocupación, con filtros de capacidad, precio por noche y características; 10 por página.
 * **`POST /api/cotizaciones`**: Cálculo detallado del costo noche por noche sin bloquear inventario.
 * **`POST /api/reservas`**: Creación de reserva. Congela la tarifa por noche y la versión de la política de cancelación (RN-22).
-* **`GET /api/reservas`**: Listado paginado de reservas filtrable por estado.
+* **`GET /api/reservas`**: Listado paginado (10 por página) de la más reciente a la más antigua, solo para recepción y administración. Filtros: estado, apartamento, canal, rango de fecha de entrada y documento del titular.
+* **`GET /api/reservas/mis-reservas`**: Reservas del huésped autenticado (el titular sale del token), con filtro opcional por estado.
 * **`GET /api/reservas/{codigo}`**: Consulta detallada de una reserva.
 * **`PUT /api/reservas/{codigo}`**: Modificación de fechas, apartamento o mascotas en reservas no iniciadas (CU-05).
 * **`PUT /api/reservas/{codigo}/confirmar`**: Confirmación de reserva pendiente tras verificar el abono del anticipo (RNP-03).

@@ -7,11 +7,16 @@ import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
+import co.edu.uniquindio.sga.domain.valueobject.NormasConvivencia;
 import co.edu.uniquindio.sga.domain.valueobject.PlazoConfirmacion;
 import co.edu.uniquindio.sga.domain.valueobject.TiempoPreparacion;
 import co.edu.uniquindio.sga.domain.valueobject.UmbralEdadFacturable;
 
+import co.edu.uniquindio.sga.domain.valueobject.ServicioAdicional;
+
+import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.List;
 
 /**
  * Caso de uso: Configurar parámetros del alojamiento (CU-20).
@@ -38,7 +43,12 @@ public class ConfigurarParametrosAlojamientoUseCase {
                          PlazoConfirmacion plazoConfirmacion,
                          UmbralEdadFacturable umbralEdadFacturable,
                          boolean exigeAnticipo,
-                         int porcentajeAnticipo) {
+                         int porcentajeAnticipo,
+                         String direccion,
+                         BigDecimal latitud,
+                         BigDecimal longitud,
+                         NormasConvivencia normasConvivencia,
+                         List<ServicioAdicional> serviciosAdicionales) {
 
         if (alojamientoId == null) {
             throw new ReglaDominioException("El identificador del alojamiento es obligatorio");
@@ -52,6 +62,7 @@ public class ConfigurarParametrosAlojamientoUseCase {
         alojamiento.actualizarParametrosOperativos(horaEntrada, horaSalida, tiempoPreparacion, plazoConfirmacion);
         alojamiento.actualizarPoliticasGenerales(horaLimiteNoShow, umbralEdadFacturable);
         alojamiento.actualizarConfiguracionAnticipo(exigeAnticipo, porcentajeAnticipo);
+        alojamiento.actualizarFichaDescriptiva(direccion, latitud, longitud, normasConvivencia, serviciosAdicionales);
 
         // 3. Persistir los cambios
         alojamientoRepository.guardar(alojamiento);

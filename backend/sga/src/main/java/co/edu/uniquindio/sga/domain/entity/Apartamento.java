@@ -158,6 +158,35 @@ public class Apartamento {
         this.activo = false;
     }
 
+    /** Vuelve a dejar el apartamento disponible para la venta (las reglas de tarifas las valida el caso de uso). */
+    public void activar() {
+        this.activo = true;
+    }
+
+    /** Actualiza los datos descriptivos del apartamento; la identificación y el alojamiento no cambian. */
+    public void actualizar(String nombre, TiempoPreparacion tiempoPreparacion, Dormitorio dormitorios,
+            CapacidadOcupantes capacidad, LimiteMascota limiteMascotas, List<String> caracteristicas,
+            List<String> imagenes) {
+        if (nombre == null || nombre.isBlank()) {
+            throw new ReglaDominioException("El apartamento debe tener un nombre");
+        }
+        if (tiempoPreparacion == null || dormitorios == null || capacidad == null || limiteMascotas == null) {
+            throw new ReglaDominioException("Dormitorios, capacidad, límite de mascotas y tiempo de preparación son obligatorios");
+        }
+        if (caracteristicas == null || imagenes == null) {
+            throw new ReglaDominioException("Las listas de características e imágenes no pueden ser nulas");
+        }
+        this.nombre = nombre;
+        this.tiempoPreparacion = tiempoPreparacion;
+        this.dormitorios = dormitorios;
+        this.capacidad = capacidad;
+        this.limiteMascotas = limiteMascotas;
+        this.caracteristicas.clear();
+        this.caracteristicas.addAll(caracteristicas);
+        this.imagenes.clear();
+        this.imagenes.addAll(imagenes);
+    }
+
     /**
      * L-16: admite la cantidad de mascotas si no supera el límite del apartamento.
      */

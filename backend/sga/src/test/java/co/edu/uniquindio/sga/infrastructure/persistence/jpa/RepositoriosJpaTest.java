@@ -115,6 +115,17 @@ class RepositoriosJpaTest {
         assertEquals(activo.getCaracteristicas(), leido.getCaracteristicas());
         assertEquals(activo.getNovedades(), leido.getNovedades());
 
+        assertTrue(apartamentos.existePorId(activo.getIdentificacion()));
+        assertFalse(apartamentos.existePorId(new IdentificacionApartamento("JPA-NO-EXISTE")));
+
+        // eliminación lógica y reactivación: la fila se conserva y solo cambia "activo"
+        leido.desactivar();
+        apartamentos.guardar(leido);
+        assertFalse(apartamentos.buscarPorId(activo.getIdentificacion()).orElseThrow().estaActivo());
+        leido.activar();
+        apartamentos.guardar(leido);
+        assertTrue(apartamentos.buscarPorId(activo.getIdentificacion()).orElseThrow().estaActivo());
+
         List<IdentificacionApartamento> activos = apartamentos.listarActivos().stream()
                 .map(Apartamento::getIdentificacion).toList();
         assertTrue(activos.contains(activo.getIdentificacion()));
