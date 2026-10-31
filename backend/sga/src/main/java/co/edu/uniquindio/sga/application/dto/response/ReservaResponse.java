@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga.application.dto.response;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -24,6 +25,7 @@ public record ReservaResponse(
         LocalDate fechaEntrada,
         LocalDate fechaSalida,
         LocalDateTime fechaCreacion,
+        LocalTime horaEstimadaLlegada,
         Long valorTotal,
         Long saldoPendiente,
         TitularResumenDto titular,

@@ -6,6 +6,7 @@ import co.edu.uniquindio.sga.application.dto.request.ModificarReservaRequest;
 import co.edu.uniquindio.sga.application.dto.request.RegistrarSalidaRequest;
 import co.edu.uniquindio.sga.application.dto.response.ReservaResponse;
 import co.edu.uniquindio.sga.application.exception.AccesoDenegadoException;
+import co.edu.uniquindio.sga.application.usecase.ConsultarAlojamientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.CancelarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfirmarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarReservaUseCase;
@@ -47,7 +48,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -56,11 +56,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 /**
  * Adaptador HTTP para las operaciones de reservas.
  *
- * <p>El autor de cada operación sale del token (usuario que inició sesión).
- * El header {@code X-Alojamiento-Id} se usa porque
- * los casos de uso necesitan esos datos, pero los DTOs y algunas rutas del
- * contrato actual no los exponen. Son una adaptación temporal hasta alinear
- * el contrato OpenAPI con las firmas de aplicación.</p>
+ * <p>El autor de cada operación sale del token (usuario que inició sesión) y el
+ * alojamiento es el único del sistema (F-13), así que el cliente no envía ninguno de los dos.</p>
  */
 @RestController
 @RequestMapping("/api/reservas")
@@ -80,6 +77,7 @@ public class ReservaController {
     private final VerificarAccesoReservaUseCase verificarAccesoReservaUseCase;
     private final ConsultarReservaUseCase consultarReservaUseCase;
     private final ConsultarReservasUseCase consultarReservasUseCase;
+    private final ConsultarAlojamientoUseCase consultarAlojamientoUseCase;
     private final ReservaMapper reservaMapper;
 
     /** Pendiente: cotizar, porque el request no permite construir todos los ocupantes. */
@@ -167,7 +165,6 @@ public class ReservaController {
     @ApiResponse(responseCode = "404", description = "Alojamiento o apartamento no encontrado")
     @ApiResponse(responseCode = "409", description = "La reserva viola una regla de negocio")
     public ResponseEntity<ReservaResponse> crearReserva(
-        @RequestHeader("X-Alojamiento-Id") String alojamientoId,
         @Valid @RequestBody CrearReservaRequest request,
         @AuthenticationPrincipal UsuarioAutenticado usuario) {
     // 7.1: el huésped reserva por el PORTAL y a su propio nombre
@@ -186,7 +183,7 @@ public class ReservaController {
         request.titular().fechaNacimiento(),
         fechaActual);
     var reserva = crearReservaUseCase.ejecutar(
-        new IdentificacionAlojamiento(alojamientoId),
+        alojamientoUnico(),
         new IdentificacionApartamento(request.apartamentoId()),
         reservaMapper.aEstancia(request),
         request.horaEstimadaLlegada(),
@@ -213,13 +210,12 @@ public class ReservaController {
     @ApiResponse(responseCode = "409", description = "La modificación viola una regla de negocio")
     public ResponseEntity<ReservaResponse> modificarReserva(
         @PathVariable String codigo,
-        @RequestHeader("X-Alojamiento-Id") String alojamientoId,
         @AuthenticationPrincipal UsuarioAutenticado usuario,
         @Valid @RequestBody ModificarReservaRequest request) {
     String autor = usuario.correo(); // quién hace la operación, sacado del token
     var reserva = modificarReservaUseCase.ejecutar(
         new CodigoReserva(codigo),
-        new IdentificacionAlojamiento(alojamientoId),
+        alojamientoUnico(),
         new IdentificacionApartamento(request.apartamentoId()),
         reservaMapper.aEstancia(request),
         null,
@@ -237,12 +233,11 @@ public class ReservaController {
     @ApiResponse(responseCode = "409", description = "La reserva no puede confirmarse")
     public ResponseEntity<ReservaResponse> confirmarReserva(
         @PathVariable String codigo,
-        @RequestHeader("X-Alojamiento-Id") String alojamientoId,
         @AuthenticationPrincipal UsuarioAutenticado usuario) {
     String autor = usuario.correo(); // quién hace la operación, sacado del token
     var reserva = confirmarReservaUseCase.ejecutar(
         new CodigoReserva(codigo),
-        new IdentificacionAlojamiento(alojamientoId),
+        alojamientoUnico(),
         autor,
         LocalDateTime.now());
     return ResponseEntity.ok(reservaMapper.aReserva(reserva));
@@ -257,7 +252,6 @@ public class ReservaController {
     @ApiResponse(responseCode = "409", description = "La reserva no puede cancelarse")
     public ResponseEntity<ReservaResponse> cancelarReserva(
         @PathVariable String codigo,
-        @RequestHeader("X-Alojamiento-Id") String alojamientoId,
         @AuthenticationPrincipal UsuarioAutenticado usuario,
         @Valid @RequestBody CancelarReservaRequest request) {
     String autor = usuario.correo(); // quién hace la operación, sacado del token
@@ -268,7 +262,7 @@ public class ReservaController {
     }
     var reserva = cancelarReservaUseCase.ejecutar(
         new CodigoReserva(codigo),
-        new IdentificacionAlojamiento(alojamientoId),
+        alojamientoUnico(),
         request.motivo(),
         LocalDateTime.now(),
         autor);
@@ -283,12 +277,11 @@ public class ReservaController {
     @ApiResponse(responseCode = "409", description = "La reserva no puede declararse no-show")
     public ResponseEntity<ReservaResponse> declararNoShow(
         @PathVariable String codigo,
-        @RequestHeader("X-Alojamiento-Id") String alojamientoId,
         @AuthenticationPrincipal UsuarioAutenticado usuario) {
     String autor = usuario.correo(); // quién hace la operación, sacado del token
     var reserva = declararNoShowUseCase.ejecutar(
         new CodigoReserva(codigo),
-        new IdentificacionAlojamiento(alojamientoId),
+        alojamientoUnico(),
         autor,
         LocalDateTime.now());
     return ResponseEntity.ok(reservaMapper.aReserva(reserva));
@@ -307,5 +300,10 @@ public class ReservaController {
     var reserva = registrarLlegadaUseCase.ejecutar(
         new CodigoReserva(codigo), autor, LocalDateTime.now());
     return ResponseEntity.ok(reservaMapper.aReserva(reserva));
+    }
+
+    /** San Rocco es un único alojamiento (F-13): se toma del sistema, el cliente no tiene que enviarlo. */
+    private IdentificacionAlojamiento alojamientoUnico() {
+        return consultarAlojamientoUseCase.ejecutar().getIdentificacion();
     }
 }

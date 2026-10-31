@@ -32,13 +32,14 @@ public interface ReservaMapper {
 
 	// Convierte una reserva completa en su respuesta detallada.
 	@Mapping(target = "codigoReserva", source = "codigo.valor")
-	@Mapping(target = "codigoExterno", ignore = true)
+	@Mapping(target = "codigoExterno", source = "codigoExterno")
 	@Mapping(target = "estadoReserva", source = "estado")
 	@Mapping(target = "canalOrigen", source = "canalOrigen")
 	@Mapping(target = "apartamentoId", source = "apartamento.valor")
 	@Mapping(target = "fechaEntrada", source = "estancia.fechaEntrada")
 	@Mapping(target = "fechaSalida", source = "estancia.fechaSalida")
 	@Mapping(target = "fechaCreacion", source = "creadaEn")
+	@Mapping(target = "horaEstimadaLlegada", source = "horaEstimadaLlegada.horaEstimada")
 	@Mapping(target = "valorTotal", source = "valor")
 	@Mapping(target = "saldoPendiente", ignore = true)
 	@Mapping(target = "titular", source = "titular")

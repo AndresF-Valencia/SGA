@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,18 +31,17 @@ public class AlojamientoController {
     /**
      * /parametros es la ruta de ESCRITURA (solo administrador): reemplaza la configuración del
      * alojamiento (horarios, anticipo, no-show, plazos, ubicación, normas y servicios adicionales).
-     * Para LEER esa misma configuración se usa GET /api/alojamiento. Lleva el header
-     * X-Alojamiento-Id porque la ruta no identifica el alojamiento.
+     * Para LEER esa misma configuración se usa GET /api/alojamiento. El alojamiento es
+     * el único del sistema (F-13), por eso la ruta no lo identifica.
      */
     @PutMapping("/parametros")
     @Operation(summary = "Configurar los parámetros del alojamiento")
     @ApiResponse(responseCode = "200", description = "Parámetros actualizados")
     @ApiResponse(responseCode = "400", description = "Solicitud invalida")
     public ResponseEntity<ParametrosAlojamientoResponse> configurarParametros(
-            @RequestHeader("X-Alojamiento-Id") String alojamientoId,
             @Valid @RequestBody ConfigurarParametrosAlojamientoRequest request) {
         var alojamiento = configurarParametrosUseCase.ejecutar(
-                new IdentificacionAlojamiento(alojamientoId),
+                alojamientoUnico(),
                 request.horaEntrada(),
                 request.horaSalida(),
                 request.horaLimiteNoShow(),
@@ -70,5 +68,10 @@ public class AlojamientoController {
     @ApiResponse(responseCode = "404", description = "No hay alojamiento configurado")
     public ResponseEntity<ParametrosAlojamientoResponse> consultar() {
         return ResponseEntity.ok(alojamientoMapper.aParametrosAlojamiento(consultarAlojamientoUseCase.ejecutar()));
+    }
+
+    /** San Rocco es un único alojamiento (F-13): se toma del sistema, el cliente no tiene que enviarlo. */
+    private IdentificacionAlojamiento alojamientoUnico() {
+        return consultarAlojamientoUseCase.ejecutar().getIdentificacion();
     }
 }

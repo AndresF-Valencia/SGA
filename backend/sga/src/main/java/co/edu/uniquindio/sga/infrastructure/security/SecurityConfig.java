@@ -54,8 +54,14 @@ public class SecurityConfig {
                                 "/v3/api-docs/**", "/api-docs/**", "/actuator/health", "/error").permitAll()
                         // Los canales externos se autentican con su credencial (X-Canal-Credencial), no con JWT
                         .requestMatchers("/api/canales/**").permitAll()
-                        // Buscar apartamentos, ver su detalle y cotizar no exige cuenta (7.1, Huésped)
-                        .requestMatchers(HttpMethod.GET, "/api/apartamentos/**", "/api/disponibilidad").permitAll()
+                        // El tablero de estados es del personal: va antes de la regla pública de abajo,
+                        // porque "/api/apartamentos/*" también coincidiría con "/api/apartamentos/estado"
+                        .requestMatchers(HttpMethod.GET, "/api/apartamentos/estado")
+                                .hasAnyRole(RECEPCIONISTA, ADMINISTRADOR, PERSONAL_SERVICIO)
+                        // Buscar apartamentos, ver su detalle y cotizar no exige cuenta (7.1, Huésped).
+                        // Solo el listado y el detalle: novedades y bloqueos NO son públicos.
+                        .requestMatchers(HttpMethod.GET, "/api/apartamentos", "/api/apartamentos/*",
+                                "/api/disponibilidad").permitAll()
                         // La consulta del alojamiento (dirección, normas, servicios) es pública; modificarlo (PUT /parametros) es solo del administrador
                         .requestMatchers(HttpMethod.GET, "/api/alojamiento").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/cotizaciones").permitAll()

@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga.application.dto.request;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import co.edu.uniquindio.sga.domain.valueobject.TipoTemporada;
 import java.time.LocalDate;
 
 /**
@@ -24,6 +25,9 @@ public record RegistrarTemporadaRequest(
         LocalDate fechaFin,
 
         @Min(value = 1, message = "La estancia mínima debe ser al menos de 1 noche")
-        int estanciaMinima
+        int estanciaMinima,
+
+        // BASE / MEDIA / ALTA (si no se envía queda BASE)
+        TipoTemporada tipo
 
 ) {}

@@ -49,7 +49,7 @@ public class TemporadaTarifaController {
                 new IdentificacionTemporada(UUID.randomUUID().toString()),
                 temporadaMapper.aPeriodo(request),
                 request.nombre(),
-                TipoTemporada.BASE,
+                request.tipo() != null ? request.tipo() : TipoTemporada.BASE,
                 temporadaMapper.aEstanciaMinima(request));
         TemporadaResponse response = temporadaMapper.aTemporada(temporada);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()

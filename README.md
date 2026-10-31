@@ -76,12 +76,12 @@ curl -X POST http://localhost:8080/api/usuarios -H "Authorization: Bearer <token
 
 Se cargan solos al arrancar, a partir de la Ficha del Alojamiento. Se apagan con `sga.datos-prueba.habilitado=false`.
 
-- **Alojamiento `SANROCCO`.** Es el valor del header `X-Alojamiento-Id` en las rutas de reservas.
+- **Alojamiento `SANROCCO`.** Es el único del sistema, así que ninguna ruta pide su identificador.
 - **5 apartamentos:** AP001 Familiar 4 (10 personas), AP002 Parejas VIP (2), AP003 Familiar 3 (3), AP004 Familiar 2 (5) y AP005 Parejas (2).
 - **Temporadas sin huecos** desde el año pasado hasta el próximo: Baja, Media (fiestas de Armenia, +15 %) y Alta (fin de año, Semana Santa y mitad de año, +30 %, mínimo 3 noches). Cada apartamento tiene tarifa en todas.
 - **Tarifa base por persona y noche:** AP002 $120.000 · AP005 $90.000 · AP003 $70.000 · AP004 $65.000 · AP001 $60.000.
 - **Política v1:** 1 semana o más antes, se devuelve el 100 %; menos de una semana, se retiene el 100 %. No-show a partir de las 8:00 p. m.
-- **Canal externo** "Booking (simulado)", con credencial `clave-booking-demo`.
+- **Canal externo** "Booking (simulado)", con credencial `clave-booking-demo` (se envía en el encabezado `X-Canal-Credencial`).
 - **Bloqueos y estados:** AP003 fuera de servicio con bloqueo vigente, AP004 con mantenimiento programado y AP002 ocupado ahora.
 
 Una reserva en cada estado y de los tres canales (las fechas son relativas a hoy):
@@ -121,14 +121,15 @@ Si el correo falla o tarda más de 5 segundos, **la reserva se crea igual** y el
 | Servicios de dominio (disponibilidad, cotizador, estancia mínima, confirmación, llegada, salida, cancelación, no-show, modificación, bloqueos) | ✅ |
 | Casos de uso: 21, en `application/usecase` | ✅ |
 | DTOs de request y response (records) | ✅ |
-| Contrato de la API: 34 operaciones en `docs/api/openapi.yaml` | ✅ |
+| Contrato de la API: 43 operaciones en `docs/api/openapi.yaml`, con seguridad, roles y 401/403 por ruta | ✅ |
 | Beans de Spring: `UseCaseConfig` y `DomainServiceConfig` | ✅ |
 | **Persistencia JPA en H2 de todos los repositorios** | ✅ |
-| Controllers REST, mappers REST y `GlobalExceptionHandler` | ✅ (faltan los endpoints de consulta GET) |
+| Controllers REST, mappers REST y `GlobalExceptionHandler` | ✅ (faltan novedades, correcciones del folio y tablero de estados: Corte 3) |
 | Datos de prueba al iniciar (12.3): alojamiento, apartamentos, temporadas, tarifas, política, canal, bloqueos y reservas en todos los estados | ✅ |
 | Seguridad: usuarios, registro, login con JWT, roles por endpoint y verificación del propietario | ✅ |
 | Perfil, cambio y recuperación de contraseña, eliminación lógica de usuarios | ⬜ |
-| Credencial de canales (`X-Canal-Credencial`) | ⬜ |
+| Credencial de canales (`X-Canal-Credencial`) e idempotencia de reservas externas | ✅ |
+| Vencimiento automático de reservas pendientes (cada minuto) | ✅ |
 | Notificación por correo al crear, confirmar y cancelar (integración de salida, 10.3.2) | ✅ |
 | Asistente con IA (10.2) | ⬜ |
 | Frontend | ⬜ |
@@ -243,19 +244,18 @@ sh ./gradlew test
 # reporte: backend/sga/build/reports/tests/test/index.html
 ```
 
-Hay **278 pruebas**:
+Hay **280 pruebas unitarias** y además las de integración:
 
 - **Unitarias** del dominio, los servicios, los value objects y los mappers. No arrancan Spring.
 - **De integración:** `SgaApplicationTests`, `ReservaRepositoryJpaTest`, `RepositoriosJpaTest` y `SeguridadTest`. Arrancan Spring con H2; `SeguridadTest` además levanta el servidor y hace peticiones HTTP de verdad (login, 401, 403, registro).
 
 ## 9. Pendientes
 
-- [ ] Endpoints de consulta (GET): reservas, folio, disponibilidad, cotizar, canales externos.
-- [ ] **RN-19:** la `Reserva` no guarda el identificador externo del canal, así que la idempotencia de reservas externas todavía no funciona.
+- [ ] Endpoints de Corte 3 que ya están en el contrato: novedades, bloqueos por apartamento, correcciones del folio y tablero de estados.
+- [ ] Registrar los conflictos de canal (7.8) cuando una reserva externa choca.
 - [ ] Leer el plazo de confirmación desde `Alojamiento` en `VencerReservasPendientesUseCase`, en lugar de `application.properties`, para no tenerlo en dos lugares.
-- [ ] Ajustes de DTOs: tiempo de preparación en horas, gravedad de la novedad, autor y motivo en las autorizaciones (RN-17), y `horaEstimadaLlegada` en `CrearReservaRequest`.
-- [ ] Perfil, cambio y recuperación de contraseña (7.2) y la credencial `X-Canal-Credencial` para los canales.
-- [ ] Cambiar el header `X-Alojamiento-Id` por `obtenerUnico()` (hay un solo alojamiento).
+- [ ] Ajustes de DTOs: gravedad de la novedad, autor y motivo en las autorizaciones (RN-17), y `horaEstimadaLlegada` en `CrearReservaRequest`.
+- [ ] Perfil, cambio y recuperación de contraseña, eliminación lógica, listar usuarios y cambiar rol (7.2).
 - [ ] Opcional: H2 en archivo para que los datos queden guardados entre reinicios.
 
 ## 10. Documentación
