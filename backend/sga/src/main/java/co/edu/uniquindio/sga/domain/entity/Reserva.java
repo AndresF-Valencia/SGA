@@ -45,7 +45,7 @@ public class Reserva {
     private final CanalOrigen canalOrigen;
     private final LocalDateTime creadaEn;
     private final Ocupante titular;
-    private final IdentificacionApartamento apartamento;
+    private IdentificacionApartamento apartamento; // referencia a OTRO agregado; cambia solo al modificar (7.5)
     private final VersionPolitica politica;
     private final List<EventoReserva> historial = new ArrayList<>();
 
@@ -304,6 +304,30 @@ public class Reserva {
      * RN-14: toda modificación recalcula el valor y produce un ajuste.
      * RN-22: la política congelada NO se recalcula.
      */
+    /**
+     * 7.5: modifica fechas y/o apartamento de una reserva no iniciada. Las validaciones de
+     * disponibilidad ya las hizo el caso de uso; aquí se protege el estado y se registra el cambio.
+     * Devuelve el ajuste (nuevo valor − valor anterior) que va al folio.
+     */
+    public Dinero modificar(IdentificacionApartamento nuevoApartamento, Estancia nuevaEstancia,
+            List<Ocupante> nuevosOcupantes, ValorCongelado nuevoValor, String autor, LocalDateTime ahora) {
+        if (nuevoApartamento == null) {
+            throw new ReglaDominioException("La modificación debe indicar el apartamento");
+        }
+        IdentificacionApartamento anterior = this.apartamento;
+        Dinero ajuste = modificarEstancia(nuevaEstancia, nuevoValor, autor, ahora);   // valida antes de cambiar
+        if (!nuevoApartamento.equals(anterior)) {
+            this.apartamento = nuevoApartamento;
+            registrarEvento("CAMBIO_APARTAMENTO", autor, this.estado, this.estado,
+                    "Apartamento " + anterior.valor() + " → " + nuevoApartamento.valor(), ahora);
+        }
+        // Si el grupo cambia, se reemplaza completo (ya se recotizó con estos ocupantes)
+        if (nuevosOcupantes != null && !nuevosOcupantes.isEmpty()) {
+            this.ocupantes = List.copyOf(nuevosOcupantes);
+        }
+        return ajuste;
+    }
+
     public Dinero modificarEstancia(Estancia nuevaEstancia, ValorCongelado nuevoValor,
             String autor, LocalDateTime ahora) {
         verificarQueNoEsteTerminada();

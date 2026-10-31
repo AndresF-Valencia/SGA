@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga.application.dto.response.ErrorResponse;
 import co.edu.uniquindio.sga.application.exception.AccesoDenegadoException;
 import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
 import co.edu.uniquindio.sga.application.exception.ApartamentoNoEncontradoException;
+import co.edu.uniquindio.sga.application.exception.CredencialCanalInvalidaException;
 import co.edu.uniquindio.sga.application.exception.CredencialesInvalidasException;
 import co.edu.uniquindio.sga.application.exception.FolioNoEncontradoException;
 import co.edu.uniquindio.sga.application.exception.PoliticaCancelacionNoEncontradaException;
@@ -67,9 +68,9 @@ public class GlobalExceptionHandler {
 
     // ---------- 401 y 403: seguridad ----------
 
-    @ExceptionHandler(CredencialesInvalidasException.class)
+    @ExceptionHandler({CredencialesInvalidasException.class, CredencialCanalInvalidaException.class})
     ResponseEntity<ErrorResponse> credencialesInvalidas(
-            CredencialesInvalidasException exception, HttpServletRequest request) {
+            RuntimeException exception, HttpServletRequest request) {
         return error(HttpStatus.UNAUTHORIZED, exception.getMessage(), request, List.of());
     }
 

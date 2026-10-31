@@ -1,5 +1,12 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import co.edu.uniquindio.sga.domain.valueobject.TipoCargo;
+import co.edu.uniquindio.sga.domain.valueobject.Dinero;
+import co.edu.uniquindio.sga.domain.valueobject.Cargo;
+import co.edu.uniquindio.sga.domain.repository.FolioRepository;
+import co.edu.uniquindio.sga.domain.entity.Folio;
+import co.edu.uniquindio.sga.application.exception.FolioNoEncontradoException;
+import co.edu.uniquindio.sga.application.exception.ReservaNoEncontradaException;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,7 +17,6 @@ import co.edu.uniquindio.sga.domain.entity.Apartamento;
 import co.edu.uniquindio.sga.domain.entity.Ocupante;
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.entity.Temporada;
-import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
 import co.edu.uniquindio.sga.domain.repository.ApartamentoRepository;
 import co.edu.uniquindio.sga.domain.repository.BloqueoRepository;
@@ -37,6 +43,7 @@ import java.util.List;
 public class ModificarReservaUseCase {
 
     private final ReservaRepository reservaRepository;
+    private final FolioRepository folioRepository;
     private final ApartamentoRepository apartamentoRepository;
     private final AlojamientoRepository alojamientoRepository;
     private final TemporadaRepository temporadaRepository;
@@ -55,8 +62,10 @@ public class ModificarReservaUseCase {
             BloqueoRepository bloqueoRepository,
             DisponibilidadApartamentoService disponibilidadService,
             EstanciaMinimaTemporadaAltaService estanciaMinimaService,
-            CotizadorEstanciaService cotizadorService) {
+            CotizadorEstanciaService cotizadorService,
+            FolioRepository folioRepository) {
         this.reservaRepository = reservaRepository;
+        this.folioRepository = folioRepository;
         this.apartamentoRepository = apartamentoRepository;
         this.alojamientoRepository = alojamientoRepository;
         this.temporadaRepository = temporadaRepository;
@@ -84,7 +93,9 @@ public class ModificarReservaUseCase {
 
         // 1. Buscar la reserva existente
         Reserva reserva = reservaRepository.buscarPorCodigo(codigoReserva)
-                .orElseThrow(() -> new ReglaDominioException("No se encontró la reserva con código: " + codigoReserva));
+                .orElseThrow(() -> new ReservaNoEncontradaException(codigoReserva));
+        Folio folio = folioRepository.buscarPorReserva(codigoReserva)
+                .orElseThrow(() -> new FolioNoEncontradoException(codigoReserva));
 
         // 2. Buscar entidades relacionadas
         Apartamento apartamento = apartamentoRepository.buscarPorId(nuevoApartamentoId)
@@ -92,7 +103,10 @@ public class ModificarReservaUseCase {
         Alojamiento alojamiento = alojamientoRepository.buscarPorId(alojamientoId)
                 .orElseThrow(() -> new AlojamientoNoEncontradoException(alojamientoId));
 
-        int totalOcupantes = nuevosOcupantes != null ? nuevosOcupantes.size() : 0;
+        // Si no se mandan ocupantes nuevos, se valida con los que ya tiene la reserva
+        List<Ocupante> ocupantes = nuevosOcupantes != null && !nuevosOcupantes.isEmpty()
+                ? nuevosOcupantes : reserva.getOcupantes();
+        int totalOcupantes = ocupantes.size();
 
         // 3. Validar disponibilidad (RN-01, RN-07, etc.) excluyendo esta misma reserva
         disponibilidadService.verificarDisponibilidad(
@@ -112,7 +126,6 @@ public class ModificarReservaUseCase {
         estanciaMinimaService.verificarEstanciaMinima(nuevaEstancia, temporadas);
 
         // 5. Recotizar los valores con la nueva configuración
-        List<Ocupante> ocupantes = nuevosOcupantes != null ? nuevosOcupantes : reserva.getOcupantes();
         ValorCongelado nuevoValor = cotizadorService.cotizar(
                 nuevoApartamentoId,
                 nuevaEstancia,
@@ -123,10 +136,16 @@ public class ModificarReservaUseCase {
         );
 
         // 6. Delegar la modificación a la entidad de dominio (RN-14, RN-22)
-        reserva.modificarEstancia(nuevaEstancia, nuevoValor, autor, ahora);
+        Dinero ajuste = reserva.modificar(nuevoApartamentoId, nuevaEstancia, ocupantes, nuevoValor, autor, ahora);
 
-        // 7. Persistir cambios actualizados
+        // 7. 7.5: la diferencia de valor va al folio como AJUSTE (positivo o negativo)
+        if (!ajuste.esCero()) {
+            folio.registrarCargo(new Cargo(ajuste, "Ajuste por modificación de la reserva", TipoCargo.AJUSTE, ahora));
+        }
+
+        // 8. Persistir
         reservaRepository.guardar(reserva);
+        folioRepository.guardar(folio);
 
         return reserva;
     }

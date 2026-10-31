@@ -3,14 +3,19 @@ package co.edu.uniquindio.sga.infrastructure.rest.controller;
 import co.edu.uniquindio.sga.application.dto.request.RecibirReservaExternaRequest;
 import co.edu.uniquindio.sga.application.dto.request.ResolverConflictoCanalRequest;
 import co.edu.uniquindio.sga.application.dto.response.DisponibilidadResponse;
+import co.edu.uniquindio.sga.application.dto.response.PaginaResponse;
 import co.edu.uniquindio.sga.application.dto.response.ReservaResponse;
+import co.edu.uniquindio.sga.application.exception.ReservaNoEncontradaException;
+import co.edu.uniquindio.sga.application.usecase.AutenticarCanalUseCase;
 import co.edu.uniquindio.sga.application.usecase.CancelarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarDisponibilidadUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarDisponibilidadUseCase.Criterios;
+import co.edu.uniquindio.sga.application.usecase.ConsultarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.RecibirReservaExternaUseCase;
 import co.edu.uniquindio.sga.application.usecase.ResolverConflictoCanalUseCase;
-import co.edu.uniquindio.sga.domain.entity.Apartamento;
+import co.edu.uniquindio.sga.domain.entity.Canal;
 import co.edu.uniquindio.sga.domain.entity.Ocupante;
-import co.edu.uniquindio.sga.domain.valueobject.CanalOrigen;
+import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.valueobject.CantidadMascota;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.DocumentoIdentidad;
@@ -24,147 +29,144 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Contrato del canal externo (7.8 y 10.3.1).
+ *
+ * Las tres operaciones del canal se autentican con la credencial del canal en el
+ * encabezado X-Canal-Credencial, no con JWT. Sin credencial válida → 401.
+ */
 @RestController
 @RequestMapping("/api")
 @Tag(name = "Canal Externo")
 @RequiredArgsConstructor
 public class CanalController {
 
+    private static final String CREDENCIAL = "X-Canal-Credencial";
+
+    private final AutenticarCanalUseCase autenticarCanalUseCase;
     private final ConsultarDisponibilidadUseCase consultarDisponibilidadUseCase;
-    private final CancelarReservaUseCase cancelarReservaUseCase;
+    private final ConsultarReservaUseCase consultarReservaUseCase;
     private final RecibirReservaExternaUseCase recibirReservaExternaUseCase;
+    private final CancelarReservaUseCase cancelarReservaUseCase;
     private final ResolverConflictoCanalUseCase resolverConflictoUseCase;
     private final ReservaMapper reservaMapper;
 
+    /** 1. Consultar disponibilidad para un rango de fechas y una composición de grupo. */
     @GetMapping("/canales/disponibilidad")
-    @Operation(summary = "Canal externo: consultar disponibilidad", description = "Busca apartamentos disponibles para canales externos.")
+    @Operation(summary = "Canal externo: consultar disponibilidad")
+    @ApiResponse(responseCode = "200", description = "Apartamentos disponibles")
+    @ApiResponse(responseCode = "401", description = "Credencial de canal inválida")
     public ResponseEntity<DisponibilidadResponse> consultarDisponibilidad(
+            @RequestHeader(value = CREDENCIAL, required = false) String credencial,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaEntrada,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaSalida,
             @RequestParam int personas,
-            @RequestParam(defaultValue = "0") int mascotas) {
-        
-        // 1. Obtener entidades puras del dominio
-        List<Apartamento> apartamentosDisponibles = consultarDisponibilidadUseCase.listarDisponibles(
-                fechaEntrada, 
-                fechaSalida, 
-                personas, 
-                new CantidadMascota(mascotas)
-        );
-        
-        // 2. Mapear correctamente usando los métodos reales de la entidad Apartamento
-        List<DisponibilidadResponse.ApartamentoDisponibleDto> dtos = apartamentosDisponibles.stream()
-                .map(ap -> new DisponibilidadResponse.ApartamentoDisponibleDto(
-                        ap.getIdentificacion().toString(), 
-                        ap.getNombre(),
-                        ap.getCapacidad().cantidad(),
-                        ap.getCaracteristicas(),            
-                        ap.getImagenes(),                   
-                        null                                // Tarifa estimada (si aplica)
-                ))
-                .toList();
+            @RequestParam(defaultValue = "0") int mascotas,
+            @RequestParam(name = "page", defaultValue = "0") int pagina,
+            @RequestParam(name = "size", defaultValue = "10") int tamano) {
+        autenticarCanalUseCase.ejecutar(credencial);
 
-        
-        DisponibilidadResponse respuesta = new DisponibilidadResponse(
-                fechaEntrada,
-                fechaSalida,
-                dtos.size(),
-                dtos
-        );
-        
-        return ResponseEntity.ok(respuesta);
+        var dtos = consultarDisponibilidadUseCase.buscar(new Criterios(
+                        fechaEntrada, fechaSalida, personas, new CantidadMascota(mascotas),
+                        null, null, null, null)).stream()
+                .map(r -> new DisponibilidadResponse.ApartamentoDisponibleDto(
+                        r.apartamento().getIdentificacion().valor(),
+                        r.apartamento().getNombre(),
+                        r.apartamento().getCapacidad().cantidad(),
+                        r.apartamento().getCaracteristicas(),
+                        r.apartamento().getImagenes(),
+                        r.tarifaPorNoche()))
+                .toList();
+        PaginaResponse<DisponibilidadResponse.ApartamentoDisponibleDto> p = PaginaResponse.de(dtos, pagina, tamano);
+        return ResponseEntity.ok(new DisponibilidadResponse(fechaEntrada, fechaSalida,
+                (int) p.totalElementos(), p.contenido(), p.pagina(), p.tamano(), p.totalPaginas()));
     }
 
-   /** Canal externo: crear una reserva externa (RN-18, RN-19) */
-    @PostMapping("/canales/{canal}/reservas-externas")
-    @Operation(summary = "Canal externo: crear una reserva externa", description = "Registra una reserva proveniente de un canal externo validando colisiones (RN-19).")
+    /**
+     * 2. Crear una reserva externa (RN-18, RN-19).
+     * Idempotente: si el mismo código externo ya llegó antes, devuelve la reserva existente con 200
+     * y NO crea otra. Si es nueva, 201.
+     */
+    @PostMapping("/canales/reservas-externas")
+    @Operation(summary = "Canal externo: crear una reserva externa")
     @ApiResponse(responseCode = "201", description = "Reserva externa creada")
-    @ApiResponse(responseCode = "200", description = "Mensaje repetido: ya existía una reserva con este canal y código externo")
-    @ApiResponse(responseCode = "400", description = "Datos inválidos")
-    @ApiResponse(responseCode = "401", description = "No autenticado")
-    @ApiResponse(responseCode = "409", description = "Regla de negocio / Conflicto")
+    @ApiResponse(responseCode = "200", description = "Mensaje repetido: se devuelve la reserva que ya existía (RN-19)")
+    @ApiResponse(responseCode = "401", description = "Credencial de canal inválida")
+    @ApiResponse(responseCode = "409", description = "Choca con una reserva o bloqueo vigente (RN-18)")
     public ResponseEntity<ReservaResponse> recibirReservaExterna(
-            @PathVariable String canal,
+            @RequestHeader(value = CREDENCIAL, required = false) String credencial,
             @Valid @RequestBody RecibirReservaExternaRequest request) {
-        
+        Canal canal = autenticarCanalUseCase.ejecutar(credencial);
+        boolean repetida = existe(request.codigoExterno());
 
-        // 1. Mapear el titular (creando su DocumentoIdentidad y pasando LocalDate.now() para la validación de fecha de nacimiento)
-        Ocupante titular = new Ocupante(
-                new DocumentoIdentidad(request.titular().documento()),
-                request.titular().nombre(),
-                request.titular().fechaNacimiento(),
-                LocalDate.now()
-        );
-
-        // 2. Mapear la lista de ocupantes externos usando el constructor real de la entidad
-        List<Ocupante> listaOcupantes = request.ocupantes().stream()
-                .map(o -> new Ocupante(
-                        new DocumentoIdentidad(o.documento()),
-                        o.nombre(),
-                        o.fechaNacimiento(),
-                        LocalDate.now()
-                ))
+        LocalDate hoy = LocalDate.now();
+        Ocupante titular = new Ocupante(new DocumentoIdentidad(request.titular().documento()),
+                request.titular().nombre(), request.titular().fechaNacimiento(), hoy);
+        List<Ocupante> ocupantes = request.ocupantes().stream()
+                .map(o -> new Ocupante(new DocumentoIdentidad(o.documento()), o.nombre(), o.fechaNacimiento(), hoy))
                 .toList();
 
-        // 3. Ejecutar el caso de uso pasando los tipos de dominio puros
         var reserva = recibirReservaExternaUseCase.ejecutar(
                 request.codigoExterno(),
-                CanalOrigen.valueOf(canal.toUpperCase()),
+                canal.getTipoCanal(),           // el canal sale de la credencial, no de lo que diga la petición
                 new IdentificacionApartamento(request.identificacionApartamento()),
                 request.fechaEntrada(),
                 request.fechaSalida(),
                 titular,
-                listaOcupantes,
-                new CantidadMascota(request.cantidadMascotas()), 
-                LocalDateTime.now()
-        );
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(reservaMapper.aReserva(reserva));
+                ocupantes,
+                new CantidadMascota(request.cantidadMascotas()),
+                LocalDateTime.now());
+        return ResponseEntity.status(repetida ? HttpStatus.OK : HttpStatus.CREATED)
+                .body(reservaMapper.aReserva(reserva));
     }
 
+    /** 3. Cancelar una reserva externa previamente creada. */
+    @PutMapping("/canales/reservas-externas/{codigoExterno}/cancelar")
+    @Operation(summary = "Canal externo: cancelar una reserva externa")
+    @ApiResponse(responseCode = "200", description = "Reserva cancelada con la política congelada")
+    @ApiResponse(responseCode = "401", description = "Credencial de canal inválida")
+    @ApiResponse(responseCode = "404", description = "No existe una reserva con ese código externo")
+    @ApiResponse(responseCode = "409", description = "La reserva ya no se puede cancelar")
+    public ResponseEntity<ReservaResponse> cancelarReservaExterna(
+            @RequestHeader(value = CREDENCIAL, required = false) String credencial,
+            @PathVariable String codigoExterno,
+            @RequestParam(defaultValue = "Cancelación solicitada por el canal") String motivo) {
+        Canal canal = autenticarCanalUseCase.ejecutar(credencial);
+        var reserva = cancelarReservaUseCase.ejecutarPorCodigoExterno(
+                codigoExterno, motivo, LocalDateTime.now(), "CANAL " + canal.getNombre());
+        return ResponseEntity.ok(reservaMapper.aReserva(reserva));
+    }
 
-    /** Resolver un conflicto de canal (administrador, 7.8 / CU-21) */
+    /** Resolver un conflicto de canal (administrador, 7.8 / CU-21). Este sí usa JWT. */
     @PutMapping("/conflictos-canal/{id}/resolver")
-    @Operation(summary = "Resolver un conflicto de canal", description = "Rechaza o gestiona la reserva indicada por el identificador de conflicto recibido.")
-    @ApiResponse(responseCode = "200", description = "Conflicto resuelto")
-    @ApiResponse(responseCode = "400", description = "Solicitud invalida")
-    @ApiResponse(responseCode = "404", description = "Reserva no encontrada")
-    @ApiResponse(responseCode = "409", description = "El conflicto no puede resolverse")
+    @Operation(summary = "Resolver un conflicto de canal")
     public ResponseEntity<ReservaResponse> resolverConflicto(
             @PathVariable String id,
             @Valid @RequestBody ResolverConflictoCanalRequest request) {
-        
-        // Invoca el caso de uso pasando el CodigoReserva y el motivo de resolución
-        var reserva = resolverConflictoUseCase.rechazarReservaCanal(
-                new CodigoReserva(id), request.resolucion());
-        
+        var reserva = resolverConflictoUseCase.rechazarReservaCanal(new CodigoReserva(id), request.resolucion());
         return ResponseEntity.ok(reservaMapper.aReserva(reserva));
     }
 
-    /** Canal externo: cancelar una reserva previamente creada (10.3.1) */
-    @DeleteMapping("/canales/{canal}/reservas-externas/{codigoExterno}")
-    @Operation(summary = "Canal externo: cancelar reserva", description = "Permite al canal externo cancelar una reserva por su identificador externo.")
-    @ApiResponse(responseCode = "200", description = "Reserva externa cancelada con éxito")
-    @ApiResponse(responseCode = "404", description = "Reserva no encontrada")
-    public ResponseEntity<ReservaResponse> cancelarReservaExterna(
-            @PathVariable String canal,
-            @PathVariable String codigoExterno,
-            @RequestParam(required = false, defaultValue = "Cancelación solicitada por el canal") String motivo) {
-        
-        // Delegamos en el caso de uso existente que procesa folios, políticas y notificaciones
-        var reserva = cancelarReservaUseCase.ejecutarPorCodigoExterno(
-                codigoExterno, 
-                motivo, 
-                LocalDateTime.now(), 
-                "CANAL_" + canal.toUpperCase()
-        );
-        
-        return ResponseEntity.ok(reservaMapper.aReserva(reserva));
+    private boolean existe(String codigoExterno) {
+        try {
+            consultarReservaUseCase.ejecutar(codigoExterno);
+            return true;
+        } catch (ReservaNoEncontradaException | IllegalArgumentException | ReglaDominioException e) {
+            return false;
+        }
     }
 }

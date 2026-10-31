@@ -20,9 +20,12 @@ public record CotizacionResponse(
         List<DetalleTarifaNocheDto> desgloseNoches
 
 ) {
+    /** 7.4: desglose noche por noche: fecha, temporada, tarifa aplicada, ocupantes facturables y subtotal. */
     public record DetalleTarifaNocheDto(
             LocalDate fecha,
             Long tarifaAplicada,
-            String nombreTemporada
+            String nombreTemporada,
+            int ocupantesFacturables,
+            Long subtotal
     ) {}
 }

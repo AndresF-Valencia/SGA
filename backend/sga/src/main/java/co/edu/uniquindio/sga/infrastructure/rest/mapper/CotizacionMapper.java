@@ -34,11 +34,16 @@ public interface CotizacionMapper {
     @Mapping(target = "desgloseNoches", source = "valor.detalle")
     CotizacionResponse aCotizacion(Cotizacion cotizacion);
 
-    // Convierte una noche cotizada en el detalle de la respuesta.
-    @Mapping(target = "fecha", source = "noche")
-    @Mapping(target = "tarifaAplicada", source = "tarifaPorOcupante")
-    @Mapping(target = "nombreTemporada", source = "temporada")
-    CotizacionResponse.DetalleTarifaNocheDto aDetalle(CargoNoche cargoNoche);
+    // Convierte una noche cotizada en el detalle de la respuesta (7.4).
+    // Se escribe a mano porque el subtotal es un cálculo de CargoNoche, no un campo.
+    default CotizacionResponse.DetalleTarifaNocheDto aDetalle(CargoNoche cargoNoche) {
+        return new CotizacionResponse.DetalleTarifaNocheDto(
+                cargoNoche.noche(),
+                aDinero(cargoNoche.tarifaPorOcupante()),
+                cargoNoche.temporada(),
+                cargoNoche.ocupantesFacturables(),
+                aDinero(cargoNoche.subtotal()));
+    }
 
     /** ==================== CONVERSIONES DE RESPONSE DEL CASO DE USO ==================== */
 
@@ -55,7 +60,7 @@ public interface CotizacionMapper {
                 fechaSalida,
                 valor.noches(),
                 aDinero(valor.total()),
-                null,
+                aDinero(valor.total()),   // sin servicios adicionales, el subtotal es el total
                 valor.detalle().stream().map(this::aDetalle).toList());
     }
 

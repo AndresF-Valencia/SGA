@@ -6,6 +6,7 @@ import co.edu.uniquindio.sga.application.dto.request.RegistrarPagoRequest;
 import co.edu.uniquindio.sga.application.dto.response.FolioResponse;
 import co.edu.uniquindio.sga.application.usecase.CerrarFolioUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarFolioUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarCargoUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarPagoUseCase;
 import co.edu.uniquindio.sga.domain.entity.Folio;
@@ -14,9 +15,11 @@ import co.edu.uniquindio.sga.domain.valueobject.AutorizacionCierre;
 import co.edu.uniquindio.sga.domain.valueobject.Cargo;
 import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
 import co.edu.uniquindio.sga.domain.valueobject.Dinero;
+import co.edu.uniquindio.sga.domain.valueobject.DocumentoIdentidad;
 import co.edu.uniquindio.sga.domain.valueobject.MedioPago;
 import co.edu.uniquindio.sga.domain.valueobject.TipoCargo;
 import co.edu.uniquindio.sga.infrastructure.rest.mapper.FolioMapper;
+import co.edu.uniquindio.sga.infrastructure.security.UsuarioAutenticado;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,6 +28,7 @@ import java.net.URI;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,6 +46,7 @@ public class FolioController {
 
     private final RegistrarCargoUseCase registrarCargoUseCase;
     private final ConsultarFolioUseCase consultarFolioUseCase;
+    private final ConsultarReservaUseCase consultarReservaUseCase;
     private final RegistrarPagoUseCase registrarPagoUseCase;
     private final CerrarFolioUseCase cerrarFolioUseCase;
     private final FolioMapper folioMapper;
@@ -114,8 +119,13 @@ public class FolioController {
     @Operation(summary = "Consultar folio", description = "Obtiene el estado financiero, cargos y pagos del folio.")
     @ApiResponse(responseCode = "200", description = "Folio encontrado")
     @ApiResponse(responseCode = "404", description = "Folio no encontrado")
-    public ResponseEntity<FolioResponse> consultarFolio(@PathVariable String codigo) {
-        // Ejecutamos el caso de uso pasando el String (soporta código interno o externo de Booking)
+    public ResponseEntity<FolioResponse> consultarFolio(@PathVariable String codigo,
+            @AuthenticationPrincipal UsuarioAutenticado usuario) {
+        // 7.2: un huésped solo ve el folio de SUS reservas (se verifica el titular, no solo el rol)
+        if (usuario.esHuesped()) {
+            consultarReservaUseCase.ejecutarComoHuesped(codigo, new DocumentoIdentidad(usuario.documento()));
+        }
+        // Soporta código interno (RES-...) o externo del canal
         Folio folio = consultarFolioUseCase.ejecutar(codigo);
         return ResponseEntity.ok(folioMapper.aFolio(folio));
     }
