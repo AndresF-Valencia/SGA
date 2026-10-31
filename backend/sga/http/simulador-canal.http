@@ -123,12 +123,12 @@ Content-Type: application/json
 ###
 # @name conflictos
 GET {{base}}/api/conflictos-canal?resuelto=false
-Authorization: Bearer {{loginAdmin.response.body.token}}
+Authorization: Bearer {{loginAdmin.response.body.$.token}}
 
 ### El administrador lo resuelve (deja por escrito qué hizo)
-PUT {{base}}/api/conflictos-canal/{{conflictos.response.body.contenido[0].id}}/resolver
+PUT {{base}}/api/conflictos-canal/{{conflictos.response.body.$.contenido[0].id}}/resolver
 Content-Type: application/json
-Authorization: Bearer {{loginAdmin.response.body.token}}
+Authorization: Bearer {{loginAdmin.response.body.$.token}}
 
 { "resolucion": "Se le ofreció AP004 en las mismas fechas por el canal" }
 
