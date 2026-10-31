@@ -66,6 +66,10 @@ public class SecurityConfig {
                                 .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)
                         .requestMatchers(HttpMethod.PUT, "/api/reservas/*/cancelar")
                                 .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)
+                        // Listado general solo para el personal; el huésped usa "mis reservas"
+                        .requestMatchers(HttpMethod.GET, "/api/reservas")
+                                .hasAnyRole(RECEPCIONISTA, ADMINISTRADOR)
+                        .requestMatchers(HttpMethod.GET, "/api/reservas/mis-reservas").hasRole(HUESPED)
                         .requestMatchers(HttpMethod.GET, "/api/reservas/**")
                                 .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)
                         // Lo demás de reservas y folios: confirmar, modificar, llegada, salida, no-show, cargos y pagos

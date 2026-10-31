@@ -73,8 +73,8 @@ paths:
     get:
       tags:
       - Reservas
-      summary: Listar reservas por estado (ConsultarReservasPorEstadoUseCase)
-      operationId: consultarReservasPorEstado
+      summary: Listar reservas con filtros (solo recepción y administración)
+      operationId: listarReservas
       parameters:
       - name: estado
         in: query
@@ -89,6 +89,40 @@ paths:
           - FINALIZADA
           - CANCELADA
           - NO_SHOW
+      - name: apartamentoId
+        in: query
+        required: false
+        schema:
+          type: string
+          example: APTO-101
+      - name: canalOrigen
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - PORTAL
+          - DIRECTO
+          - EXTERNO
+      - name: fechaEntradaDesde
+        in: query
+        required: false
+        description: Fecha de entrada mínima, incluida.
+        schema:
+          type: string
+          format: date
+      - name: fechaEntradaHasta
+        in: query
+        required: false
+        description: Fecha de entrada máxima, incluida.
+        schema:
+          type: string
+          format: date
+      - name: documentoTitular
+        in: query
+        required: false
+        schema:
+          type: string
       - $ref: '#/components/parameters/Pagina'
       - $ref: '#/components/parameters/Tamano'
       responses:
@@ -100,6 +134,36 @@ paths:
                 $ref: '#/components/schemas/PaginaReservaResumen'
         '400':
           $ref: '#/components/responses/DatosInvalidos'
+
+  /api/reservas/mis-reservas:
+    get:
+      tags:
+      - Reservas
+      summary: Listar las reservas del huésped autenticado
+      description: El titular sale del token; no se acepta otro documento. De la más reciente a la más antigua.
+      operationId: misReservas
+      parameters:
+      - name: estado
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - PENDIENTE
+          - CONFIRMADA
+          - EN_CURSO
+          - FINALIZADA
+          - CANCELADA
+          - NO_SHOW
+      - $ref: '#/components/parameters/Pagina'
+      - $ref: '#/components/parameters/Tamano'
+      responses:
+        '200':
+          description: Página de reservas del huésped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaReservaResumen'
 
   /api/reservas/{codigo}:
     get:
@@ -116,6 +180,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReservaResponse'
+        '403':
+          description: La reserva pertenece a otro huésped (7.2).
         '404':
           $ref: '#/components/responses/NoEncontrado'
     put:
@@ -324,6 +390,44 @@ paths:
           format: int32
           minimum: 1
           example: 2
+      - name: mascotas
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: capacidadMinima
+        in: query
+        required: false
+        description: Capacidad máxima mínima del apartamento.
+        schema:
+          type: integer
+          format: int32
+      - name: precioMin
+        in: query
+        required: false
+        description: Tarifa estimada mínima por noche para el grupo, en pesos. Excluye apartamentos sin tarifa.
+        schema:
+          type: integer
+          format: int64
+      - name: precioMax
+        in: query
+        required: false
+        description: Tarifa estimada máxima por noche para el grupo, en pesos. Excluye apartamentos sin tarifa.
+        schema:
+          type: integer
+          format: int64
+      - name: caracteristicas
+        in: query
+        required: false
+        description: Características que el apartamento debe tener todas (sin distinguir mayúsculas). Repetir el parámetro para varias.
+        schema:
+          type: array
+          items:
+            type: string
+        explode: true
       - $ref: '#/components/parameters/Pagina'
       - $ref: '#/components/parameters/Tamano'
       responses:
@@ -1990,6 +2094,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DisponibilidadResponse.ApartamentoDisponibleDto'
+        pagina:
+          type: integer
+          format: int32
+          example: 0
+        tamano:
+          type: integer
+          format: int32
+          example: 10
+        totalPaginas:
+          type: integer
+          format: int32
+          example: 1
     ErrorResponse:
       type: object
       properties:

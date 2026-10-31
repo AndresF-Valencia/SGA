@@ -17,6 +17,7 @@ import co.edu.uniquindio.sga.application.usecase.ConsultarAlojamientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarDisponibilidadUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarFolioUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarReservaUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarReservasUseCase;
 import co.edu.uniquindio.sga.application.usecase.CorregirMovimientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.CotizarEstanciaUseCase;
 import co.edu.uniquindio.sga.application.usecase.CrearReservaUseCase;
@@ -326,18 +327,29 @@ public class UseCaseConfig {
     }
 
     @Bean
+    public ConsultarReservasUseCase consultarReservasUseCase(ReservaRepository reservaRepository) {
+        return new ConsultarReservasUseCase(reservaRepository);
+    }
+
+    @Bean
     public ConsultarDisponibilidadUseCase consultarDisponibilidadUseCase(
             ApartamentoRepository apartamentoRepository,
             AlojamientoRepository alojamientoRepository,
             ReservaRepository reservaRepository,
             BloqueoRepository bloqueoRepository,
-            DisponibilidadApartamentoService disponibilidadService) {
+            DisponibilidadApartamentoService disponibilidadService,
+            TemporadaRepository temporadaRepository,
+            TarifaRepository tarifaRepository,
+            CotizadorEstanciaService cotizadorService) {
         return new ConsultarDisponibilidadUseCase(
                 apartamentoRepository,
                 alojamientoRepository,
                 reservaRepository,
                 bloqueoRepository,
-                disponibilidadService
+                disponibilidadService,
+                temporadaRepository,
+                tarifaRepository,
+                cotizadorService
         );
     }
 

@@ -14,8 +14,18 @@ public record DisponibilidadResponse(
         LocalDate fechaEntrada,
         LocalDate fechaSalida,
         int totalDisponibles,
-        List<ApartamentoDisponibleDto> apartamentosDisponibles
+        List<ApartamentoDisponibleDto> apartamentosDisponibles,
+        int pagina,
+        int tamano,
+        int totalPaginas
 ) {
+    /** Respuesta sin paginar (canal externo): una sola página con todos los resultados. */
+    public DisponibilidadResponse(LocalDate fechaEntrada, LocalDate fechaSalida, int totalDisponibles,
+            List<ApartamentoDisponibleDto> apartamentosDisponibles) {
+        this(fechaEntrada, fechaSalida, totalDisponibles, apartamentosDisponibles, 0,
+                apartamentosDisponibles.size(), 1);
+    }
+
     public record ApartamentoDisponibleDto(
             String identificacionApartamento,
             String nombre,

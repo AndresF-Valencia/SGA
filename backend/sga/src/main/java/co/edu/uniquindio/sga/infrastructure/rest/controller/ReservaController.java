@@ -8,6 +8,14 @@ import co.edu.uniquindio.sga.application.dto.response.ReservaResponse;
 import co.edu.uniquindio.sga.application.exception.AccesoDenegadoException;
 import co.edu.uniquindio.sga.application.usecase.CancelarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfirmarReservaUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarReservaUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarReservasUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarReservasUseCase.Filtros;
+import co.edu.uniquindio.sga.application.dto.response.PaginaResponse;
+import co.edu.uniquindio.sga.application.dto.response.ReservaResumenResponse;
+import co.edu.uniquindio.sga.domain.valueobject.EstadoReserva;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.RequestParam;
 import co.edu.uniquindio.sga.application.usecase.CrearReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.DeclararNoShowUseCase;
 import co.edu.uniquindio.sga.application.usecase.ModificarReservaUseCase;
@@ -34,6 +42,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -69,13 +78,66 @@ public class ReservaController {
     private final DeclararNoShowUseCase declararNoShowUseCase;
     private final RegistrarLlegadaUseCase registrarLlegadaUseCase;
     private final VerificarAccesoReservaUseCase verificarAccesoReservaUseCase;
+    private final ConsultarReservaUseCase consultarReservaUseCase;
+    private final ConsultarReservasUseCase consultarReservasUseCase;
     private final ReservaMapper reservaMapper;
 
-    /**
-     * Pendientes: listar y consultar reservas porque no existen sus casos de uso;
-     * cotizar porque el request no permite construir todos los ocupantes; y
-     * consultar disponibilidad porque tampoco existe su caso de uso.
-     */
+    /** Pendiente: cotizar, porque el request no permite construir todos los ocupantes. */
+
+    /** Listado para el personal, de la más reciente a la más antigua, de a 10 por página (12.4). */
+    @GetMapping
+    @Operation(summary = "Listar reservas", description = "Filtros opcionales: estado, apartamento, canal, rango de fecha de entrada y documento del titular.")
+    @ApiResponse(responseCode = "200", description = "Página de reservas")
+    @ApiResponse(responseCode = "400", description = "Filtro inválido")
+    public ResponseEntity<PaginaResponse<ReservaResumenResponse>> listarReservas(
+	    @RequestParam(required = false) EstadoReserva estado,
+	    @RequestParam(required = false) String apartamentoId,
+	    @RequestParam(required = false) CanalOrigen canalOrigen,
+	    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaEntradaDesde,
+	    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaEntradaHasta,
+	    @RequestParam(required = false) String documentoTitular,
+	    @RequestParam(name = "page", defaultValue = "0") int pagina,
+	    @RequestParam(name = "size", defaultValue = "10") int tamano) {
+	return ResponseEntity.ok(listar(new Filtros(estado,
+		apartamentoId == null ? null : new IdentificacionApartamento(apartamentoId),
+		canalOrigen, fechaEntradaDesde, fechaEntradaHasta,
+		documentoTitular == null ? null : new DocumentoIdentidad(documentoTitular)), pagina, tamano));
+    }
+
+    /** Las reservas del huésped autenticado; el titular sale del token, nunca de un parámetro (7.2). */
+    @GetMapping("/mis-reservas")
+    @Operation(summary = "Listar mis reservas", description = "Reservas cuyo titular es el huésped autenticado.")
+    @ApiResponse(responseCode = "200", description = "Página de reservas del huésped")
+    public ResponseEntity<PaginaResponse<ReservaResumenResponse>> misReservas(
+	    @RequestParam(required = false) EstadoReserva estado,
+	    @RequestParam(name = "page", defaultValue = "0") int pagina,
+	    @RequestParam(name = "size", defaultValue = "10") int tamano,
+	    @AuthenticationPrincipal UsuarioAutenticado usuario) {
+	return ResponseEntity.ok(listar(new Filtros(estado, null, null, null, null,
+		new DocumentoIdentidad(usuario.documento())), pagina, tamano));
+    }
+
+    private PaginaResponse<ReservaResumenResponse> listar(Filtros filtros, int pagina, int tamano) {
+	var resumenes = consultarReservasUseCase.ejecutar(filtros).stream()
+		.map(reservaMapper::aReservaResumen)
+		.toList();
+	return PaginaResponse.de(resumenes, pagina, tamano);
+    }
+
+    /** Detalle de una reserva; un huésped solo puede ver las suyas (7.2). */
+    @GetMapping("/{codigo}")
+    @Operation(summary = "Consultar el detalle de una reserva", description = "Acepta el código interno (RES-...) o el código externo del canal.")
+    @ApiResponse(responseCode = "200", description = "Reserva encontrada")
+    @ApiResponse(responseCode = "403", description = "La reserva pertenece a otro huésped")
+    @ApiResponse(responseCode = "404", description = "Reserva no encontrada")
+    public ResponseEntity<ReservaResponse> consultarReserva(
+	    @PathVariable String codigo,
+	    @AuthenticationPrincipal UsuarioAutenticado usuario) {
+	var reserva = usuario.esHuesped()
+		? consultarReservaUseCase.ejecutarComoHuesped(codigo, new DocumentoIdentidad(usuario.documento()))
+		: consultarReservaUseCase.ejecutar(codigo);
+	return ResponseEntity.ok(reservaMapper.aReserva(reserva));
+    }
 
     /**
      * Registra la salida del grupo y cierra el folio según RN-17.
