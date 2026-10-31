@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @DisplayName("UsuarioPersistenceMapper")
 class UsuarioPersistenceMapperTest {
@@ -34,5 +35,21 @@ class UsuarioPersistenceMapperTest {
         assertEquals(original.getFechaNacimiento(), copia.getFechaNacimiento());
         assertEquals(Rol.RECEPCIONISTA, copia.getRol());
         assertFalse(copia.estaActivo());
+    }
+
+    @Test
+    @DisplayName("Conserva la foto y el código de recuperación pendiente con su vencimiento e intentos")
+    void conservaFotoYCodigo() {
+        Usuario original = Usuario.reconstruir(new Correo("laura@example.com"), "Laura",
+                "$2a$10$hash", "3001234567", new DocumentoIdentidad("1094000001"),
+                LocalDate.of(1990, 5, 1), Rol.HUESPED, true,
+                "https://img.example.com/laura.jpg", "$2a$10$codigo", LocalDateTime.of(2026, 10, 27, 10, 15), 2);
+
+        Usuario copia = UsuarioPersistenceMapper.aDominio(UsuarioPersistenceMapper.aEntity(original));
+
+        assertEquals("https://img.example.com/laura.jpg", copia.getFotoPerfil());
+        assertEquals("$2a$10$codigo", copia.getCodigoRecuperacionCifrado());
+        assertEquals(LocalDateTime.of(2026, 10, 27, 10, 15), copia.getCodigoRecuperacionExpira());
+        assertEquals(2, copia.getIntentosCodigoFallidos());
     }
 }

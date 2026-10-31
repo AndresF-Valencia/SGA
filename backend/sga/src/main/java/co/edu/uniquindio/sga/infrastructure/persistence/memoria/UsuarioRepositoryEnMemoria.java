@@ -5,6 +5,7 @@ import co.edu.uniquindio.sga.domain.repository.UsuarioRepository;
 import co.edu.uniquindio.sga.domain.valueobject.Correo;
 import co.edu.uniquindio.sga.domain.valueobject.DocumentoIdentidad;
 
+import java.util.List;
 import java.util.Optional;
 
 // Sin @Repository: la aplicación usa el adaptador JPA. Esta clase queda para las pruebas unitarias.
@@ -32,5 +33,10 @@ public class UsuarioRepositoryEnMemoria extends AlmacenEnMemoria<Correo, Usuario
     @Override
     public boolean existePorDocumento(DocumentoIdentidad documento) {
         return !filtrar(u -> u.getDocumento().equals(documento)).isEmpty();
+    }
+
+    @Override
+    public List<Usuario> listar() {
+        return todos();
     }
 }

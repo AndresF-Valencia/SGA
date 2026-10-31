@@ -19,7 +19,7 @@ info:
     - Los canales externos no usan token: envían su credencial en el encabezado `X-Canal-Credencial`.
     - 401 = falta el token o no es válido. 403 = el rol no tiene permiso, o la reserva es de otro huésped.
     - El alojamiento es único (F-13): ninguna operación pide su identificador.
-  version: 1.1.0
+  version: 1.2.0
   contact:
     name: Grupo Niche
     email: andresf.valenciaa1@uqvirtual.edu.co
@@ -102,6 +102,52 @@ paths:
         '401':
           $ref: '#/components/responses/NoAutenticado'
 
+  /api/auth/recuperar-contrasena:
+    post:
+      tags:
+      - Autenticación
+      summary: Pedir un código para recuperar la contraseña
+      operationId: solicitarRecuperacion
+      description: 'Envía al correo registrado un código de 6 dígitos que vence en 15 minutos y sirve una sola vez. Responde 202 aunque el correo no exista, para no revelar qué correos tienen cuenta. En modo consola el correo se escribe en el log. Pública: no requiere token.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitarRecuperacionRequest'
+      responses:
+        '202':
+          description: Si el correo tiene cuenta activa, se envió el código.
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+
+  /api/auth/restablecer-contrasena:
+    post:
+      tags:
+      - Autenticación
+      summary: Poner una contraseña nueva con el código
+      operationId: restablecerContrasena
+      description: 'El código se anula al usarse, al vencer o tras 5 intentos fallidos. Pública: no requiere token.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestablecerContrasenaRequest'
+      responses:
+        '204':
+          description: Contraseña cambiada.
+        '400':
+          description: Datos inválidos, o el código no es válido, ya se usó o venció.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+
   /api/usuarios:
     post:
       tags:
@@ -128,6 +174,199 @@ paths:
           $ref: '#/components/responses/NoAutenticado'
         '403':
           $ref: '#/components/responses/SinPermiso'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+    get:
+      tags:
+      - Usuarios
+      summary: Listar usuarios
+      operationId: listarUsuarios
+      description: 'Filtros opcionales por rol y estado; ordenados por nombre. Roles: Administrador.'
+      parameters:
+      - name: rol
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: &id016
+          - HUESPED
+          - RECEPCIONISTA
+          - ADMINISTRADOR
+          - PERSONAL_SERVICIO
+      - name: activo
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - $ref: '#/components/parameters/Pagina'
+      - $ref: '#/components/parameters/Tamano'
+      responses:
+        '200':
+          description: Página de usuarios
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaUsuarioResponse'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '401': &id001
+          $ref: '#/components/responses/NoAutenticado'
+        '403': &id002
+          $ref: '#/components/responses/SinPermiso'
+
+  /api/usuarios/me:
+    get:
+      tags:
+      - Usuarios
+      summary: Consultar mi perfil
+      operationId: consultarMiPerfil
+      description: 'El usuario sale del token. Roles: todos.'
+      responses:
+        '200':
+          description: Mi perfil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+    put:
+      tags:
+      - Usuarios
+      summary: Actualizar mi perfil
+      operationId: actualizarMiPerfil
+      description: 'Nombre, teléfono y foto. El correo no es editable. Roles: todos.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActualizarPerfilRequest'
+      responses:
+        '200':
+          description: Perfil actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+    delete:
+      tags:
+      - Usuarios
+      summary: Eliminar mi cuenta
+      operationId: eliminarMiCuenta
+      description: 'Eliminación lógica. No se permite si soy titular de reservas PENDIENTE, CONFIRMADA o EN_CURSO (409). Mis reservas históricas se conservan. Roles: todos.'
+      responses:
+        '204':
+          description: Cuenta eliminada.
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+
+  /api/usuarios/me/contrasena:
+    put:
+      tags:
+      - Usuarios
+      summary: Cambiar mi contraseña
+      operationId: cambiarMiContrasena
+      description: 'Con la contraseña actual y la nueva. Actual incorrecta → 409. Roles: todos.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambiarContrasenaRequest'
+      responses:
+        '204':
+          description: Contraseña cambiada.
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+
+  /api/usuarios/{correo}:
+    get:
+      tags:
+      - Usuarios
+      summary: Consultar un usuario
+      operationId: consultarUsuario
+      description: 'Roles: Administrador.'
+      parameters:
+      - &id003
+        name: correo
+        in: path
+        required: true
+        schema:
+          type: string
+          format: email
+        example: laura@example.com
+      responses:
+        '200':
+          description: Usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '401': *id001
+        '403': *id002
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+    delete:
+      tags:
+      - Usuarios
+      summary: Eliminar un usuario
+      operationId: eliminarUsuario
+      description: 'Eliminación lógica: no se permite si es titular de reservas PENDIENTE, CONFIRMADA o EN_CURSO, ni si es el último administrador activo (409). Roles: Administrador.'
+      parameters:
+      - *id003
+      responses:
+        '204':
+          description: Usuario eliminado.
+        '401': *id001
+        '403': *id002
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/ReglaDeNegocio'
+
+  /api/usuarios/{correo}/rol:
+    put:
+      tags:
+      - Usuarios
+      summary: Cambiar el rol de un usuario
+      operationId: cambiarRolUsuario
+      description: 'No se permite quitarle el rol al último administrador activo (409). Roles: Administrador.'
+      parameters:
+      - *id003
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambiarRolRequest'
+      responses:
+        '200':
+          description: Rol actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '401': *id001
+        '403': *id002
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
         '409':
           $ref: '#/components/responses/ReglaDeNegocio'
 
@@ -1435,7 +1674,7 @@ components:
         estadoOperativo:
           type: string
           example: PREPARADO
-          enum: &id003
+          enum: &id006
           - PREPARADO
           - OCUPADO
           - PENDIENTE_PREPARACION
@@ -1795,7 +2034,7 @@ components:
           type: string
           minLength: 1
           example: DIRECTO
-          enum: &id001
+          enum: &id004
           - PORTAL
           - DIRECTO
           - EXTERNO
@@ -1923,7 +2162,7 @@ components:
         medioPago:
           type: string
           example: EFECTIVO
-          enum: &id002
+          enum: &id005
           - EFECTIVO
           - TARJETA_CREDITO
           - TARJETA_DEBITO
@@ -2042,7 +2281,7 @@ components:
           minLength: 1
           example: EXTERNO
           description: 'Informativo: el canal real se toma de la credencial X-Canal-Credencial.'
-          enum: *id001
+          enum: *id004
         horaEstimadaLlegada:
           type: string
           example: '15:00:00'
@@ -2169,7 +2408,7 @@ components:
           type: string
           minLength: 1
           example: EFECTIVO
-          enum: *id002
+          enum: *id005
         fechaPago:
           type: string
           format: date
@@ -2308,7 +2547,7 @@ components:
         estadoOperativo:
           type: string
           example: PREPARADO
-          enum: *id003
+          enum: *id006
         activo:
           type: boolean
         caracteristicas:
@@ -2705,7 +2944,7 @@ components:
         estadoReserva:
           type: string
           example: PENDIENTE
-          enum: &id004
+          enum: &id007
           - PENDIENTE
           - CONFIRMADA
           - EN_CURSO
@@ -2715,7 +2954,7 @@ components:
         canalOrigen:
           type: string
           example: DIRECTO
-          enum: *id001
+          enum: *id004
         apartamentoId:
           type: string
           example: AP001
@@ -2774,11 +3013,11 @@ components:
         estadoReserva:
           type: string
           example: PENDIENTE
-          enum: *id004
+          enum: *id007
         canalOrigen:
           type: string
           example: DIRECTO
-          enum: *id001
+          enum: *id004
         nombreTitular:
           type: string
           example: Laura Gómez
@@ -2841,25 +3080,25 @@ components:
       - documento
       - fechaNacimiento
       properties:
-        nombre: &id005
+        nombre: &id008
           type: string
           example: Laura Gómez
-        correo: &id006
+        correo: &id009
           type: string
           format: email
           example: laura@example.com
-        contrasena: &id007
+        contrasena: &id010
           type: string
           format: password
           minLength: 8
           example: Sanrocco123
-        telefono: &id008
+        telefono: &id011
           type: string
           example: '3001234567'
-        documento: &id009
+        documento: &id012
           type: string
           example: '1094000001'
-        fechaNacimiento: &id010
+        fechaNacimiento: &id013
           type: string
           format: date
           description: Debe ser una fecha pasada.
@@ -2876,15 +3115,15 @@ components:
       - fechaNacimiento
       - rol
       properties:
-        nombre: *id005
-        correo: *id006
-        contrasena: *id007
-        telefono: *id008
-        documento: *id009
-        fechaNacimiento: *id010
+        nombre: *id008
+        correo: *id009
+        contrasena: *id010
+        telefono: *id011
+        documento: *id012
+        fechaNacimiento: *id013
         rol:
           type: string
-          enum: &id011
+          enum: &id014
           - HUESPED
           - RECEPCIONISTA
           - ADMINISTRADOR
@@ -2912,11 +3151,15 @@ components:
           example: '1990-05-01'
         rol:
           type: string
-          enum: *id011
+          enum: *id014
           example: HUESPED
         activo:
           type: boolean
           example: true
+        fotoPerfil:
+          type: string
+          description: URL de la foto; null si no tiene.
+          example: https://img.example.com/laura.jpg
 
     LoginResponse:
       type: object
@@ -2939,7 +3182,7 @@ components:
       required:
       - nombre
       - valor
-      properties: &id012
+      properties: &id015
         nombre:
           type: string
           example: Parqueadero
@@ -2950,7 +3193,109 @@ components:
 
     ServicioAdicionalResponse:
       type: object
-      properties: *id012
+      properties: *id015
+
+    ActualizarPerfilRequest:
+      type: object
+      required:
+      - nombre
+      - telefono
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          example: Laura Gómez
+        telefono:
+          type: string
+          minLength: 1
+          example: '3001234567'
+        fotoPerfil:
+          type: string
+          maxLength: 500
+          description: URL http(s). Vacía o null la quita.
+          example: https://img.example.com/laura.jpg
+
+    CambiarContrasenaRequest:
+      type: object
+      required:
+      - contrasenaActual
+      - nuevaContrasena
+      properties:
+        contrasenaActual:
+          type: string
+          format: password
+          example: Sanrocco123
+        nuevaContrasena:
+          type: string
+          format: password
+          minLength: 8
+          description: Mínimo 8 caracteres, con una mayúscula y un número; distinta de la actual.
+          example: NuevaClave1
+
+    SolicitarRecuperacionRequest:
+      type: object
+      required:
+      - correo
+      properties:
+        correo:
+          type: string
+          format: email
+          example: laura@example.com
+
+    RestablecerContrasenaRequest:
+      type: object
+      required:
+      - correo
+      - codigo
+      - nuevaContrasena
+      properties:
+        correo:
+          type: string
+          format: email
+          example: laura@example.com
+        codigo:
+          type: string
+          pattern: ^\d{6}$
+          example: '482915'
+        nuevaContrasena:
+          type: string
+          format: password
+          minLength: 8
+          example: NuevaClave1
+
+    CambiarRolRequest:
+      type: object
+      required:
+      - rol
+      properties:
+        rol:
+          type: string
+          enum: *id016
+          example: RECEPCIONISTA
+
+    PaginaUsuarioResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsuarioResponse'
+        pagina:
+          type: integer
+          format: int32
+          example: 0
+        tamano:
+          type: integer
+          format: int32
+          example: 10
+        totalElementos:
+          type: integer
+          format: int64
+          example: 4
+        totalPaginas:
+          type: integer
+          format: int32
+          example: 1
   responses:
 
     DatosInvalidos:

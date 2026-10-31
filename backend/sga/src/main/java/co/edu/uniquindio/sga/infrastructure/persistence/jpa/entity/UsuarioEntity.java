@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /** Tabla de usuarios. La llave es el correo, que es único y no se edita (7.2). */
 @Entity
@@ -42,4 +43,17 @@ public class UsuarioEntity {
 
     @Column(name = "activo", nullable = false)
     private boolean activo;
+
+    @Column(name = "foto_perfil", length = 500)
+    private String fotoPerfil;
+
+    /** Código de recuperación de contraseña, cifrado como la contraseña (7.2). */
+    @Column(name = "codigo_recuperacion", length = 100)
+    private String codigoRecuperacionCifrado;
+
+    @Column(name = "codigo_recuperacion_expira")
+    private LocalDateTime codigoRecuperacionExpira;
+
+    @Column(name = "intentos_codigo_fallidos", nullable = false)
+    private int intentosCodigoFallidos;
 }

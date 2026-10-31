@@ -119,6 +119,27 @@ class SeguridadTest {
     }
 
     @Test
+    @DisplayName("Mi perfil: cualquier usuario ve el suyo (200), pero solo el administrador lista usuarios (403)")
+    void miPerfil() throws Exception {
+        String token = iniciarSesion("huesped@sanrocco.co");
+
+        HttpResponse<String> perfil = enviar("GET", "/api/usuarios/me", token, null);
+        assertEquals(200, perfil.statusCode(), perfil.body());
+        assertTrue(perfil.body().contains("huesped@sanrocco.co"), perfil.body());
+
+        assertEquals(403, enviar("GET", "/api/usuarios", token, null).statusCode());
+        assertEquals(200, enviar("GET", "/api/usuarios", iniciarSesion("admin@sanrocco.co"), null).statusCode());
+    }
+
+    @Test
+    @DisplayName("Pedir código de recuperación no exige token y responde 202 aunque el correo no exista")
+    void recuperarContrasena() throws Exception {
+        HttpResponse<String> respuesta = enviar("POST", "/api/auth/recuperar-contrasena", null,
+                "{\"correo\":\"nadie@example.com\"}");
+        assertEquals(202, respuesta.statusCode(), respuesta.body());
+    }
+
+    @Test
     @DisplayName("Registro público: crea un huésped (201) y no permite repetir el correo (409)")
     void registro() throws Exception {
         String json = "{\"nombre\":\"Pedro Pérez\",\"correo\":\"pedro.seguridad@mail.com\","

@@ -72,6 +72,21 @@ curl -X POST http://localhost:8080/api/usuarios -H "Authorization: Bearer <token
 
 **Secreto del JWT:** no se versiona. Se configura con la variable de entorno `SGA_JWT_SECRETO` (mínimo 32 caracteres). Si no está, la aplicación arranca con una clave temporal y los tokens dejan de valer al reiniciar.
 
+**Mi cuenta y recuperación de contraseña (7.2):**
+
+| Qué | Ruta |
+|---|---|
+| Ver / editar mi perfil (nombre, teléfono, foto) | `GET` / `PUT /api/usuarios/me` |
+| Cambiar mi contraseña (con la actual) | `PUT /api/usuarios/me/contrasena` |
+| Eliminar mi cuenta (lógico) | `DELETE /api/usuarios/me` |
+| Pedir código de recuperación (sin token) | `POST /api/auth/recuperar-contrasena` |
+| Poner contraseña nueva con el código (sin token) | `POST /api/auth/restablecer-contrasena` |
+| Administrador: listar, consultar, cambiar rol, eliminar | `GET /api/usuarios`, `GET` / `DELETE /api/usuarios/{correo}`, `PUT /api/usuarios/{correo}/rol` |
+
+El código de recuperación tiene 6 dígitos, vence en 15 minutos, sirve una sola vez y se anula tras 5 intentos fallidos. En modo consola (por defecto) **el correo con el código aparece en la terminal** donde corre la aplicación.
+
+Reglas al eliminar: no se puede eliminar a quien sea titular de reservas pendientes, confirmadas o en curso; sus reservas históricas se conservan; y el sistema nunca se queda sin un administrador activo.
+
 ## 2.2 Datos de prueba (12.3)
 
 Se cargan solos al arrancar, a partir de la Ficha del Alojamiento. Se apagan con `sga.datos-prueba.habilitado=false`.
@@ -121,13 +136,13 @@ Si el correo falla o tarda más de 5 segundos, **la reserva se crea igual** y el
 | Servicios de dominio (disponibilidad, cotizador, estancia mínima, confirmación, llegada, salida, cancelación, no-show, modificación, bloqueos) | ✅ |
 | Casos de uso: 21, en `application/usecase` | ✅ |
 | DTOs de request y response (records) | ✅ |
-| Contrato de la API: 43 operaciones en `docs/api/openapi.yaml`, con seguridad, roles y 401/403 por ruta | ✅ |
+| Contrato de la API: 53 operaciones en `docs/api/openapi.yaml`, con seguridad, roles y 401/403 por ruta | ✅ |
 | Beans de Spring: `UseCaseConfig` y `DomainServiceConfig` | ✅ |
 | **Persistencia JPA en H2 de todos los repositorios** | ✅ |
 | Controllers REST, mappers REST y `GlobalExceptionHandler` | ✅ (faltan novedades, correcciones del folio y tablero de estados: Corte 3) |
 | Datos de prueba al iniciar (12.3): alojamiento, apartamentos, temporadas, tarifas, política, canal, bloqueos y reservas en todos los estados | ✅ |
 | Seguridad: usuarios, registro, login con JWT, roles por endpoint y verificación del propietario | ✅ |
-| Perfil, cambio y recuperación de contraseña, eliminación lógica de usuarios | ⬜ |
+| Perfil, cambio y recuperación de contraseña, eliminación lógica, listar usuarios y cambiar rol | ✅ |
 | Credencial de canales (`X-Canal-Credencial`) e idempotencia de reservas externas | ✅ |
 | Vencimiento automático de reservas pendientes (cada minuto) | ✅ |
 | Notificación por correo al crear, confirmar y cancelar (integración de salida, 10.3.2) | ✅ |
@@ -244,7 +259,7 @@ sh ./gradlew test
 # reporte: backend/sga/build/reports/tests/test/index.html
 ```
 
-Hay **280 pruebas unitarias** y además las de integración:
+Hay **290 pruebas unitarias** y además las de integración:
 
 - **Unitarias** del dominio, los servicios, los value objects y los mappers. No arrancan Spring.
 - **De integración:** `SgaApplicationTests`, `ReservaRepositoryJpaTest`, `RepositoriosJpaTest` y `SeguridadTest`. Arrancan Spring con H2; `SeguridadTest` además levanta el servidor y hace peticiones HTTP de verdad (login, 401, 403, registro).
@@ -255,7 +270,7 @@ Hay **280 pruebas unitarias** y además las de integración:
 - [ ] Registrar los conflictos de canal (7.8) cuando una reserva externa choca.
 - [ ] Leer el plazo de confirmación desde `Alojamiento` en `VencerReservasPendientesUseCase`, en lugar de `application.properties`, para no tenerlo en dos lugares.
 - [ ] Ajustes de DTOs: gravedad de la novedad, autor y motivo en las autorizaciones (RN-17), y `horaEstimadaLlegada` en `CrearReservaRequest`.
-- [ ] Perfil, cambio y recuperación de contraseña, eliminación lógica, listar usuarios y cambiar rol (7.2).
+- [ ] Que un token deje de valer en cuanto el usuario se elimina o cambia de rol (hoy vale hasta que vence, máximo 120 minutos).
 - [ ] Opcional: H2 en archivo para que los datos queden guardados entre reinicios.
 
 ## 10. Documentación

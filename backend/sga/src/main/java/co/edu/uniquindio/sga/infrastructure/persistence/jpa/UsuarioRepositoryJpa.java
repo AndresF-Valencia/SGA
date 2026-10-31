@@ -7,6 +7,7 @@ import co.edu.uniquindio.sga.domain.valueobject.DocumentoIdentidad;
 import co.edu.uniquindio.sga.infrastructure.persistence.jpa.mapper.UsuarioPersistenceMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -42,5 +43,10 @@ public class UsuarioRepositoryJpa implements UsuarioRepository {
     @Override
     public boolean existePorDocumento(DocumentoIdentidad documento) {
         return documento != null && jpa.existsByDocumento(documento.numero());
+    }
+
+    @Override
+    public List<Usuario> listar() {
+        return jpa.findAll().stream().map(UsuarioPersistenceMapper::aDominio).toList();
     }
 }

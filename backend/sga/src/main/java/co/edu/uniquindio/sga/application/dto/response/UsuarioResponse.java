@@ -10,5 +10,6 @@ public record UsuarioResponse(
         String documento,
         LocalDate fechaNacimiento,
         String rol,
-        boolean activo
+        boolean activo,
+        String fotoPerfil
 ) {}

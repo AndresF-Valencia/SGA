@@ -19,7 +19,8 @@ public final class UsuarioRestMapper {
                 usuario.getDocumento().numero(),
                 usuario.getFechaNacimiento(),
                 usuario.getRol().name(),
-                usuario.estaActivo());
+                usuario.estaActivo(),
+                usuario.getFotoPerfil());
     }
 
     public static LoginResponse aLogin(IniciarSesionUseCase.Sesion sesion) {

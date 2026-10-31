@@ -20,6 +20,10 @@ public final class UsuarioPersistenceMapper {
         entity.setFechaNacimiento(usuario.getFechaNacimiento());
         entity.setRol(usuario.getRol());
         entity.setActivo(usuario.estaActivo());
+        entity.setFotoPerfil(usuario.getFotoPerfil());
+        entity.setCodigoRecuperacionCifrado(usuario.getCodigoRecuperacionCifrado());
+        entity.setCodigoRecuperacionExpira(usuario.getCodigoRecuperacionExpira());
+        entity.setIntentosCodigoFallidos(usuario.getIntentosCodigoFallidos());
         return entity;
     }
 
@@ -32,6 +36,10 @@ public final class UsuarioPersistenceMapper {
                 new DocumentoIdentidad(entity.getDocumento()),
                 entity.getFechaNacimiento(),
                 entity.getRol(),
-                entity.isActivo());
+                entity.isActivo(),
+                entity.getFotoPerfil(),
+                entity.getCodigoRecuperacionCifrado(),
+                entity.getCodigoRecuperacionExpira(),
+                entity.getIntentosCodigoFallidos());
     }
 }
