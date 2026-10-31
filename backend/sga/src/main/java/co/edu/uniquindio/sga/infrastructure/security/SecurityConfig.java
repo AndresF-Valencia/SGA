@@ -85,6 +85,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/apartamentos/*/estado-operativo", "/api/apartamentos/*/novedades")
                                 .hasAnyRole(PERSONAL_SERVICIO, ADMINISTRADOR)
 
+                        // ---------- Mi cuenta: cualquier usuario con sesión, sobre la suya ----------
+                        .requestMatchers("/api/usuarios/me", "/api/usuarios/me/**").authenticated()
+
                         // ---------- Solo administrador ----------
                         .requestMatchers("/api/usuarios/**", "/api/alojamiento/**", "/api/apartamentos/**",
                                 "/api/bloqueos/**", "/api/temporadas/**", "/api/politicas-cancelacion/**",

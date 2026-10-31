@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga.infrastructure.rest.exception;
 
 import co.edu.uniquindio.sga.application.dto.response.ErrorResponse;
+import co.edu.uniquindio.sga.application.exception.CodigoRecuperacionInvalidoException;
 import co.edu.uniquindio.sga.application.exception.AccesoDenegadoException;
 import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
 import co.edu.uniquindio.sga.application.exception.ApartamentoNoEncontradoException;
@@ -61,6 +62,11 @@ public class GlobalExceptionHandler {
     }
 
     /** Un valor que no existe en un enum (canal, medio de pago, motivo, rol...) */
+    @ExceptionHandler(CodigoRecuperacionInvalidoException.class)
+    ResponseEntity<ErrorResponse> codigoInvalido(CodigoRecuperacionInvalidoException exception, HttpServletRequest request) {
+        return error(HttpStatus.BAD_REQUEST, exception.getMessage(), request, List.of());
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     ResponseEntity<ErrorResponse> argumentoIlegal(IllegalArgumentException exception, HttpServletRequest request) {
         return error(HttpStatus.BAD_REQUEST, exception.getMessage(), request, List.of());

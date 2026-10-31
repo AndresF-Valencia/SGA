@@ -2,9 +2,12 @@ package co.edu.uniquindio.sga.infrastructure.rest.controller;
 
 import co.edu.uniquindio.sga.application.dto.request.LoginRequest;
 import co.edu.uniquindio.sga.application.dto.request.RegistroUsuarioRequest;
+import co.edu.uniquindio.sga.application.dto.request.RestablecerContrasenaRequest;
+import co.edu.uniquindio.sga.application.dto.request.SolicitarRecuperacionRequest;
 import co.edu.uniquindio.sga.application.dto.response.LoginResponse;
 import co.edu.uniquindio.sga.application.dto.response.UsuarioResponse;
 import co.edu.uniquindio.sga.application.usecase.IniciarSesionUseCase;
+import co.edu.uniquindio.sga.application.usecase.RecuperarContrasenaUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarHuespedUseCase;
 import co.edu.uniquindio.sga.domain.valueobject.Correo;
 import co.edu.uniquindio.sga.domain.valueobject.DocumentoIdentidad;
@@ -20,8 +23,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-/** Registro público e inicio de sesión. Son las únicas rutas de /api que no piden token. */
+/** Registro público, inicio de sesión y recuperación de contraseña: rutas que no piden token. */
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Autenticación")
@@ -29,11 +33,14 @@ public class AuthController {
 
     private final RegistrarHuespedUseCase registrarHuespedUseCase;
     private final IniciarSesionUseCase iniciarSesionUseCase;
+    private final RecuperarContrasenaUseCase recuperarContrasenaUseCase;
 
     public AuthController(RegistrarHuespedUseCase registrarHuespedUseCase,
-                          IniciarSesionUseCase iniciarSesionUseCase) {
+                          IniciarSesionUseCase iniciarSesionUseCase,
+                          RecuperarContrasenaUseCase recuperarContrasenaUseCase) {
         this.registrarHuespedUseCase = registrarHuespedUseCase;
         this.iniciarSesionUseCase = iniciarSesionUseCase;
+        this.recuperarContrasenaUseCase = recuperarContrasenaUseCase;
     }
 
     @Operation(summary = "Registrarse como huésped")
@@ -55,5 +62,25 @@ public class AuthController {
     public ResponseEntity<LoginResponse> iniciarSesion(@Valid @RequestBody LoginRequest request) {
         var sesion = iniciarSesionUseCase.ejecutar(new Correo(request.correo()), request.contrasena());
         return ResponseEntity.ok(UsuarioRestMapper.aLogin(sesion));
+    }
+
+    /**
+     * 7.2 Recuperación, paso 1. Siempre responde 202 (exista o no el correo) para no
+     * revelar qué correos tienen cuenta. El código llega al correo; en modo consola, al log.
+     */
+    @Operation(summary = "Pedir un código para recuperar la contraseña")
+    @PostMapping("/recuperar-contrasena")
+    public ResponseEntity<Void> solicitarRecuperacion(@Valid @RequestBody SolicitarRecuperacionRequest request) {
+        recuperarContrasenaUseCase.solicitar(new Correo(request.correo()), LocalDateTime.now());
+        return ResponseEntity.accepted().build();
+    }
+
+    /** 7.2 Recuperación, paso 2: código de 6 dígitos, 15 minutos, un solo uso. */
+    @Operation(summary = "Poner una contraseña nueva con el código recibido")
+    @PostMapping("/restablecer-contrasena")
+    public ResponseEntity<Void> restablecer(@Valid @RequestBody RestablecerContrasenaRequest request) {
+        recuperarContrasenaUseCase.restablecer(new Correo(request.correo()), request.codigo(),
+                request.nuevaContrasena(), LocalDateTime.now());
+        return ResponseEntity.noContent().build();
     }
 }

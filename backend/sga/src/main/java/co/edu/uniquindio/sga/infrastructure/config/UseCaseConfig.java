@@ -39,6 +39,10 @@ import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
 import co.edu.uniquindio.sga.domain.repository.ApartamentoRepository;
 import co.edu.uniquindio.sga.domain.repository.BloqueoRepository;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
+import co.edu.uniquindio.sga.domain.port.NotificadorUsuario;
+import co.edu.uniquindio.sga.application.usecase.AdministrarUsuariosUseCase;
+import co.edu.uniquindio.sga.application.usecase.RecuperarContrasenaUseCase;
+import co.edu.uniquindio.sga.application.usecase.GestionarPerfilUseCase;
 import co.edu.uniquindio.sga.domain.repository.CanalRepository;
 import co.edu.uniquindio.sga.application.usecase.AutenticarCanalUseCase;
 import co.edu.uniquindio.sga.domain.repository.GeneradorCodigoReserva;
@@ -368,5 +372,25 @@ public class UseCaseConfig {
     @Bean
     public AutenticarCanalUseCase autenticarCanalUseCase(CanalRepository canalRepository) {
         return new AutenticarCanalUseCase(canalRepository);
+    }
+
+    // ---------- Usuarios: perfil, recuperación y administración (7.2) ----------
+
+    @Bean
+    public GestionarPerfilUseCase gestionarPerfilUseCase(UsuarioRepository usuarioRepository,
+            CifradorContrasena cifrador) {
+        return new GestionarPerfilUseCase(usuarioRepository, cifrador);
+    }
+
+    @Bean
+    public RecuperarContrasenaUseCase recuperarContrasenaUseCase(UsuarioRepository usuarioRepository,
+            CifradorContrasena cifrador, NotificadorUsuario notificadorUsuario) {
+        return new RecuperarContrasenaUseCase(usuarioRepository, cifrador, notificadorUsuario);
+    }
+
+    @Bean
+    public AdministrarUsuariosUseCase administrarUsuariosUseCase(UsuarioRepository usuarioRepository,
+            ReservaRepository reservaRepository) {
+        return new AdministrarUsuariosUseCase(usuarioRepository, reservaRepository);
     }
 }
