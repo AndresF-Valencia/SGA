@@ -1,52 +1,40 @@
 package co.edu.uniquindio.sga.application.usecase;
 
-
+import co.edu.uniquindio.sga.application.exception.ConflictoCanalNoEncontradoException;
+import co.edu.uniquindio.sga.domain.entity.ConflictoCanal;
+import co.edu.uniquindio.sga.domain.repository.ConflictoCanalRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-import co.edu.uniquindio.sga.domain.entity.Reserva;
-import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
-import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
-import co.edu.uniquindio.sga.domain.valueobject.CodigoReserva;
-
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
- * Caso de uso: Resolver conflicto de canal (CU-21).
- * Gestiona y resuelve las sobre-reservas o colisiones generadas por canales externos (Channel Manager).
+ * 7.8 / CU-21: el administrador revisa los conflictos de canal y los marca resueltos.
+ * La reserva externa en conflicto nunca se creó (RN-18), así que resolver es dejar por
+ * escrito qué se hizo con ese huésped (reubicarlo, avisarle al canal, etc.).
  */
- 
 public class ResolverConflictoCanalUseCase {
 
-    private final ReservaRepository reservaRepository;
+    private final ConflictoCanalRepository conflictoRepository;
 
-    public ResolverConflictoCanalUseCase(ReservaRepository reservaRepository) {
-        this.reservaRepository = reservaRepository;
+    public ResolverConflictoCanalUseCase(ConflictoCanalRepository conflictoRepository) {
+        this.conflictoRepository = conflictoRepository;
     }
 
-    /**
-     * Rechaza o cancela la reserva en conflicto recibida desde un canal externo.
-     * 
-     * @param codigoReserva Código único de la reserva en conflicto.
-     * @param motivo        Descripción del motivo de la resolución (ej. "Sobre-reserva por bloqueo previo").
-     */
+    /** resuelto = null → todos; true/false → solo resueltos o solo pendientes. */
+    @Transactional(readOnly = true)
+    public List<ConflictoCanal> listar(Boolean resuelto) {
+        return conflictoRepository.listar().stream()
+                .filter(c -> resuelto == null || c.estaResuelto() == resuelto)
+                .toList();
+    }
+
     @Transactional
-    public Reserva rechazarReservaCanal(CodigoReserva codigoReserva, String motivo) {
-        if (codigoReserva == null) {
-            throw new ReglaDominioException("El código de la reserva es obligatorio");
-        }
-        if (motivo == null || motivo.isBlank()) {
-            throw new ReglaDominioException("El motivo de resolución del conflicto es obligatorio");
-        }
-
-        // 1. Obtener la reserva en conflicto
-        Reserva reserva = reservaRepository.buscarPorCodigo(codigoReserva)
-                .orElseThrow(() -> new ReglaDominioException("No se encontró la reserva con código: " + codigoReserva));
-
-        // 2. Invocar el método de negocio cancelar existente en la entidad Reserva
-        reserva.cancelar(motivo, "CHANNEL_MANAGER", LocalDateTime.now());
-
-        // 3. Persistir el nuevo estado de la reserva
-        reservaRepository.guardar(reserva);
-        return reserva;
+    public ConflictoCanal resolver(String id, String resolucion, String autor, LocalDateTime ahora) {
+        ConflictoCanal conflicto = conflictoRepository.buscarPorId(id)
+                .orElseThrow(() -> new ConflictoCanalNoEncontradoException(id));
+        conflicto.resolver(resolucion, autor, ahora);
+        conflictoRepository.guardar(conflicto);
+        return conflicto;
     }
 }

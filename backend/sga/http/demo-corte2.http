@@ -1,0 +1,135 @@
+###############################################################################
+# DEMO CORTE 2 · Usuarios y seguridad, catálogo, cotización y reservas por API
+#
+# Cómo usarlo (VS Code): extensión "REST Client", arrancar la app con
+#   cd backend/sga && ./gradlew bootRun
+# y dar "Send Request" en orden. Los tokens se guardan solos entre peticiones.
+# Usuarios de prueba (clave Sanrocco123): admin@, recepcion@, servicio@, huesped@sanrocco.co
+###############################################################################
+
+@base = http://localhost:8080
+
+### 1. Catálogo público (sin token): alojamiento, apartamentos y disponibilidad
+GET {{base}}/api/alojamiento
+
+###
+GET {{base}}/api/apartamentos
+
+###
+GET {{base}}/api/disponibilidad?fechaEntrada={{$datetime "YYYY-MM-DD" 60 d}}&fechaSalida={{$datetime "YYYY-MM-DD" 63 d}}&personas=2
+
+### 2. Cotizar (sin token): valor noche por noche
+POST {{base}}/api/cotizaciones
+Content-Type: application/json
+
+{
+  "identificacionApartamento": "AP001",
+  "fechaEntrada": "{{$datetime "YYYY-MM-DD" 60 d}}",
+  "fechaSalida": "{{$datetime "YYYY-MM-DD" 63 d}}",
+  "ocupantes": [ { "fechaNacimiento": "1995-01-01" }, { "fechaNacimiento": "2023-06-01" } ]
+}
+
+
+### 3. Login del huésped (Laura Gómez, documento 1094000001)
+# @name huesped
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{ "correo": "huesped@sanrocco.co", "contrasena": "Sanrocco123" }
+
+### 4. Mi perfil
+GET {{base}}/api/usuarios/me
+Authorization: Bearer {{huesped.response.body.token}}
+
+### 5. Crear una reserva por el PORTAL, a su nombre → 201
+# @name reserva
+POST {{base}}/api/reservas
+Content-Type: application/json
+Authorization: Bearer {{huesped.response.body.token}}
+
+{
+  "apartamentoId": "AP001",
+  "fechaEntrada": "{{$datetime "YYYY-MM-DD" 60 d}}",
+  "fechaSalida": "{{$datetime "YYYY-MM-DD" 63 d}}",
+  "horaEstimadaLlegada": "15:00:00",
+  "canalOrigen": "PORTAL",
+  "titular": {
+    "nombre": "Laura Gómez",
+    "documento": "1094000001",
+    "email": "huesped@sanrocco.co",
+    "telefono": "3001234567",
+    "fechaNacimiento": "1995-01-01"
+  },
+  "ocupantes": [
+    { "nombre": "Laura Gómez", "documento": "1094000001", "fechaNacimiento": "1995-01-01" },
+    { "nombre": "Tomás Gómez", "documento": "1094000009", "fechaNacimiento": "2023-06-01" }
+  ],
+  "cantidadMascotas": 0
+}
+
+### 6. Mis reservas (solo las suyas)
+GET {{base}}/api/reservas/mis-reservas
+Authorization: Bearer {{huesped.response.body.token}}
+
+### 7. Su folio (cuenta de la reserva)
+GET {{base}}/api/reservas/{{reserva.response.body.codigoReserva}}/folio
+Authorization: Bearer {{huesped.response.body.token}}
+
+### 8. Seguridad: el huésped NO puede tocar la configuración → 403
+PUT {{base}}/api/alojamiento/parametros
+Content-Type: application/json
+Authorization: Bearer {{huesped.response.body.token}}
+
+{}
+
+### 9. Seguridad: sin token → 401
+GET {{base}}/api/reservas
+
+
+### 10. Recepción confirma la reserva
+# @name recepcion
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{ "correo": "recepcion@sanrocco.co", "contrasena": "Sanrocco123" }
+
+### Primero registra el pago (RNP-03 exige el 50 % de anticipo; aquí se paga todo)
+POST {{base}}/api/reservas/{{reserva.response.body.codigoReserva}}/folio/pagos
+Content-Type: application/json
+Authorization: Bearer {{recepcion.response.body.token}}
+
+{ "monto": {{reserva.response.body.valorTotal}}, "medioPago": "EFECTIVO", "fechaPago": "{{$datetime "YYYY-MM-DD"}}" }
+
+### Ahora sí: confirmar → 200, estado CONFIRMADA
+PUT {{base}}/api/reservas/{{reserva.response.body.codigoReserva}}/confirmar
+Authorization: Bearer {{recepcion.response.body.token}}
+
+### 11. Listado de reservas del personal (paginado de a 10)
+GET {{base}}/api/reservas?page=0&size=10
+Authorization: Bearer {{recepcion.response.body.token}}
+
+
+### 12. Recuperar contraseña: pide el código (sin token) → 202
+# En modo consola el correo con el código de 6 dígitos sale en la TERMINAL de bootRun.
+POST {{base}}/api/auth/recuperar-contrasena
+Content-Type: application/json
+
+{ "correo": "huesped@sanrocco.co" }
+
+### 13. Pon aquí el código que salió en la terminal → 204
+POST {{base}}/api/auth/restablecer-contrasena
+Content-Type: application/json
+
+{ "correo": "huesped@sanrocco.co", "codigo": "000000", "nuevaContrasena": "NuevaClave1" }
+
+
+### 14. Administrador: listar usuarios por rol
+# @name admin
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{ "correo": "admin@sanrocco.co", "contrasena": "Sanrocco123" }
+
+###
+GET {{base}}/api/usuarios?rol=HUESPED
+Authorization: Bearer {{admin.response.body.token}}

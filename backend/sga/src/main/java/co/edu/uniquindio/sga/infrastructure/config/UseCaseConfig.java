@@ -38,6 +38,7 @@ import co.edu.uniquindio.sga.application.usecase.VencerReservasPendientesUseCase
 import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
 import co.edu.uniquindio.sga.domain.repository.ApartamentoRepository;
 import co.edu.uniquindio.sga.domain.repository.BloqueoRepository;
+import co.edu.uniquindio.sga.domain.repository.ConflictoCanalRepository;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
 import co.edu.uniquindio.sga.domain.port.NotificadorUsuario;
 import co.edu.uniquindio.sga.application.usecase.AdministrarUsuariosUseCase;
@@ -280,7 +281,8 @@ public class UseCaseConfig {
             GeneradorCodigoReserva generadorCodigo,
             DisponibilidadApartamentoService disponibilidadService,
             EstanciaMinimaTemporadaAltaService estanciaMinimaService,
-            CotizadorEstanciaService cotizadorService) {
+            CotizadorEstanciaService cotizadorService,
+            ConflictoCanalRepository conflictoCanalRepository) {
         return new RecibirReservaExternaUseCase(
                 reservaRepository,
                 apartamentoRepository,
@@ -292,13 +294,14 @@ public class UseCaseConfig {
                 generadorCodigo,
                 disponibilidadService,
                 estanciaMinimaService,
-                cotizadorService
-        );
+                cotizadorService,
+                conflictoCanalRepository);
     }
 
     @Bean
-    public ResolverConflictoCanalUseCase resolverConflictoCanalUseCase(ReservaRepository reservaRepository) {
-        return new ResolverConflictoCanalUseCase(reservaRepository);
+    public ResolverConflictoCanalUseCase resolverConflictoCanalUseCase(
+            ConflictoCanalRepository conflictoCanalRepository) {
+        return new ResolverConflictoCanalUseCase(conflictoCanalRepository);
     }
 
     // ---------- Usuarios y sesión (7.2) ----------
