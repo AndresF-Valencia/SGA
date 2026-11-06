@@ -157,12 +157,9 @@ Las páginas secundarias se cargan bajo demanda con `React.lazy`; `Layout` muest
 | 14 | Completa | Proyecto Vite, React Router, componentes, páginas, modelos y rutas base. |
 | 15 | Completa con adaptación | React Hook Form, Zod, Axios, login, registro, disponibilidad, cotización y reserva. Los nombres de campos siguen el backend actual. |
 | 16 | Completa | Bootstrap, layout con `Outlet`, navegación responsiva, CSS Modules, formato de fechas y pesos. |
-| 17 | No localizada | No existe un archivo `17-*.md` en el repositorio actual; debe confirmarse si la guía fue omitida o tiene otro nombre. |
 | 18 | Completa | `AuthProvider`, `useAuth`, `RutaProtegida`, `RutaPublica`, JWT en Axios, manejo centralizado de `401` y menú por rol. |
 | 19 | Completa para reservas | `React.lazy`, `Suspense`, paginación del servidor, `Paginacion`, SweetAlert2 y acciones de confirmar/cancelar. |
 | 20 | Adaptada al contrato actual | Contexto con reducer, filtros persistentes, debounce de 400 ms y `AbortController`. La búsqueda usa `documentoTitular`, que es el parámetro aceptado por el backend actual; la guía propone búsqueda por nombre con `titular`. |
-
-La guía 20 no se considera pendiente de frontend: la funcionalidad disponible es coherente con el backend actual. Para buscar por nombre habría que ampliar el contrato del backend, lo cual está fuera de esta etapa y está prohibido por las reglas actuales.
 
 ## 8. Paginación, filtros y notificaciones
 
@@ -185,9 +182,7 @@ Las rutas ya existen, pero algunas son pantallas iniciales y todavía requieren 
 - **Huésped:** puede crear reservas por `PORTAL`, consultar sus reservas, ver detalle y folio, cancelar reservas permitidas, editar perfil, cambiar contraseña y eliminar su cuenta.
 - **Recepción:** puede listar, filtrar, crear, consultar y modificar reservas; confirmar, cancelar, registrar llegada, salida y no-show; y consultar/operar el folio con cargos, pagos y cierre.
 - **Personal de servicio:** puede consultar los apartamentos activos y cambiar estados permitidos de preparación; `FUERA_DE_SERVICIO` queda reservado al administrador.
-- **Administrador:** la pantalla es una base; faltan usuarios, apartamentos, bloqueos, temporadas, tarifas, políticas y conflictos de canal.
-
-La siguiente fase debe planear estas vistas por rol antes de implementarlas, reutilizando servicios, modelos y componentes existentes.
+- **Administrador:** dispone de una consola por pestañas para usuarios, apartamentos, temporadas/tarifas, bloqueos, parámetros del alojamiento, políticas de cancelación y conflictos de canal.
 
 ## 10. Verificación antes de entregar cambios
 
