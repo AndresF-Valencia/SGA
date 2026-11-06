@@ -7,3 +7,5 @@ export interface Pagina<T> {
   totalElementos: number;
   totalPaginas: number;
 }
+
+export const TAMANO_PAGINA = 10;

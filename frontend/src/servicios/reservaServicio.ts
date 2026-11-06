@@ -1,6 +1,6 @@
 // Llamadas a ReservaController.java (/api/reservas, rutas protegidas con JWT).
 // El token lo agrega el interceptor de api.ts. Lo usan NuevaReserva, ListaReservas y MisReservas.
-import type { Pagina } from '../modelos/pagina';
+import { TAMANO_PAGINA, type Pagina } from '../modelos/pagina';
 import type { CrearReservaRequest, EstadoReserva, ReservaResponse, ReservaResumen } from '../modelos/reserva';
 import { api } from './api';
 
@@ -11,8 +11,31 @@ export async function crearReserva(datos: CrearReservaRequest): Promise<ReservaR
 }
 
 // GET /api/reservas?estado=... (RECEPCIONISTA, ADMINISTRADOR): primera página, más reciente primero
-export async function listarReservas(estado: EstadoReserva): Promise<Pagina<ReservaResumen>> {
-  const respuesta = await api.get<Pagina<ReservaResumen>>('/reservas', { params: { estado } });
+export async function listarReservas(
+  estado: EstadoReserva | '',
+  pagina: number,
+  documentoTitular = '',
+  signal?: AbortSignal,
+): Promise<Pagina<ReservaResumen>> {
+  const respuesta = await api.get<Pagina<ReservaResumen>>('/reservas', {
+    params: {
+      estado: estado || undefined,
+      documentoTitular: documentoTitular || undefined,
+      pagina,
+      tamano: TAMANO_PAGINA,
+    },
+    signal,
+  });
+  return respuesta.data;
+}
+
+export async function confirmarReserva(codigo: string): Promise<ReservaResponse> {
+  const respuesta = await api.put<ReservaResponse>(`/reservas/${codigo}/confirmar`);
+  return respuesta.data;
+}
+
+export async function cancelarReserva(codigo: string, motivo: string): Promise<ReservaResponse> {
+  const respuesta = await api.put<ReservaResponse>(`/reservas/${codigo}/cancelar`, { motivo });
   return respuesta.data;
 }
 

@@ -26,9 +26,12 @@ git clone https://github.com/AndresF-Valencia/sga.git
 cd sga/backend/sga
 
 sh ./gradlew bootRun        # API en http://localhost:8080
+
+# En una terminal nueva: 
+ cd frontend && npm install && npm run dev # http://localhost:5173 
 ```
 
-> En Mac o Linux se usa `sh ./gradlew` porque el archivo puede venir sin permiso de ejecución. En Windows se usa `gradlew.bat bootRun`.
+> En Mac o Linux se usa `sh ./git commit -m "feat: crear proyecto frontend con Vite, React y React Router" -m "Incluye login, registro, nueva reserva y cotización con React Hook Form y Zod conectados al backend."gradlew` porque el archivo puede venir sin permiso de ejecución. En Windows se usa `gradlew.bat bootRun`.
 
 Al arrancar, Hibernate crea las tablas solo (`ddl-auto=update`).
 

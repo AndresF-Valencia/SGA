@@ -1,27 +1,34 @@
 // Tabla de rutas: todas dentro del Layout común y agrupadas por quién puede verlas, con los
 // mismos roles que exige SecurityConfig del backend para los endpoints de cada página.
+import { lazy } from 'react';
 import { Route, Routes } from 'react-router';
 import { Layout } from './componentes/Layout';
-import Administracion from './paginas/Administracion';
 import BuscarDisponibilidad from './paginas/BuscarDisponibilidad';
 import Cotizacion from './paginas/Cotizacion';
-import DetalleApartamento from './paginas/DetalleApartamento';
 import Inicio from './paginas/Inicio';
-import ListaReservas from './paginas/ListaReservas';
-import Login from './paginas/Login';
-import MisReservas from './paginas/MisReservas';
-import NoAutorizado from './paginas/NoAutorizado';
-import NoEncontrada from './paginas/NoEncontrada';
-import NuevaReserva from './paginas/NuevaReserva';
-import Preparacion from './paginas/Preparacion';
-import Registro from './paginas/Registro';
+import { FiltrosProvider } from './contexto/FiltrosProvider';
+import { useAuth } from './hooks/useAuth';
 import { RutaProtegida } from './rutas/RutaProtegida';
 import { RutaPublica } from './rutas/RutaPublica';
 
+const Administracion = lazy(() => import('./paginas/Administracion'));
+const DetalleApartamento = lazy(() => import('./paginas/DetalleApartamento'));
+const ListaReservas = lazy(() => import('./paginas/ListaReservas'));
+const Login = lazy(() => import('./paginas/Login'));
+const MisReservas = lazy(() => import('./paginas/MisReservas'));
+const NoAutorizado = lazy(() => import('./paginas/NoAutorizado'));
+const NoEncontrada = lazy(() => import('./paginas/NoEncontrada'));
+const NuevaReserva = lazy(() => import('./paginas/NuevaReserva'));
+const Preparacion = lazy(() => import('./paginas/Preparacion'));
+const Registro = lazy(() => import('./paginas/Registro'));
+
 // Rutas públicas, solo sin sesión y protegidas por rol
 export default function App() {
+  const { sesion } = useAuth();
+
   return (
-    <Routes>
+    <FiltrosProvider key={sesion?.correo ?? 'anonimo'}>
+      <Routes>
       <Route element={<Layout />}>
         {/* Públicas para todos (GET /apartamentos, /disponibilidad y POST /cotizaciones son permitAll) */}
         <Route index element={<Inicio />} />
@@ -59,6 +66,7 @@ export default function App() {
 
         <Route path="*" element={<NoEncontrada />} />
       </Route>
-    </Routes>
+      </Routes>
+    </FiltrosProvider>
   );
 }
