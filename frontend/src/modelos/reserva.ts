@@ -1,11 +1,39 @@
-// Espejo de CrearReservaRequest.java y ReservaResponse.java, con los mismos nombres de
-// campo que serializa Jackson. Lo usan reservaServicio y la página NuevaReserva.
+// Espejo de CrearReservaRequest.java, ReservaResponse.java y ReservaResumenResponse.java, con
+// los mismos nombres de campo que serializa Jackson. Lo usan reservaServicio, NuevaReserva,
+// ListaReservas, MisReservas, TarjetaReserva y EstadoReservaBadge.
 
 // Enums del dominio (EstadoReserva.java, CanalOrigen.java) como uniones de texto
 export type EstadoReserva =
   | 'PENDIENTE' | 'CONFIRMADA' | 'EN_CURSO' | 'FINALIZADA' | 'CANCELADA' | 'NO_SHOW';
 
 export type CanalOrigen = 'PORTAL' | 'DIRECTO' | 'EXTERNO';
+
+// Todos los estados en el orden del ciclo de vida, para los filtros de los listados
+export const ESTADOS_RESERVA: EstadoReserva[] = [
+  'PENDIENTE', 'CONFIRMADA', 'EN_CURSO', 'FINALIZADA', 'CANCELADA', 'NO_SHOW',
+];
+
+// Texto legible de cada estado, para el badge y los filtros
+export const ETIQUETA_ESTADO: Record<EstadoReserva, string> = {
+  PENDIENTE: 'Pendiente',
+  CONFIRMADA: 'Confirmada',
+  EN_CURSO: 'En curso',
+  FINALIZADA: 'Finalizada',
+  CANCELADA: 'Cancelada',
+  NO_SHOW: 'No-show',
+};
+
+// Espejo de: record ReservaResumenResponse(...) — vista breve de los listados
+export interface ReservaResumen {
+  codigoReserva: string;
+  apartamentoId: string;
+  fechaEntrada: string;
+  fechaSalida: string;
+  estadoReserva: EstadoReserva;
+  canalOrigen: CanalOrigen;
+  nombreTitular: string;
+  valorTotal: number;
+}
 
 // Espejo de: CrearReservaRequest.OcupanteDto
 export interface OcupanteRequest {

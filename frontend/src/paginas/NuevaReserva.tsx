@@ -1,8 +1,10 @@
 // Página "/reservas/nueva" (recepción, canal DIRECTO): valida con esquemaNuevaReserva,
-// convierte el formulario a CrearReservaRequest y lo envía con reservaServicio (POST /api/reservas, JWT).
+// convierte el formulario a CrearReservaRequest y lo envía con reservaServicio (POST /api/reservas).
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useFieldArray, useForm, type Path } from 'react-hook-form';
+import { Link } from 'react-router';
+import { Campo } from '../componentes/Campo';
 import { esquemaNuevaReserva, type FormularioNuevaReserva } from '../esquemas/reserva';
 import type { CrearReservaRequest } from '../modelos/reserva';
 import { crearReserva } from '../servicios/reservaServicio';
@@ -59,7 +61,7 @@ export default function NuevaReserva() {
   // Administra agregar y quitar ocupantes
   const { fields, append, remove } = useFieldArray({ control, name: 'ocupantes' });
 
-  // Envía la reserva; 400 se pinta junto al campo, 401/404/409 como mensaje general
+  // Envía la reserva; 400 se pinta junto al campo, 404/409 como mensaje general
   async function alEnviar(datos: FormularioNuevaReserva) {
     setCodigoCreado(null);
     try {
@@ -76,93 +78,95 @@ export default function NuevaReserva() {
 
   return (
     <section>
-      <h1>Nueva reserva (recepción)</h1>
+      <h1 className="h3 mb-3">Nueva reserva <small className="text-body-secondary">(recepción)</small></h1>
 
       <form onSubmit={handleSubmit(alEnviar)} noValidate>
-        <div>
-          <label htmlFor="apartamentoId">Apartamento</label>
-          <input id="apartamentoId" placeholder="AP001" {...register('apartamentoId')} />
-          {errors.apartamentoId && <p className="error">{errors.apartamentoId.message}</p>}
+        <div className="row">
+          <div className="col-12 col-md-6">
+            <Campo id="apartamentoId" etiqueta="Apartamento" placeholder="AP001"
+              error={errors.apartamentoId?.message} {...register('apartamentoId')} />
+          </div>
+          <div className="col-12 col-md-6">
+            <Campo id="horaEstimadaLlegada" etiqueta="Hora estimada de llegada" type="time"
+              error={errors.horaEstimadaLlegada?.message} {...register('horaEstimadaLlegada')} />
+          </div>
+          <div className="col-12 col-md-4">
+            <Campo id="fechaEntrada" etiqueta="Fecha de entrada" type="date"
+              error={errors.fechaEntrada?.message} {...register('fechaEntrada')} />
+          </div>
+          <div className="col-12 col-md-4">
+            <Campo id="fechaSalida" etiqueta="Fecha de salida" type="date"
+              error={errors.fechaSalida?.message} {...register('fechaSalida')} />
+          </div>
+          <div className="col-12 col-md-4">
+            <Campo id="cantidadMascotas" etiqueta="Mascotas" type="number" min={0}
+              error={errors.cantidadMascotas?.message} {...register('cantidadMascotas', { valueAsNumber: true })} />
+          </div>
         </div>
 
-        <div>
-          <label htmlFor="fechaEntrada">Fecha de entrada</label>
-          <input id="fechaEntrada" type="date" {...register('fechaEntrada')} />
-          {errors.fechaEntrada && <p className="error">{errors.fechaEntrada.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="fechaSalida">Fecha de salida</label>
-          <input id="fechaSalida" type="date" {...register('fechaSalida')} />
-          {errors.fechaSalida && <p className="error">{errors.fechaSalida.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="horaEstimadaLlegada">Hora estimada de llegada</label>
-          <input id="horaEstimadaLlegada" type="time" {...register('horaEstimadaLlegada')} />
-          {errors.horaEstimadaLlegada && <p className="error">{errors.horaEstimadaLlegada.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="cantidadMascotas">Mascotas</label>
-          <input id="cantidadMascotas" type="number" min={0} {...register('cantidadMascotas', { valueAsNumber: true })} />
-          {errors.cantidadMascotas && <p className="error">{errors.cantidadMascotas.message}</p>}
-        </div>
-
-        <fieldset>
-          <legend>Ocupantes (el primero es el titular)</legend>
+        <fieldset className="mt-2">
+          <legend className="h5">Ocupantes <small className="text-body-secondary">(el primero es el titular)</small></legend>
 
           {fields.map((campo, indice) => (
-            <div key={campo.id} className="tarjeta">
-              <strong>{indice === 0 ? 'Titular' : `Ocupante ${indice + 1}`}</strong>
+            <div key={campo.id} className="card mb-3">
+              <div className="card-header d-flex justify-content-between align-items-center">
+                <strong>{indice === 0 ? 'Titular' : `Ocupante ${indice + 1}`}</strong>
+                {indice > 0 && (
+                  <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => remove(indice)}>
+                    Quitar
+                  </button>
+                )}
+              </div>
+              <div className="card-body row">
+                <div className="col-12 col-md-4">
+                  <Campo id={`documento-${indice}`} etiqueta="Documento"
+                    error={errors.ocupantes?.[indice]?.documento?.message}
+                    {...register(`ocupantes.${indice}.documento`)} />
+                </div>
+                <div className="col-12 col-md-4">
+                  <Campo id={`nombre-${indice}`} etiqueta="Nombre"
+                    error={errors.ocupantes?.[indice]?.nombre?.message}
+                    {...register(`ocupantes.${indice}.nombre`)} />
+                </div>
+                <div className="col-12 col-md-4">
+                  <Campo id={`fechaNacimiento-${indice}`} etiqueta="Fecha de nacimiento" type="date"
+                    error={errors.ocupantes?.[indice]?.fechaNacimiento?.message}
+                    {...register(`ocupantes.${indice}.fechaNacimiento`)} />
+                </div>
 
-              <label htmlFor={`documento-${indice}`}>Documento</label>
-              <input id={`documento-${indice}`} {...register(`ocupantes.${indice}.documento`)} />
-              {errors.ocupantes?.[indice]?.documento && (
-                <p className="error">{errors.ocupantes[indice].documento.message}</p>
-              )}
-
-              <label htmlFor={`nombre-${indice}`}>Nombre</label>
-              <input id={`nombre-${indice}`} {...register(`ocupantes.${indice}.nombre`)} />
-              {errors.ocupantes?.[indice]?.nombre && (
-                <p className="error">{errors.ocupantes[indice].nombre.message}</p>
-              )}
-
-              <label htmlFor={`fechaNacimiento-${indice}`}>Fecha de nacimiento</label>
-              <input id={`fechaNacimiento-${indice}`} type="date" {...register(`ocupantes.${indice}.fechaNacimiento`)} />
-              {errors.ocupantes?.[indice]?.fechaNacimiento && (
-                <p className="error">{errors.ocupantes[indice].fechaNacimiento.message}</p>
-              )}
-
-              {/* Solo el titular lleva correo y teléfono (CrearReservaRequest.TitularDto) */}
-              {indice === 0 && (
-                <>
-                  <label htmlFor="emailTitular">Correo del titular</label>
-                  <input id="emailTitular" type="email" {...register('emailTitular')} />
-                  {errors.emailTitular && <p className="error">{errors.emailTitular.message}</p>}
-
-                  <label htmlFor="telefonoTitular">Teléfono del titular</label>
-                  <input id="telefonoTitular" type="tel" {...register('telefonoTitular')} />
-                  {errors.telefonoTitular && <p className="error">{errors.telefonoTitular.message}</p>}
-                </>
-              )}
-
-              {indice > 0 && (
-                <button type="button" onClick={() => remove(indice)}>Quitar</button>
-              )}
+                {/* Solo el titular lleva correo y teléfono (CrearReservaRequest.TitularDto) */}
+                {indice === 0 && (
+                  <>
+                    <div className="col-12 col-md-6">
+                      <Campo id="emailTitular" etiqueta="Correo del titular" type="email"
+                        error={errors.emailTitular?.message} {...register('emailTitular')} />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <Campo id="telefonoTitular" etiqueta="Teléfono del titular" type="tel"
+                        error={errors.telefonoTitular?.message} {...register('telefonoTitular')} />
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           ))}
 
-          {errors.ocupantes?.root && <p className="error">{errors.ocupantes.root.message}</p>}
-          <button type="button" onClick={() => append(OCUPANTE_VACIO)}>Agregar ocupante</button>
+          {errors.ocupantes?.root && <div className="text-danger small mb-2">{errors.ocupantes.root.message}</div>}
+          <button type="button" className="btn btn-outline-secondary" onClick={() => append(OCUPANTE_VACIO)}>
+            <i className="bi bi-person-plus me-1" aria-hidden="true"></i>Agregar ocupante
+          </button>
         </fieldset>
 
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Creando…' : 'Crear reserva'}
-        </button>
+        <div className="mt-4 d-flex gap-2">
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+            {isSubmitting && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>}
+            {isSubmitting ? 'Creando…' : 'Crear reserva'}
+          </button>
+          <Link to="/reservas" className="btn btn-outline-secondary">Volver</Link>
+        </div>
 
-        {errors.root?.servidor && <p className="error">{errors.root.servidor.message}</p>}
-        {codigoCreado && <p className="exito">Reserva {codigoCreado} creada en estado PENDIENTE.</p>}
+        {errors.root?.servidor && <div className="alert alert-danger mt-3">{errors.root.servidor.message}</div>}
+        {codigoCreado && <div className="alert alert-success mt-3">Reserva {codigoCreado} creada en estado PENDIENTE.</div>}
       </form>
     </section>
   );

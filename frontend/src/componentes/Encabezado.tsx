@@ -1,29 +1,93 @@
-// Encabezado común con la navegación a cada página registrada en App.tsx.
-// Todavía no cambia según la sesión: eso llega en las Guías 16 y 18.
-import { Link } from 'react-router';
+// Barra de navegación responsiva del Layout. Lee la sesión con useAuth() y muestra solo las
+// opciones que el rol puede usar, con los mismos permisos de RutaProtegida en App.tsx.
+import { useState } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router';
+import { useAuth } from '../hooks/useAuth';
 
 interface EncabezadoProps {
   nombreAlojamiento: string;
 }
 
-// Nombre del alojamiento y enlaces internos (Link, nunca <a href>)
+// Clase del enlace según si es la página actual
+function claseEnlace({ isActive }: { isActive: boolean }) {
+  return `nav-link ${isActive ? 'active fw-semibold' : ''}`;
+}
+
+// Marca, menú por rol y botones de sesión; el menú se despliega con estado de React
 export function Encabezado({ nombreAlojamiento }: EncabezadoProps) {
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const navigate = useNavigate();
+  const { sesion, tieneRol, cerrarSesion } = useAuth();
+
+  // Cierra la sesión y vuelve al login
+  function salir() {
+    cerrarSesion();
+    navigate('/login');
+  }
+
   return (
     <header>
-      <p>{nombreAlojamiento}</p>
-      <nav>
-        <ul>
-          <li><Link to="/">Inicio</Link></li>
-          <li><Link to="/disponibilidad">Buscar disponibilidad</Link></li>
-          <li><Link to="/cotizacion">Cotizar</Link></li>
-          <li><Link to="/mis-reservas">Mis reservas</Link></li>
-          <li><Link to="/recepcion">Recepción</Link></li>
-          <li><Link to="/reservas/nueva">Nueva reserva</Link></li>
-          <li><Link to="/preparacion">Preparación</Link></li>
-          <li><Link to="/administracion">Administración</Link></li>
-          <li><Link to="/login">Ingresar</Link></li>
-          <li><Link to="/registro">Registrarse</Link></li>
-        </ul>
+      <nav className="navbar navbar-expand-lg bg-body-tertiary border-bottom">
+        <div className="container">
+          <Link to="/" id="marca" className="navbar-brand d-flex align-items-center gap-2">
+            <i className="bi bi-house-heart" aria-hidden="true"></i>
+            {nombreAlojamiento}
+          </Link>
+
+          <button
+            className="navbar-toggler"
+            type="button"
+            aria-controls="menuPrincipal"
+            aria-expanded={menuAbierto}
+            aria-label="Abrir menú"
+            onClick={() => setMenuAbierto(!menuAbierto)}
+          >
+            <span className="navbar-toggler-icon"></span>
+          </button>
+
+          <div
+            id="menuPrincipal"
+            className={`collapse navbar-collapse ${menuAbierto ? 'show' : ''}`}
+            onClick={() => setMenuAbierto(false)}
+          >
+            <ul className="navbar-nav me-auto">
+              <li className="nav-item"><NavLink to="/" end className={claseEnlace}>Inicio</NavLink></li>
+              <li className="nav-item"><NavLink to="/disponibilidad" className={claseEnlace}>Disponibilidad</NavLink></li>
+              <li className="nav-item"><NavLink to="/cotizacion" className={claseEnlace}>Cotizar</NavLink></li>
+              {tieneRol('HUESPED') && (
+                <li className="nav-item"><NavLink to="/mis-reservas" className={claseEnlace}>Mis reservas</NavLink></li>
+              )}
+              {tieneRol('RECEPCIONISTA', 'ADMINISTRADOR') && (
+                <>
+                  <li className="nav-item"><NavLink to="/reservas" end className={claseEnlace}>Reservas</NavLink></li>
+                  <li className="nav-item"><NavLink to="/reservas/nueva" className={claseEnlace}>Nueva reserva</NavLink></li>
+                </>
+              )}
+              {tieneRol('PERSONAL_SERVICIO', 'ADMINISTRADOR') && (
+                <li className="nav-item"><NavLink to="/preparacion" className={claseEnlace}>Preparación</NavLink></li>
+              )}
+              {tieneRol('ADMINISTRADOR') && (
+                <li className="nav-item"><NavLink to="/administracion" className={claseEnlace}>Administración</NavLink></li>
+              )}
+            </ul>
+
+            {sesion ? (
+              <div className="d-flex align-items-center gap-2">
+                <span className="navbar-text small">
+                  <i className="bi bi-person-circle me-1" aria-hidden="true"></i>{sesion.nombre}
+                </span>
+                <button type="button" className="btn btn-outline-danger btn-sm" onClick={salir}>
+                  <i className="bi bi-box-arrow-right me-1" aria-hidden="true"></i>Cerrar sesión
+                </button>
+              </div>
+            ) : (
+              <div className="d-flex gap-2">
+                <Link to="/login" className="btn btn-primary btn-sm">Ingresar</Link>
+                <Link to="/registro" className="btn btn-outline-secondary btn-sm">Registrarse</Link>
+              </div>
+            )}
+          </div>
+        </div>
       </nav>
     </header>
   );

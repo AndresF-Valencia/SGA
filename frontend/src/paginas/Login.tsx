@@ -1,16 +1,16 @@
-// Página "/login": valida con esquemaLogin, llama a authServicio.login (POST /api/auth/login)
-// y guarda la sesión con sesion.ts para que los servicios protegidos envíen el token.
+// Página "/login" (dentro de RutaPublica): valida con esquemaLogin e inicia sesión con
+// useAuth().iniciarSesion (POST /api/auth/login). Al haber sesión, RutaPublica redirige.
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
+import { Campo } from '../componentes/Campo';
 import { esquemaLogin, type FormularioLogin } from '../esquemas/login';
-import { login } from '../servicios/authServicio';
-import { guardarSesion } from '../servicios/sesion';
+import { useAuth } from '../hooks/useAuth';
 import { estadoHttp, mensajeDeError } from '../utilidades/errores';
 
-// Formulario de ingreso con errores por campo y error general del servidor
+// Formulario de ingreso con aviso de sesión vencida y error general del servidor
 export default function Login() {
-  const navigate = useNavigate();
+  const { iniciarSesion, avisoSesion } = useAuth();
   const {
     register,
     handleSubmit,
@@ -22,12 +22,10 @@ export default function Login() {
     defaultValues: { correo: '', contrasena: '' },
   });
 
-  // Solo se llama si el esquema aprobó los datos; 401 = credenciales incorrectas
+  // Solo se llama si el esquema aprobó los datos; aquí no se navega (lo hace RutaPublica)
   async function alEnviar(datos: FormularioLogin) {
     try {
-      const sesion = await login(datos);
-      guardarSesion(sesion);
-      navigate('/');
+      await iniciarSesion(datos);
     } catch (error) {
       setError('root.servidor', {
         message: estadoHttp(error) === 401 ? 'Correo o contraseña incorrectos' : mensajeDeError(error),
@@ -36,30 +34,54 @@ export default function Login() {
   }
 
   return (
-    <section>
-      <h1>Ingresar</h1>
+    <div className="row justify-content-center">
+      <div className="col-12 col-sm-10 col-md-7 col-lg-5">
+        <div className="card shadow-sm">
+          <div className="card-header text-center py-3">
+            <h1 className="h5 mb-0">
+              <i className="bi bi-box-arrow-in-right me-2" aria-hidden="true"></i>Ingresar
+            </h1>
+          </div>
+          <div className="card-body">
+            {avisoSesion && <div className="alert alert-warning">{avisoSesion}</div>}
 
-      <form onSubmit={handleSubmit(alEnviar)} noValidate>
-        <div>
-          <label htmlFor="correo">Correo electrónico</label>
-          <input id="correo" type="email" autoComplete="username" {...register('correo')} />
-          {errors.correo && <p className="error">{errors.correo.message}</p>}
+            <form onSubmit={handleSubmit(alEnviar)} noValidate>
+              <Campo
+                id="correo"
+                etiqueta="Correo electrónico"
+                type="email"
+                autoComplete="username"
+                placeholder="correo@ejemplo.com"
+                error={errors.correo?.message}
+                {...register('correo')}
+              />
+
+              <Campo
+                id="contrasena"
+                etiqueta="Contraseña"
+                type="password"
+                autoComplete="current-password"
+                error={errors.contrasena?.message}
+                {...register('contrasena')}
+              />
+
+              <div className="d-grid">
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>}
+                  {isSubmitting ? 'Ingresando…' : 'Ingresar'}
+                </button>
+              </div>
+
+              {errors.root?.servidor && (
+                <div className="alert alert-danger mt-3 mb-0">{errors.root.servidor.message}</div>
+              )}
+            </form>
+          </div>
+          <div className="card-footer text-center small">
+            ¿No tiene cuenta? <Link to="/registro">Regístrese</Link>
+          </div>
         </div>
-
-        <div>
-          <label htmlFor="contrasena">Contraseña</label>
-          <input id="contrasena" type="password" autoComplete="current-password" {...register('contrasena')} />
-          {errors.contrasena && <p className="error">{errors.contrasena.message}</p>}
-        </div>
-
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Ingresando…' : 'Ingresar'}
-        </button>
-
-        {errors.root?.servidor && <p className="error">{errors.root.servidor.message}</p>}
-      </form>
-
-      <p>¿No tiene cuenta? <Link to="/registro">Regístrese</Link></p>
-    </section>
+      </div>
+    </div>
   );
 }

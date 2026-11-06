@@ -1,9 +1,10 @@
-// Página "/registro": crea una cuenta HUESPED con authServicio.registrar
-// (POST /api/auth/registro). El backend no devuelve token, así que luego se envía al login.
+// Página "/registro" (dentro de RutaPublica): crea una cuenta HUESPED con authServicio.registrar
+// (POST /api/auth/registro). El backend no devuelve token, así que luego se invita al login.
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm, type Path } from 'react-hook-form';
 import { Link } from 'react-router';
+import { Campo } from '../componentes/Campo';
 import { esquemaRegistro, type FormularioRegistro } from '../esquemas/registro';
 import type { RegistroUsuarioRequest } from '../modelos/usuario';
 import { registrar } from '../servicios/authServicio';
@@ -32,7 +33,7 @@ export default function Registro() {
     },
   });
 
-  // Envía el registro; un correo o documento repetido llega como 409 del dominio
+  // Envía el registro; un correo repetido llega como 409 del dominio
   async function alEnviar(datos: FormularioRegistro) {
     setCorreoCreado(null);
     try {
@@ -48,64 +49,68 @@ export default function Registro() {
   }
 
   return (
-    <section>
-      <h1>Registrarse</h1>
-      <p>El registro público crea usuarios con rol Huésped (7.2).</p>
+    <div className="row justify-content-center">
+      <div className="col-12 col-md-10 col-lg-8">
+        <div className="card shadow-sm">
+          <div className="card-header text-center py-3">
+            <h1 className="h5 mb-0">
+              <i className="bi bi-person-plus me-2" aria-hidden="true"></i>Registrarse
+            </h1>
+          </div>
+          <div className="card-body">
+            <p className="text-body-secondary small">El registro público crea usuarios con rol Huésped (7.2).</p>
 
-      <form onSubmit={handleSubmit(alEnviar)} noValidate>
-        <div>
-          <label htmlFor="nombre">Nombre completo</label>
-          <input id="nombre" autoComplete="name" {...register('nombre')} />
-          {errors.nombre && <p className="error">{errors.nombre.message}</p>}
+            <form onSubmit={handleSubmit(alEnviar)} noValidate>
+              <div className="row">
+                <div className="col-12 col-md-6">
+                  <Campo id="nombre" etiqueta="Nombre completo" autoComplete="name"
+                    error={errors.nombre?.message} {...register('nombre')} />
+                </div>
+                <div className="col-12 col-md-6">
+                  <Campo id="correo" etiqueta="Correo electrónico" type="email" autoComplete="email"
+                    error={errors.correo?.message} {...register('correo')} />
+                </div>
+                <div className="col-12 col-md-6">
+                  <Campo id="contrasena" etiqueta="Contraseña" type="password" autoComplete="new-password"
+                    error={errors.contrasena?.message} {...register('contrasena')} />
+                </div>
+                <div className="col-12 col-md-6">
+                  <Campo id="confirmacion" etiqueta="Confirmar contraseña" type="password" autoComplete="new-password"
+                    error={errors.confirmacion?.message} {...register('confirmacion')} />
+                </div>
+                <div className="col-12 col-md-4">
+                  <Campo id="telefono" etiqueta="Teléfono" type="tel" autoComplete="tel"
+                    error={errors.telefono?.message} {...register('telefono')} />
+                </div>
+                <div className="col-12 col-md-4">
+                  <Campo id="documento" etiqueta="Documento"
+                    error={errors.documento?.message} {...register('documento')} />
+                </div>
+                <div className="col-12 col-md-4">
+                  <Campo id="fechaNacimiento" etiqueta="Fecha de nacimiento" type="date"
+                    error={errors.fechaNacimiento?.message} {...register('fechaNacimiento')} />
+                </div>
+              </div>
+
+              <div className="d-grid">
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>}
+                  {isSubmitting ? 'Registrando…' : 'Registrarse'}
+                </button>
+              </div>
+
+              {errors.root?.servidor && (
+                <div className="alert alert-danger mt-3 mb-0">{errors.root.servidor.message}</div>
+              )}
+              {correoCreado && (
+                <div className="alert alert-success mt-3 mb-0">
+                  Cuenta {correoCreado} creada. <Link to="/login">Ingrese aquí</Link>.
+                </div>
+              )}
+            </form>
+          </div>
         </div>
-
-        <div>
-          <label htmlFor="correo">Correo electrónico</label>
-          <input id="correo" type="email" autoComplete="email" {...register('correo')} />
-          {errors.correo && <p className="error">{errors.correo.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="contrasena">Contraseña</label>
-          <input id="contrasena" type="password" autoComplete="new-password" {...register('contrasena')} />
-          {errors.contrasena && <p className="error">{errors.contrasena.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="confirmacion">Confirmar contraseña</label>
-          <input id="confirmacion" type="password" autoComplete="new-password" {...register('confirmacion')} />
-          {errors.confirmacion && <p className="error">{errors.confirmacion.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="telefono">Teléfono</label>
-          <input id="telefono" type="tel" autoComplete="tel" {...register('telefono')} />
-          {errors.telefono && <p className="error">{errors.telefono.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="documento">Documento</label>
-          <input id="documento" {...register('documento')} />
-          {errors.documento && <p className="error">{errors.documento.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="fechaNacimiento">Fecha de nacimiento</label>
-          <input id="fechaNacimiento" type="date" {...register('fechaNacimiento')} />
-          {errors.fechaNacimiento && <p className="error">{errors.fechaNacimiento.message}</p>}
-        </div>
-
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Registrando…' : 'Registrarse'}
-        </button>
-
-        {errors.root?.servidor && <p className="error">{errors.root.servidor.message}</p>}
-        {correoCreado && (
-          <p className="exito">
-            Cuenta {correoCreado} creada. <Link to="/login">Ingrese aquí</Link>.
-          </p>
-        )}
-      </form>
-    </section>
+      </div>
+    </div>
   );
 }

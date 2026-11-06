@@ -1,45 +1,64 @@
-// Componente raíz: pinta Encabezado y PiePagina en todas las páginas y asocia cada URL
-// con su página. main.tsx lo monta dentro del BrowserRouter.
+// Tabla de rutas: todas dentro del Layout común y agrupadas por quién puede verlas, con los
+// mismos roles que exige SecurityConfig del backend para los endpoints de cada página.
 import { Route, Routes } from 'react-router';
-import { Encabezado } from './componentes/Encabezado';
-import { PiePagina } from './componentes/PiePagina';
+import { Layout } from './componentes/Layout';
 import Administracion from './paginas/Administracion';
 import BuscarDisponibilidad from './paginas/BuscarDisponibilidad';
 import Cotizacion from './paginas/Cotizacion';
 import DetalleApartamento from './paginas/DetalleApartamento';
 import Inicio from './paginas/Inicio';
+import ListaReservas from './paginas/ListaReservas';
 import Login from './paginas/Login';
 import MisReservas from './paginas/MisReservas';
+import NoAutorizado from './paginas/NoAutorizado';
 import NoEncontrada from './paginas/NoEncontrada';
 import NuevaReserva from './paginas/NuevaReserva';
 import Preparacion from './paginas/Preparacion';
-import Recepcion from './paginas/Recepcion';
 import Registro from './paginas/Registro';
+import { RutaProtegida } from './rutas/RutaProtegida';
+import { RutaPublica } from './rutas/RutaPublica';
 
-// Tabla de rutas de la aplicación
+// Rutas públicas, solo sin sesión y protegidas por rol
 export default function App() {
   return (
-    <>
-      <Encabezado nombreAlojamiento="Apartamentos Turísticos San Rocco" />
+    <Routes>
+      <Route element={<Layout />}>
+        {/* Públicas para todos (GET /apartamentos, /disponibilidad y POST /cotizaciones son permitAll) */}
+        <Route index element={<Inicio />} />
+        <Route path="apartamentos/:identificacion" element={<DetalleApartamento />} />
+        <Route path="disponibilidad" element={<BuscarDisponibilidad />} />
+        <Route path="cotizacion" element={<Cotizacion />} />
+        <Route path="no-autorizado" element={<NoAutorizado />} />
 
-      <main>
-        <Routes>
-          <Route path="/" element={<Inicio />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/registro" element={<Registro />} />
-          <Route path="/apartamentos/:identificacion" element={<DetalleApartamento />} />
-          <Route path="/disponibilidad" element={<BuscarDisponibilidad />} />
-          <Route path="/cotizacion" element={<Cotizacion />} />
-          <Route path="/mis-reservas" element={<MisReservas />} />
-          <Route path="/recepcion" element={<Recepcion />} />
-          <Route path="/reservas/nueva" element={<NuevaReserva />} />
-          <Route path="/preparacion" element={<Preparacion />} />
-          <Route path="/administracion" element={<Administracion />} />
-          <Route path="*" element={<NoEncontrada />} />
-        </Routes>
-      </main>
+        {/* Solo sin sesión */}
+        <Route element={<RutaPublica />}>
+          <Route path="login" element={<Login />} />
+          <Route path="registro" element={<Registro />} />
+        </Route>
 
-      <PiePagina />
-    </>
+        {/* Huésped: sus propias reservas */}
+        <Route element={<RutaProtegida roles={['HUESPED']} />}>
+          <Route path="mis-reservas" element={<MisReservas />} />
+        </Route>
+
+        {/* Recepción: recepcionista y administrador */}
+        <Route element={<RutaProtegida roles={['RECEPCIONISTA', 'ADMINISTRADOR']} />}>
+          <Route path="reservas" element={<ListaReservas />} />
+          <Route path="reservas/nueva" element={<NuevaReserva />} />
+        </Route>
+
+        {/* Operación del apartamento: personal de servicio y administrador */}
+        <Route element={<RutaProtegida roles={['PERSONAL_SERVICIO', 'ADMINISTRADOR']} />}>
+          <Route path="preparacion" element={<Preparacion />} />
+        </Route>
+
+        {/* Solo administrador */}
+        <Route element={<RutaProtegida roles={['ADMINISTRADOR']} />}>
+          <Route path="administracion" element={<Administracion />} />
+        </Route>
+
+        <Route path="*" element={<NoEncontrada />} />
+      </Route>
+    </Routes>
   );
 }
