@@ -65,6 +65,10 @@ export default function Login() {
                 {...register('contrasena')}
               />
 
+              <div className="mb-3 text-end">
+                <Link to="/recuperar-contrasena" className="small">¿Olvidó su contraseña?</Link>
+              </div>
+
               <div className="d-grid">
                 <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
                   {isSubmitting && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>}

@@ -4,8 +4,12 @@
 export interface ApartamentoResumen {
   identificacion: string; // "AP001": identidad del negocio, igual que en el backend
   nombre: string;
+  descripcion: string;
   dormitorios: number;
   capacidadMaxima: number; // tope rígido de personas
   limiteMascotas: number;
+  estadoOperativo: string;
+  activo: boolean;
   caracteristicas: string[];
+  imagenes: string[];
 }

@@ -1,6 +1,7 @@
 // Tarjeta de una reserva (ReservaResumenResponse del backend) para ListaReservas y MisReservas.
 // Usa EstadoReservaBadge, formato.ts y su CSS Module; las acciones las decide quien la usa.
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import type { EstadoReserva, ReservaResumen } from '../modelos/reserva';
 import { formatearFecha, formatearPesos } from '../utilidades/formato';
 import { EstadoReservaBadge } from './EstadoReservaBadge';
@@ -32,7 +33,7 @@ export function TarjetaReserva({ reserva, acciones }: TarjetaReservaProps) {
   return (
     <article className={clases}>
       <div className="card-header d-flex justify-content-between align-items-center">
-        <span className="fw-semibold">{reserva.codigoReserva}</span>
+        <Link to={`/reservas/${reserva.codigoReserva}`} className="fw-semibold">{reserva.codigoReserva}</Link>
         <EstadoReservaBadge estado={reserva.estadoReserva} />
       </div>
       <div className="card-body">

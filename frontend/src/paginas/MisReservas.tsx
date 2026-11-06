@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Cargando } from '../componentes/Cargando';
+import { Paginacion } from '../componentes/Paginacion';
 import { TarjetaReserva } from '../componentes/TarjetaReserva';
 import type { Pagina } from '../modelos/pagina';
 import { ESTADOS_RESERVA, ETIQUETA_ESTADO, type EstadoReserva, type ReservaResumen } from '../modelos/reserva';
@@ -15,6 +16,7 @@ type FiltroEstado = EstadoReserva | '';
 // Filtro opcional por estado, carga con limpieza y estados de carga, error y lista vacía
 export default function MisReservas() {
   const [estado, setEstado] = useState<FiltroEstado>('');
+  const [paginaActual, setPaginaActual] = useState(0);
   const [pagina, setPagina] = useState<Pagina<ReservaResumen> | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +24,7 @@ export default function MisReservas() {
   // El usuario provoca la nueva consulta: aquí se prepara la pantalla
   function cambiarEstado(nuevo: FiltroEstado) {
     setEstado(nuevo);
+    setPaginaActual(0);
     setCargando(true);
     setError(null);
   }
@@ -29,12 +32,12 @@ export default function MisReservas() {
   // Se ejecuta al abrir y cada vez que cambia el filtro; descarta respuestas viejas
   useEffect(() => {
     let ignorar = false;
-    listarMisReservas(estado || undefined)
+    listarMisReservas(estado || undefined, paginaActual)
       .then((datos) => { if (!ignorar) setPagina(datos); })
       .catch((e: unknown) => { if (!ignorar) setError(mensajeDeError(e)); })
       .finally(() => { if (!ignorar) setCargando(false); });
     return () => { ignorar = true; };
-  }, [estado]);
+  }, [estado, paginaActual]);
 
   const reservas = pagina?.contenido ?? [];
 
@@ -44,6 +47,9 @@ export default function MisReservas() {
         <h1 className="h3 mb-0"><i className="bi bi-suitcase2 me-2" aria-hidden="true"></i>Mis reservas</h1>
         <Link to="/disponibilidad" className="btn btn-outline-primary">
           <i className="bi bi-search me-1" aria-hidden="true"></i>Buscar disponibilidad
+        </Link>
+        <Link to="/reservas/nueva" className="btn btn-primary">
+          <i className="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva reserva
         </Link>
       </div>
 
@@ -68,13 +74,20 @@ export default function MisReservas() {
       )}
 
       {!cargando && !error && reservas.length > 0 && (
-        <div className="row g-3">
-          {reservas.map((reserva) => (
-            <div key={reserva.codigoReserva} className="col-12 col-md-6 col-lg-4">
-              <TarjetaReserva reserva={reserva} />
-            </div>
-          ))}
-        </div>
+        <>
+          <div className="row g-3">
+            {reservas.map((reserva) => (
+              <div key={reserva.codigoReserva} className="col-12 col-md-6 col-lg-4">
+                <TarjetaReserva reserva={reserva} />
+              </div>
+            ))}
+          </div>
+          <Paginacion
+            paginaActual={paginaActual}
+            totalPaginas={pagina?.totalPaginas ?? 0}
+            alCambiar={setPaginaActual}
+          />
+        </>
       )}
     </section>
   );

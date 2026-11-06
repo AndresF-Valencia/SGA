@@ -15,3 +15,15 @@ export async function registrar(datos: RegistroUsuarioRequest): Promise<UsuarioR
   const respuesta = await api.post<UsuarioResponse>('/auth/registro', datos);
   return respuesta.data;
 }
+
+export async function solicitarRecuperacion(correo: string): Promise<void> {
+  await api.post('/auth/recuperar-contrasena', { correo });
+}
+
+export async function restablecerContrasena(datos: {
+  correo: string;
+  codigo: string;
+  nuevaContrasena: string;
+}): Promise<void> {
+  await api.post('/auth/restablecer-contrasena', datos);
+}

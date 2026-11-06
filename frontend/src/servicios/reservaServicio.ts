@@ -21,8 +21,8 @@ export async function listarReservas(
     params: {
       estado: estado || undefined,
       documentoTitular: documentoTitular || undefined,
-      pagina,
-      tamano: TAMANO_PAGINA,
+      page: pagina,
+      size: TAMANO_PAGINA,
     },
     signal,
   });
@@ -39,8 +39,15 @@ export async function cancelarReserva(codigo: string, motivo: string): Promise<R
   return respuesta.data;
 }
 
+export async function obtenerReserva(codigo: string): Promise<ReservaResponse> {
+  const respuesta = await api.get<ReservaResponse>(`/reservas/${codigo}`);
+  return respuesta.data;
+}
+
 // GET /api/reservas/mis-reservas (HUESPED): el titular sale del token; estado opcional
-export async function listarMisReservas(estado?: EstadoReserva): Promise<Pagina<ReservaResumen>> {
-  const respuesta = await api.get<Pagina<ReservaResumen>>('/reservas/mis-reservas', { params: { estado } });
+export async function listarMisReservas(estado?: EstadoReserva, pagina = 0): Promise<Pagina<ReservaResumen>> {
+  const respuesta = await api.get<Pagina<ReservaResumen>>('/reservas/mis-reservas', {
+    params: { estado, page: pagina, size: TAMANO_PAGINA },
+  });
   return respuesta.data;
 }

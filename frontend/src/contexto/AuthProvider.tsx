@@ -5,7 +5,8 @@ import type { LoginRequest, LoginResponse } from '../modelos/auth';
 import type { Rol } from '../modelos/usuario';
 import { registrarManejadorNoAutorizado } from '../servicios/api';
 import { login } from '../servicios/authServicio';
-import { borrarSesion, guardarSesion, sesionVigente } from '../servicios/sesion';
+import { borrarSesion, guardarSesion, leerSesion, sesionVigente } from '../servicios/sesion';
+import type { UsuarioResponse } from '../modelos/usuario';
 import { ContextoAuth, type Sesion, type ValorAuth } from './contextoAuth';
 
 // De la respuesta del backend a la sesión del frontend
@@ -47,6 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSesion(null);
   }, []);
 
+  const actualizarUsuario = useCallback((usuario: UsuarioResponse) => {
+    setSesion((actual) => actual ? { ...actual, nombre: usuario.nombre, documento: usuario.documento } : actual);
+    const guardada = leerSesion();
+    if (guardada) guardarSesion({ ...guardada, usuario });
+  }, []);
+
   // El interceptor de api.ts llama a esta función cuando el backend responde 401
   useEffect(() => {
     return registrarManejadorNoAutorizado(() => {
@@ -63,8 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     avisoSesion,
     iniciarSesion,
     cerrarSesion,
+    actualizarUsuario,
     tieneRol: (...roles: Rol[]) => (sesion ? roles.includes(sesion.rol) : false),
-  }), [sesion, avisoSesion, iniciarSesion, cerrarSesion]);
+  }), [sesion, avisoSesion, iniciarSesion, cerrarSesion, actualizarUsuario]);
 
   return <ContextoAuth value={valor}>{children}</ContextoAuth>;
 }

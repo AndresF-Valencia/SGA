@@ -1,12 +1,29 @@
 // Página "/apartamentos/:identificacion": detalle de un apartamento de ejemplo.
 // El parámetro de la URL es la misma identificación que usa el backend (AP001...).
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { apartamentosEjemplo } from '../datos/apartamentosEjemplo';
+import { Cargando } from '../componentes/Cargando';
+import type { ApartamentoResumen } from '../modelos/apartamento';
+import { obtenerApartamento } from '../servicios/apartamentoServicio';
+import { mensajeDeError } from '../utilidades/errores';
 
 // Busca el apartamento por el parámetro de la ruta; si no existe, lo dice
 export default function DetalleApartamento() {
   const { identificacion } = useParams();
-  const apartamento = apartamentosEjemplo.find((a) => a.identificacion === identificacion);
+  const [apartamento, setApartamento] = useState<ApartamentoResumen | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!identificacion) return;
+    obtenerApartamento(identificacion)
+      .then(setApartamento)
+      .catch((e: unknown) => setError(mensajeDeError(e)))
+      .finally(() => setCargando(false));
+  }, [identificacion]);
+
+  if (cargando) return <Cargando />;
+  if (error) return <div className="alert alert-danger">{error}</div>;
 
   if (!apartamento) {
     return <div className="alert alert-warning">No existe el apartamento {identificacion}.</div>;
@@ -19,6 +36,16 @@ export default function DetalleApartamento() {
         <span className="badge text-bg-light border">{apartamento.identificacion}</span>
       </div>
       <div className="card-body">
+        {apartamento.imagenes.length > 0 && (
+          <div className="row g-2 mb-3">
+            {apartamento.imagenes.map((imagen) => (
+              <div key={imagen} className="col-12 col-md-6">
+                <img src={imagen} alt={apartamento.nombre} className="img-fluid rounded" />
+              </div>
+            ))}
+          </div>
+        )}
+        {apartamento.descripcion && <p>{apartamento.descripcion}</p>}
         <p className="mb-2">
           <i className="bi bi-door-closed me-1" aria-hidden="true"></i>{apartamento.dormitorios} dormitorio(s)
           <span className="mx-2">·</span>
@@ -31,6 +58,12 @@ export default function DetalleApartamento() {
             <span key={c} className="badge rounded-pill text-bg-secondary">{c}</span>
           ))}
         </div>
+        <p className="mt-3 mb-0">
+          <span className={`badge ${apartamento.activo ? 'text-bg-success' : 'text-bg-secondary'}`}>
+            {apartamento.activo ? 'Activo' : 'No disponible'}
+          </span>
+          <span className="badge text-bg-light border ms-2">{apartamento.estadoOperativo}</span>
+        </p>
       </div>
       <div className="card-footer d-flex gap-2">
         <Link to="/cotizacion" className="btn btn-primary btn-sm">Cotizar una estancia</Link>

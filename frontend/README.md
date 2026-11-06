@@ -136,11 +136,15 @@ Las fechas se conservan como texto ISO y se formatean con `Intl` sin convertirla
 | `/apartamentos/:identificacion` | Público | Detalle del apartamento |
 | `/disponibilidad` | Público | Búsqueda de disponibilidad |
 | `/cotizacion` | Público | Cotización de estancia |
+| `/alojamiento` | Público | Ficha y normas del alojamiento |
 | `/login` | Sin sesión | Inicio de sesión |
 | `/registro` | Sin sesión | Registro de huésped |
+| `/recuperar-contrasena` | Sin sesión | Solicitar código y restablecer contraseña |
 | `/mis-reservas` | `HUESPED` | Reservas propias |
+| `/mi-cuenta` | Usuario autenticado | Perfil, contraseña y eliminación de cuenta |
 | `/reservas` | `RECEPCIONISTA`, `ADMINISTRADOR` | Listado operativo de reservas |
-| `/reservas/nueva` | `RECEPCIONISTA`, `ADMINISTRADOR` | Crear reserva |
+| `/reservas/nueva` | `HUESPED`, `RECEPCIONISTA`, `ADMINISTRADOR` | Crear reserva en `PORTAL` o `DIRECTO` |
+| `/reservas/:codigo` | `HUESPED`, `RECEPCIONISTA`, `ADMINISTRADOR` | Detalle, folio y acciones de reserva |
 | `/preparacion` | `PERSONAL_SERVICIO`, `ADMINISTRADOR` | Preparación de apartamentos |
 | `/administracion` | `ADMINISTRADOR` | Administración del alojamiento |
 
@@ -162,7 +166,7 @@ La guía 20 no se considera pendiente de frontend: la funcionalidad disponible e
 
 ## 8. Paginación, filtros y notificaciones
 
-El backend devuelve páginas con `contenido`, `pagina`, `tamano`, `totalElementos` y `totalPaginas`. El frontend pide diez registros por página y usa índices que empiezan en cero.
+El backend devuelve páginas con `contenido`, `pagina`, `tamano`, `totalElementos` y `totalPaginas`. El frontend pide diez registros por página, usa índices que empiezan en cero y envía los parámetros REST `page` y `size`.
 
 En `/reservas`:
 
@@ -177,8 +181,8 @@ En `/reservas`:
 
 Las rutas ya existen, pero algunas son pantallas iniciales y todavía requieren desarrollo funcional y visual:
 
-- **Público:** catálogo, detalle, disponibilidad y cotización necesitan evolucionar hacia un flujo completo de consulta y reserva.
-- **Huésped:** mis reservas funciona como listado, pero faltan detalle de reserva, folio, cancelación, perfil y recuperación de contraseña.
+- **Público:** catálogo, detalle, alojamiento, disponibilidad, cotización, registro, login y recuperación ya consumen los flujos principales del backend.
+- **Huésped:** puede crear reservas por `PORTAL`, consultar sus reservas, ver detalle y folio, cancelar reservas permitidas, editar perfil, cambiar contraseña y eliminar su cuenta.
 - **Recepción:** el listado y creación existen; faltan detalle, modificación, llegada, salida, no-show, folio, pagos y cargos.
 - **Personal de servicio:** la pantalla de preparación requiere conectar el listado real y los cambios de estado operativo.
 - **Administrador:** la pantalla es una base; faltan usuarios, apartamentos, bloqueos, temporadas, tarifas, políticas y conflictos de canal.

@@ -3,6 +3,7 @@
 import { createContext } from 'react';
 import type { LoginRequest } from '../modelos/auth';
 import type { Rol } from '../modelos/usuario';
+import type { UsuarioResponse } from '../modelos/usuario';
 
 // Datos de la sesión tomados de LoginResponse.usuario (el backend ya los envía: no se decodifica el JWT)
 export interface Sesion {
@@ -21,6 +22,7 @@ export interface ValorAuth {
   avisoSesion: string | null; // "Su sesión expiró": lo muestra el Login
   iniciarSesion: (credenciales: LoginRequest) => Promise<Sesion>;
   cerrarSesion: () => void;
+  actualizarUsuario: (usuario: UsuarioResponse) => void;
   tieneRol: (...roles: Rol[]) => boolean;
 }
 

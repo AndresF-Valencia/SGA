@@ -54,8 +54,12 @@ export function Encabezado({ nombreAlojamiento }: EncabezadoProps) {
               <li className="nav-item"><NavLink to="/" end className={claseEnlace}>Inicio</NavLink></li>
               <li className="nav-item"><NavLink to="/disponibilidad" className={claseEnlace}>Disponibilidad</NavLink></li>
               <li className="nav-item"><NavLink to="/cotizacion" className={claseEnlace}>Cotizar</NavLink></li>
+              <li className="nav-item"><NavLink to="/alojamiento" className={claseEnlace}>Alojamiento</NavLink></li>
               {tieneRol('HUESPED') && (
-                <li className="nav-item"><NavLink to="/mis-reservas" className={claseEnlace}>Mis reservas</NavLink></li>
+                <>
+                  <li className="nav-item"><NavLink to="/mis-reservas" className={claseEnlace}>Mis reservas</NavLink></li>
+                  <li className="nav-item"><NavLink to="/reservas/nueva" className={claseEnlace}>Reservar</NavLink></li>
+                </>
               )}
               {tieneRol('RECEPCIONISTA', 'ADMINISTRADOR') && (
                 <>
@@ -76,6 +80,7 @@ export function Encabezado({ nombreAlojamiento }: EncabezadoProps) {
                 <span className="navbar-text small">
                   <i className="bi bi-person-circle me-1" aria-hidden="true"></i>{sesion.nombre}
                 </span>
+                <Link to="/mi-cuenta" className="btn btn-outline-secondary btn-sm">Mi cuenta</Link>
                 <button type="button" className="btn btn-outline-danger btn-sm" onClick={salir}>
                   <i className="bi bi-box-arrow-right me-1" aria-hidden="true"></i>Cerrar sesión
                 </button>

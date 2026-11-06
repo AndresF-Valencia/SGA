@@ -1,25 +1,27 @@
 // Página "/reservas/nueva" (recepción, canal DIRECTO): valida con esquemaNuevaReserva,
 // convierte el formulario a CrearReservaRequest y lo envía con reservaServicio (POST /api/reservas).
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useForm, type Path } from 'react-hook-form';
 import { Link } from 'react-router';
 import { Campo } from '../componentes/Campo';
 import { esquemaNuevaReserva, type FormularioNuevaReserva } from '../esquemas/reserva';
 import type { CrearReservaRequest } from '../modelos/reserva';
 import { crearReserva } from '../servicios/reservaServicio';
+import { obtenerMiPerfil } from '../servicios/usuarioServicio';
 import { erroresDeCampo, mensajeDeError } from '../utilidades/errores';
+import { useAuth } from '../hooks/useAuth';
 
 const OCUPANTE_VACIO = { documento: '', nombre: '', fechaNacimiento: '' };
 
 // Del formulario al DTO: el ocupante 0 es el titular y va también dentro de ocupantes
-function aSolicitud(datos: FormularioNuevaReserva): CrearReservaRequest {
+function aSolicitud(datos: FormularioNuevaReserva, canalOrigen: 'PORTAL' | 'DIRECTO'): CrearReservaRequest {
   return {
     apartamentoId: datos.apartamentoId,
     fechaEntrada: datos.fechaEntrada,
     fechaSalida: datos.fechaSalida,
     horaEstimadaLlegada: datos.horaEstimadaLlegada,
-    canalOrigen: 'DIRECTO',
+    canalOrigen,
     titular: { ...datos.ocupantes[0], email: datos.emailTitular, telefono: datos.telefonoTitular },
     ocupantes: datos.ocupantes,
     cantidadMascotas: datos.cantidadMascotas,
@@ -35,6 +37,8 @@ function aCampoFormulario(campo: string): string {
 
 // Formulario con lista dinámica de ocupantes y errores del servidor por campo y generales
 export default function NuevaReserva() {
+  const { tieneRol } = useAuth();
+  const esHuesped = tieneRol('HUESPED');
   const [codigoCreado, setCodigoCreado] = useState<string | null>(null);
   const {
     register,
@@ -61,11 +65,25 @@ export default function NuevaReserva() {
   // Administra agregar y quitar ocupantes
   const { fields, append, remove } = useFieldArray({ control, name: 'ocupantes' });
 
+  useEffect(() => {
+    if (!esHuesped) return;
+    obtenerMiPerfil().then((perfil) => reset({
+      apartamentoId: '',
+      fechaEntrada: '',
+      fechaSalida: '',
+      horaEstimadaLlegada: '',
+      emailTitular: perfil.correo,
+      telefonoTitular: perfil.telefono,
+      cantidadMascotas: 0,
+      ocupantes: [{ documento: perfil.documento, nombre: perfil.nombre, fechaNacimiento: perfil.fechaNacimiento }],
+    })).catch((e: unknown) => setError('root.servidor', { message: mensajeDeError(e) }));
+  }, [esHuesped, reset, setError]);
+
   // Envía la reserva; 400 se pinta junto al campo, 404/409 como mensaje general
   async function alEnviar(datos: FormularioNuevaReserva) {
     setCodigoCreado(null);
     try {
-      const reserva = await crearReserva(aSolicitud(datos));
+      const reserva = await crearReserva(aSolicitud(datos, esHuesped ? 'PORTAL' : 'DIRECTO'));
       setCodigoCreado(reserva.codigoReserva);
       reset();
     } catch (error) {
@@ -78,7 +96,7 @@ export default function NuevaReserva() {
 
   return (
     <section>
-      <h1 className="h3 mb-3">Nueva reserva <small className="text-body-secondary">(recepción)</small></h1>
+      <h1 className="h3 mb-3">Nueva reserva <small className="text-body-secondary">({esHuesped ? 'portal' : 'recepción'})</small></h1>
 
       <form onSubmit={handleSubmit(alEnviar)} noValidate>
         <div className="row">
@@ -121,16 +139,19 @@ export default function NuevaReserva() {
                 <div className="col-12 col-md-4">
                   <Campo id={`documento-${indice}`} etiqueta="Documento"
                     error={errors.ocupantes?.[indice]?.documento?.message}
+                    readOnly={esHuesped && indice === 0}
                     {...register(`ocupantes.${indice}.documento`)} />
                 </div>
                 <div className="col-12 col-md-4">
                   <Campo id={`nombre-${indice}`} etiqueta="Nombre"
                     error={errors.ocupantes?.[indice]?.nombre?.message}
+                    readOnly={esHuesped && indice === 0}
                     {...register(`ocupantes.${indice}.nombre`)} />
                 </div>
                 <div className="col-12 col-md-4">
                   <Campo id={`fechaNacimiento-${indice}`} etiqueta="Fecha de nacimiento" type="date"
                     error={errors.ocupantes?.[indice]?.fechaNacimiento?.message}
+                    readOnly={esHuesped && indice === 0}
                     {...register(`ocupantes.${indice}.fechaNacimiento`)} />
                 </div>
 
@@ -162,7 +183,7 @@ export default function NuevaReserva() {
             {isSubmitting && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>}
             {isSubmitting ? 'Creando…' : 'Crear reserva'}
           </button>
-          <Link to="/reservas" className="btn btn-outline-secondary">Volver</Link>
+          <Link to={esHuesped ? '/mis-reservas' : '/reservas'} className="btn btn-outline-secondary">Volver</Link>
         </div>
 
         {errors.root?.servidor && <div className="alert alert-danger mt-3">{errors.root.servidor.message}</div>}
