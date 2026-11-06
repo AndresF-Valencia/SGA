@@ -188,6 +188,8 @@ Las rutas ya existen, pero algunas son pantallas iniciales y todavía requieren 
 
 La consola administrativa permite filtrar usuarios por rol y estado, paginar usuarios, temporadas y conflictos, seleccionar una temporada existente para configurar la tarifa de un apartamento y resolver conflictos mediante formularios controlados. En temporadas/tarifas existen dos flujos: asignación rápida por tipo (`BASE` o `ALTA`) para aplicar un mismo valor a todas las temporadas de ese tipo, y asignación específica para modificar una sola temporada. Los bloqueos envían el motivo enum que exige el backend y los parámetros del alojamiento aceptan correctamente campos opcionales.
 
+Los cambios de apartamentos publican un evento interno del frontend. El catálogo, el detalle y la cotización escuchan ese evento y vuelven a consultar `/api/apartamentos`, por lo que reflejan altas, ediciones, activaciones y desactivaciones sin modificar el backend.
+
 ## 10. Verificación antes de entregar cambios
 
 Desde `frontend/`:

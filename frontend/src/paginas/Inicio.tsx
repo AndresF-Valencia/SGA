@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Cargando } from '../componentes/Cargando';
 import { TarjetaApartamento } from '../componentes/TarjetaApartamento';
 import type { ApartamentoResumen } from '../modelos/apartamento';
-import { listarApartamentos } from '../servicios/apartamentoServicio';
+import { escucharCambiosApartamentos, listarApartamentos } from '../servicios/apartamentoServicio';
 import { mensajeDeError } from '../utilidades/errores';
 
 // Estado: personas. Valor derivado: los apartamentos donde cabe el grupo
@@ -15,10 +15,13 @@ export default function Inicio() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    listarApartamentos()
-      .then(setApartamentos)
-      .catch((e: unknown) => setError(mensajeDeError(e)))
-      .finally(() => setCargando(false));
+    const cargar = () => {
+      setCargando(true);
+      setError(null);
+      listarApartamentos().then(setApartamentos).catch((e: unknown) => setError(mensajeDeError(e))).finally(() => setCargando(false));
+    };
+    cargar();
+    return escucharCambiosApartamentos(cargar);
   }, []);
 
   const queCaben = apartamentos.filter((a) => a.activo && a.capacidadMaxima >= personas);

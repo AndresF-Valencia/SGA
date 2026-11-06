@@ -1,11 +1,12 @@
 // Página "/cotizacion" (pública, 7.4): valida con esquemaCotizacion y llama a
 // cotizacionServicio (POST /api/cotizaciones). Muestra el total y el desglose por noche.
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useForm, type Path } from 'react-hook-form';
 import { Campo } from '../componentes/Campo';
-import { apartamentosEjemplo } from '../datos/apartamentosEjemplo';
 import { esquemaCotizacion, type FormularioCotizacion } from '../esquemas/cotizacion';
+import type { ApartamentoResumen } from '../modelos/apartamento';
+import { escucharCambiosApartamentos, listarApartamentos } from '../servicios/apartamentoServicio';
 import type { CotizacionResponse } from '../modelos/cotizacion';
 import { cotizar } from '../servicios/cotizacionServicio';
 import { erroresDeCampo, mensajeDeError } from '../utilidades/errores';
@@ -14,6 +15,13 @@ import { formatearFecha, formatearPesos } from '../utilidades/formato';
 // Formulario de cotización con lista de ocupantes (solo su fecha de nacimiento)
 export default function Cotizacion() {
   const [resultado, setResultado] = useState<CotizacionResponse | null>(null);
+  const [apartamentos, setApartamentos] = useState<ApartamentoResumen[]>([]);
+
+  useEffect(() => {
+    const cargar = () => { void listarApartamentos().then(setApartamentos); };
+    cargar();
+    return escucharCambiosApartamentos(cargar);
+  }, []);
   const {
     register,
     control,
@@ -63,7 +71,7 @@ export default function Cotizacion() {
                 {...register('identificacionApartamento')}
               >
                 <option value="">Seleccione…</option>
-                {apartamentosEjemplo.map((a) => (
+                {apartamentos.filter((apartamento) => apartamento.activo).map((a) => (
                   <option key={a.identificacion} value={a.identificacion}>{a.identificacion} — {a.nombre}</option>
                 ))}
               </select>

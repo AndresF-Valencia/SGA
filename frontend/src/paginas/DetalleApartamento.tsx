@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Cargando } from '../componentes/Cargando';
 import type { ApartamentoResumen } from '../modelos/apartamento';
-import { obtenerApartamento } from '../servicios/apartamentoServicio';
+import { escucharCambiosApartamentos, obtenerApartamento } from '../servicios/apartamentoServicio';
 import { mensajeDeError } from '../utilidades/errores';
 
 // Busca el apartamento por el parámetro de la ruta; si no existe, lo dice
@@ -16,10 +16,13 @@ export default function DetalleApartamento() {
 
   useEffect(() => {
     if (!identificacion) return;
-    obtenerApartamento(identificacion)
-      .then(setApartamento)
-      .catch((e: unknown) => setError(mensajeDeError(e)))
-      .finally(() => setCargando(false));
+    const cargar = () => {
+      setCargando(true);
+      setError(null);
+      obtenerApartamento(identificacion).then(setApartamento).catch((e: unknown) => setError(mensajeDeError(e))).finally(() => setCargando(false));
+    };
+    cargar();
+    return escucharCambiosApartamentos(cargar);
   }, [identificacion]);
 
   if (cargando) return <Cargando />;
