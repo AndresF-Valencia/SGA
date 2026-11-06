@@ -15,7 +15,7 @@ export interface Alojamiento {
   serviciosAdicionales: ServicioAdicional[];
   horaEntrada: string;
   horaSalida: string;
-  horaLimiteNoShow: string;
+  horaLimiteNoShow: string | null;
   minutosPreparacion: number;
   horasPlazoConfirmacion: number;
   edadUmbralFacturable: number;

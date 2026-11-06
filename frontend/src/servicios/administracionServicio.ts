@@ -52,6 +52,14 @@ export async function listarTemporadas(pagina = 0): Promise<{ contenido: Tempora
   return respuesta.data;
 }
 
+export async function listarTodasLasTemporadas(): Promise<Temporada[]> {
+  const primeraPagina = await listarTemporadas(0);
+  const paginasRestantes = await Promise.all(
+    Array.from({ length: Math.max(primeraPagina.totalPaginas - 1, 0) }, (_, indice) => listarTemporadas(indice + 1)),
+  );
+  return [primeraPagina, ...paginasRestantes].flatMap((pagina) => pagina.contenido);
+}
+
 export async function crearTemporada(datos: Record<string, unknown>): Promise<Temporada> {
   const respuesta = await api.post<Temporada>('/temporadas', datos);
   return respuesta.data;

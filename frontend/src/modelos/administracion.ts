@@ -15,7 +15,7 @@ export interface Temporada {
   fechaInicio: string;
   fechaFin: string;
   estanciaMinima: number;
-  tipo: TipoTemporada;
+  tipoTemporada: TipoTemporada;
 }
 
 export interface Bloqueo {

@@ -61,7 +61,7 @@ Después de cambiar un archivo `.env`, reinicie Vite.
 
 ```text
 src/
-├── componentes/   piezas visuales reutilizables
+├── componentes/   piezas visuales reutilizables y módulos administrativos
 ├── contexto/      estado compartido de autenticación y filtros
 ├── datos/         datos locales de apoyo
 ├── esquemas/      validaciones Zod de los formularios
@@ -72,6 +72,8 @@ src/
 ├── servicios/     cliente Axios y llamadas a la API
 └── utilidades/    formato, errores, fechas y notificaciones
 ```
+
+La consola administrativa se divide por responsabilidad en `src/componentes/administracion/`: usuarios, apartamentos, temporadas/tarifas, bloqueos y configuración general. `paginas/Administracion.tsx` solo coordina las pestañas.
 
 Reglas del proyecto:
 
@@ -183,6 +185,8 @@ Las rutas ya existen, pero algunas son pantallas iniciales y todavía requieren 
 - **Recepción:** puede listar, filtrar, crear, consultar y modificar reservas; confirmar, cancelar, registrar llegada, salida y no-show; y consultar/operar el folio con cargos, pagos y cierre.
 - **Personal de servicio:** puede consultar los apartamentos activos y cambiar estados permitidos de preparación; `FUERA_DE_SERVICIO` queda reservado al administrador.
 - **Administrador:** dispone de una consola por pestañas para usuarios, apartamentos, temporadas/tarifas, bloqueos, parámetros del alojamiento, políticas de cancelación y conflictos de canal.
+
+La consola administrativa permite filtrar usuarios por rol y estado, paginar usuarios, temporadas y conflictos, seleccionar una temporada existente para configurar la tarifa de un apartamento y resolver conflictos mediante formularios controlados. En temporadas/tarifas existen dos flujos: asignación rápida por tipo (`BASE` o `ALTA`) para aplicar un mismo valor a todas las temporadas de ese tipo, y asignación específica para modificar una sola temporada. Los bloqueos envían el motivo enum que exige el backend y los parámetros del alojamiento aceptan correctamente campos opcionales.
 
 ## 10. Verificación antes de entregar cambios
 
