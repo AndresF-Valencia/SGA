@@ -7,6 +7,7 @@ import { Campo } from '../componentes/Campo';
 import { esquemaCotizacion, type FormularioCotizacion } from '../esquemas/cotizacion';
 import type { ApartamentoResumen } from '../modelos/apartamento';
 import { escucharCambiosApartamentos, listarApartamentos } from '../servicios/apartamentoServicio';
+import { escucharCambiosTarifas } from '../servicios/administracionServicio';
 import type { CotizacionResponse } from '../modelos/cotizacion';
 import { cotizar } from '../servicios/cotizacionServicio';
 import { erroresDeCampo, mensajeDeError } from '../utilidades/errores';
@@ -16,12 +17,19 @@ import { formatearFecha, formatearPesos } from '../utilidades/formato';
 export default function Cotizacion() {
   const [resultado, setResultado] = useState<CotizacionResponse | null>(null);
   const [apartamentos, setApartamentos] = useState<ApartamentoResumen[]>([]);
+  const [ultimaSolicitud, setUltimaSolicitud] = useState<FormularioCotizacion | null>(null);
 
   useEffect(() => {
     const cargar = () => { void listarApartamentos().then(setApartamentos); };
     cargar();
     return escucharCambiosApartamentos(cargar);
   }, []);
+
+  useEffect(() => escucharCambiosTarifas(() => {
+    if (ultimaSolicitud) {
+      void cotizar(ultimaSolicitud).then(setResultado).catch(() => undefined);
+    }
+  }), [ultimaSolicitud]);
   const {
     register,
     control,
@@ -45,6 +53,7 @@ export default function Cotizacion() {
   // El formulario ya tiene la forma de CotizacionRequest: se envía tal cual
   async function alEnviar(datos: FormularioCotizacion) {
     setResultado(null);
+    setUltimaSolicitud(datos);
     try {
       setResultado(await cotizar(datos));
     } catch (error) {

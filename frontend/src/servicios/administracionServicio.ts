@@ -3,6 +3,17 @@ import type { Alojamiento } from '../modelos/alojamiento';
 import type { UsuarioResponse } from '../modelos/usuario';
 import { api } from './api';
 
+const EVENTO_TARIFAS_CAMBIARON = 'sga:tarifas-cambiaron';
+
+export function notificarCambioTarifas(): void {
+  window.dispatchEvent(new Event(EVENTO_TARIFAS_CAMBIARON));
+}
+
+export function escucharCambiosTarifas(manejador: () => void): () => void {
+  window.addEventListener(EVENTO_TARIFAS_CAMBIARON, manejador);
+  return () => window.removeEventListener(EVENTO_TARIFAS_CAMBIARON, manejador);
+}
+
 export async function listarUsuarios(filtros: { rol?: string; activo?: boolean; pagina?: number }): Promise<PaginaUsuarios> {
   const respuesta = await api.get<PaginaUsuarios>('/usuarios', { params: { ...filtros, page: filtros.pagina ?? 0, size: 10 } });
   return respuesta.data;

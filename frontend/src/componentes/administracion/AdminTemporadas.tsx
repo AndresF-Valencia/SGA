@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Temporada } from '../../modelos/administracion';
-import { configurarTarifa, crearTemporada, listarTodasLasTemporadas, listarTemporadas } from '../../servicios/administracionServicio';
+import { configurarTarifa, crearTemporada, listarTodasLasTemporadas, listarTemporadas, notificarCambioTarifas } from '../../servicios/administracionServicio';
 import { Paginacion } from '../Paginacion';
 import { mensajeDeError } from '../../utilidades/errores';
 import { notificarError, notificarExito } from '../../utilidades/notificaciones';
@@ -48,6 +48,7 @@ export function AdminTemporadas() {
     evento.preventDefault();
     try {
       await configurarTarifa(tarifa.identificacion, tarifa.temporadaId, tarifa.valorTarifa);
+      notificarCambioTarifas();
       await notificarExito('Tarifa configurada para la temporada seleccionada.');
     } catch (e: unknown) {
       await notificarError(mensajeDeError(e));
@@ -71,6 +72,7 @@ export function AdminTemporadas() {
       for (const temporada of temporadasDelTipo) {
         await configurarTarifa(asignacionRapida.identificacion.trim(), temporada.id, asignacionRapida.valorTarifa);
       }
+      notificarCambioTarifas();
       await notificarExito(`Se configuraron ${temporadasDelTipo.length} tarifas ${asignacionRapida.tipo.toLowerCase()}.`);
     } catch (e: unknown) {
       await notificarError(mensajeDeError(e));
