@@ -1,0 +1,38 @@
+/* Estilos globales mínimos de la app (Guía 14). Bootstrap llega en la Guía 16. */
+body {
+  margin: 0 auto;
+  max-width: 960px;
+  padding: 1rem;
+  font-family: system-ui, sans-serif;
+}
+
+/* Contenedor de tarjetas: apartamentos, ocupantes, resultados */
+.tarjeta {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Mensajes de error de los formularios (Zod y respuestas del backend) */
+.error {
+  color: #b00020;
+  font-size: 0.875rem;
+  margin: 0.25rem 0;
+}
+
+/* Mensaje de operación exitosa */
+.exito {
+  color: #1b5e20;
+}
+
+/* Separación entre campos de los formularios */
+form > div,
+.tarjeta > label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+label {
+  display: block;
+}
