@@ -10,3 +10,8 @@ export async function obtenerApartamento(identificacion: string): Promise<Aparta
   const respuesta = await api.get<ApartamentoResumen>(`/apartamentos/${identificacion}`);
   return respuesta.data;
 }
+
+export async function cambiarEstadoOperativo(identificacion: string, nuevoEstado: string): Promise<ApartamentoResumen> {
+  const respuesta = await api.post<ApartamentoResumen>(`/apartamentos/${identificacion}/estado-operativo`, { nuevoEstado });
+  return respuesta.data;
+}

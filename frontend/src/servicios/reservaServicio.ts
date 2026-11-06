@@ -44,6 +44,35 @@ export async function obtenerReserva(codigo: string): Promise<ReservaResponse> {
   return respuesta.data;
 }
 
+export async function modificarReserva(codigo: string, datos: {
+  apartamentoId: string;
+  fechaEntrada: string;
+  fechaSalida: string;
+  cantidadMascotas: number;
+}): Promise<ReservaResponse> {
+  const respuesta = await api.put<ReservaResponse>(`/reservas/${codigo}`, datos);
+  return respuesta.data;
+}
+
+export async function registrarLlegada(codigo: string): Promise<ReservaResponse> {
+  const respuesta = await api.put<ReservaResponse>(`/reservas/${codigo}/registrar-llegada`);
+  return respuesta.data;
+}
+
+export async function registrarSalida(codigo: string, datos: {
+  autor: string;
+  motivo: string;
+  observaciones: string;
+}): Promise<ReservaResponse> {
+  const respuesta = await api.put<ReservaResponse>(`/reservas/${codigo}/registrar-salida`, datos);
+  return respuesta.data;
+}
+
+export async function declararNoShow(codigo: string): Promise<ReservaResponse> {
+  const respuesta = await api.put<ReservaResponse>(`/reservas/${codigo}/declarar-noshow`);
+  return respuesta.data;
+}
+
 // GET /api/reservas/mis-reservas (HUESPED): el titular sale del token; estado opcional
 export async function listarMisReservas(estado?: EstadoReserva, pagina = 0): Promise<Pagina<ReservaResumen>> {
   const respuesta = await api.get<Pagina<ReservaResumen>>('/reservas/mis-reservas', {

@@ -183,8 +183,8 @@ Las rutas ya existen, pero algunas son pantallas iniciales y todavía requieren 
 
 - **Público:** catálogo, detalle, alojamiento, disponibilidad, cotización, registro, login y recuperación ya consumen los flujos principales del backend.
 - **Huésped:** puede crear reservas por `PORTAL`, consultar sus reservas, ver detalle y folio, cancelar reservas permitidas, editar perfil, cambiar contraseña y eliminar su cuenta.
-- **Recepción:** el listado y creación existen; faltan detalle, modificación, llegada, salida, no-show, folio, pagos y cargos.
-- **Personal de servicio:** la pantalla de preparación requiere conectar el listado real y los cambios de estado operativo.
+- **Recepción:** puede listar, filtrar, crear, consultar y modificar reservas; confirmar, cancelar, registrar llegada, salida y no-show; y consultar/operar el folio con cargos, pagos y cierre.
+- **Personal de servicio:** puede consultar los apartamentos activos y cambiar estados permitidos de preparación; `FUERA_DE_SERVICIO` queda reservado al administrador.
 - **Administrador:** la pantalla es una base; faltan usuarios, apartamentos, bloqueos, temporadas, tarifas, políticas y conflictos de canal.
 
 La siguiente fase debe planear estas vistas por rol antes de implementarlas, reutilizando servicios, modelos y componentes existentes.
