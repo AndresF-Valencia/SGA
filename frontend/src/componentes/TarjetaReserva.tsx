@@ -1,6 +1,8 @@
 // Tarjeta de una reserva (ReservaResumenResponse del backend) para ListaReservas y MisReservas.
 // Usa EstadoReservaBadge, formato.ts y su CSS Module; las acciones las decide quien la usa.
 import type { ReactNode } from 'react';
+import { Puerta } from './Puerta';
+import { etiquetaCanal } from '../utilidades/identidad';
 import { Link } from 'react-router';
 import type { EstadoReserva, ReservaResumen } from '../modelos/reserva';
 import { formatearFecha, formatearPesos } from '../utilidades/formato';
@@ -38,17 +40,17 @@ export function TarjetaReserva({ reserva, acciones }: TarjetaReservaProps) {
       </div>
       <div className="card-body">
         <p className="mb-1"><i className="bi bi-person me-1" aria-hidden="true"></i>{reserva.nombreTitular}</p>
-        <p className="mb-1 text-body-secondary small">
-          <i className="bi bi-building me-1" aria-hidden="true"></i>{reserva.apartamentoId}
+        <p className="mb-1 text-body-secondary small d-flex align-items-center gap-2">
+          <Puerta identificacion={reserva.apartamentoId} />Apartamento {reserva.apartamentoId}
         </p>
         <p className="mb-0 text-body-secondary small">
           <i className="bi bi-calendar-range me-1" aria-hidden="true"></i>
-          {formatearFecha(reserva.fechaEntrada)} → {formatearFecha(reserva.fechaSalida)}
+          {formatearFecha(reserva.fechaEntrada)} al {formatearFecha(reserva.fechaSalida)}
         </p>
       </div>
       <div className="card-footer d-flex justify-content-between align-items-center">
-        <small className="text-body-secondary">{reserva.canalOrigen}</small>
-        <strong>{formatearPesos(reserva.valorTotal)}</strong>
+        <small className="text-body-secondary">{etiquetaCanal(reserva.canalOrigen)}</small>
+        <strong className="cifra">{formatearPesos(reserva.valorTotal)}</strong>
       </div>
       {acciones && <div className="card-body border-top d-flex gap-2">{acciones}</div>}
     </article>

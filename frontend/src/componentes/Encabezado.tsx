@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
+import { Puerta } from './Puerta';
 
 interface EncabezadoProps {
   nombreAlojamiento: string;
@@ -10,7 +11,7 @@ interface EncabezadoProps {
 
 // Clase del enlace según si es la página actual
 function claseEnlace({ isActive }: { isActive: boolean }) {
-  return `nav-link ${isActive ? 'active fw-semibold' : ''}`;
+  return `nav-link text-nowrap ${isActive ? 'active' : ''}`;
 }
 
 // Marca, menú por rol y botones de sesión; el menú se despliega con estado de React
@@ -26,12 +27,17 @@ export function Encabezado({ nombreAlojamiento }: EncabezadoProps) {
   }
 
   return (
-    <header>
-      <nav className="navbar navbar-expand-lg bg-body-tertiary border-bottom">
+    <header className="encabezado">
+      <nav className="navbar navbar-expand-xl py-2">
         <div className="container">
-          <Link to="/" id="marca" className="navbar-brand d-flex align-items-center gap-2">
-            <i className="bi bi-house-heart" aria-hidden="true"></i>
-            {nombreAlojamiento}
+          <Link to="/" id="marca" className="navbar-brand marca" aria-label={nombreAlojamiento}>
+            <span className="marca-puertas">
+              {['AP001', 'AP002', 'AP003', 'AP004', 'AP005'].map((id) => <Puerta key={id} identificacion={id} />)}
+            </span>
+            <span>
+              <span className="marca-nombre">San Rocco</span>
+              <span className="marca-lugar">Apartamentos en Salento</span>
+            </span>
           </Link>
 
           <button
@@ -50,11 +56,10 @@ export function Encabezado({ nombreAlojamiento }: EncabezadoProps) {
             className={`collapse navbar-collapse ${menuAbierto ? 'show' : ''}`}
             onClick={() => setMenuAbierto(false)}
           >
-            <ul className="navbar-nav me-auto">
-              <li className="nav-item"><NavLink to="/" end className={claseEnlace}>Inicio</NavLink></li>
-              <li className="nav-item"><NavLink to="/disponibilidad" className={claseEnlace}>Disponibilidad</NavLink></li>
+            <ul className="navbar-nav me-auto ms-xl-3 gap-xl-1">
+              <li className="nav-item"><NavLink to="/disponibilidad" className={claseEnlace}>Buscar fechas</NavLink></li>
               <li className="nav-item"><NavLink to="/cotizacion" className={claseEnlace}>Cotizar</NavLink></li>
-              <li className="nav-item"><NavLink to="/alojamiento" className={claseEnlace}>Alojamiento</NavLink></li>
+              <li className="nav-item"><NavLink to="/alojamiento" className={claseEnlace}>El alojamiento</NavLink></li>
               {tieneRol('HUESPED') && (
                 <>
                   <li className="nav-item"><NavLink to="/mis-reservas" className={claseEnlace}>Mis reservas</NavLink></li>
@@ -76,19 +81,18 @@ export function Encabezado({ nombreAlojamiento }: EncabezadoProps) {
             </ul>
 
             {sesion ? (
-              <div className="d-flex align-items-center gap-2">
-                <span className="navbar-text small">
-                  <i className="bi bi-person-circle me-1" aria-hidden="true"></i>{sesion.nombre}
-                </span>
-                <Link to="/mi-cuenta" className="btn btn-outline-secondary btn-sm">Mi cuenta</Link>
-                <button type="button" className="btn btn-outline-danger btn-sm" onClick={salir}>
-                  <i className="bi bi-box-arrow-right me-1" aria-hidden="true"></i>Cerrar sesión
+              <div className="d-flex align-items-center gap-2 mt-2 mt-xl-0">
+                <Link to="/mi-cuenta" className="btn btn-outline-secondary btn-sm text-nowrap" title="Mi cuenta">
+                  <i className="bi bi-person-circle me-1" aria-hidden="true"></i>{sesion.nombre.split(' ')[0]}
+                </Link>
+                <button type="button" className="btn btn-outline-secondary btn-sm text-nowrap" onClick={salir}>
+                  <i className="bi bi-box-arrow-right me-1" aria-hidden="true"></i>Salir
                 </button>
               </div>
             ) : (
-              <div className="d-flex gap-2">
-                <Link to="/login" className="btn btn-primary btn-sm">Ingresar</Link>
-                <Link to="/registro" className="btn btn-outline-secondary btn-sm">Registrarse</Link>
+              <div className="d-flex gap-2 mt-2 mt-xl-0">
+                <Link to="/login" className="btn btn-outline-secondary btn-sm">Ingresar</Link>
+                <Link to="/registro" className="btn btn-primary btn-sm">Crear cuenta</Link>
               </div>
             )}
           </div>

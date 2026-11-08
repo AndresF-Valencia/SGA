@@ -29,8 +29,8 @@ export default function Alojamiento() {
           <article className="card h-100">
             <div className="card-header">Información de la estancia</div>
             <div className="card-body">
-              <p className="mb-2">Entrada: <strong>{alojamiento.horaEntrada}</strong></p>
-              <p className="mb-2">Salida: <strong>{alojamiento.horaSalida}</strong></p>
+              <p className="mb-2">Entrada: <strong>{alojamiento.horaEntrada.slice(0, 5)}</strong></p>
+              <p className="mb-2">Salida: <strong>{alojamiento.horaSalida.slice(0, 5)}</strong></p>
               <p className="mb-2">Edad mínima facturable: <strong>{alojamiento.edadUmbralFacturable} años</strong></p>
               <p className="mb-0">Anticipo: <strong>{alojamiento.exigeAnticipo ? `${alojamiento.porcentajeAnticipo}%` : 'No requerido'}</strong></p>
             </div>
