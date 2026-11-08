@@ -725,17 +725,22 @@ h4, h5, h6, .h4, .h5, .h6 {
   background: var(--sr-borde);
 }
 
-.galeria-1 img { height: 420px; }
+/* Alto según el ancho de la pantalla: sin recortes exagerados en pantallas grandes */
+.galeria-1 img { height: clamp(240px, 30vw, 380px); }
 
 .galeria-2 {
-  grid-template-columns: 2fr 1fr;
-  height: 420px;
+  grid-template-columns: 3fr 2fr;
+  height: clamp(240px, 30vw, 380px);
 }
 
 .galeria-3 {
   grid-template-columns: 2fr 1fr;
   grid-template-rows: 1fr 1fr;
-  height: 420px;
+  height: clamp(240px, 30vw, 380px);
+}
+
+.galeria img {
+  object-position: center 60%;
 }
 
 .galeria-3 img:first-child {
