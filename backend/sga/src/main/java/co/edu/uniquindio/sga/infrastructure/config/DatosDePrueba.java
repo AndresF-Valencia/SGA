@@ -214,7 +214,7 @@ public class DatosDePrueba implements ApplicationRunner {
                 List.of(foto("1502672260266-1c1ef2d93688"), foto("1583847268964-b28dc8f51f92")),
                 "Cama sencilla y doble", "Balcón");
         apartamento("AP004", "Familiar 2", 2, 5,
-                List.of(foto("1564078516393-cf04bd966897"), foto("1628592102751-ba83b0314276")),
+                List.of(foto("1542298005-68757d20ee7e"), foto("1765464184843-105e144bd54b"), foto("1680965585463-386646047473")),
                 "2 baños");
         apartamento("AP005", "Parejas", 1, 2,
                 List.of(foto("1763827513396-5917fc6c84f3"), foto("1774311237295-a65a4c1ff38a")),
