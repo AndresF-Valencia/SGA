@@ -49,16 +49,12 @@ export default function Registro() {
   }
 
   return (
-    <div className="row justify-content-center">
+    <div className="row justify-content-center py-lg-4">
       <div className="col-12 col-md-10 col-lg-8">
         <div className="card shadow-sm">
-          <div className="card-header text-center py-3">
-            <h1 className="h5 mb-0">
-              <i className="bi bi-person-plus me-2" aria-hidden="true"></i>Registrarse
-            </h1>
-          </div>
-          <div className="card-body">
-            <p className="text-body-secondary small">El registro público crea usuarios con rol Huésped (7.2).</p>
+          <div className="card-body p-4">
+            <h1 className="h3 mb-1">Crea tu cuenta</h1>
+            <p className="text-body-secondary mb-4">Con tu cuenta puedes reservar en línea y consultar tus reservas.</p>
 
             <form onSubmit={handleSubmit(alEnviar)} noValidate>
               <div className="row">

@@ -8,13 +8,13 @@ interface RutaProtegidaProps {
   roles?: Rol[]; // si no se indica, basta con haber iniciado sesión
 }
 
-// Sin sesión → /login (recordando a dónde iba); rol insuficiente → /no-autorizado
+// Sin sesión → /login (recordando a dónde iba, con sus datos en la URL); rol insuficiente → /no-autorizado
 export function RutaProtegida({ roles }: RutaProtegidaProps) {
   const { autenticado, tieneRol } = useAuth();
   const ubicacion = useLocation();
 
   if (!autenticado) {
-    return <Navigate to="/login" replace state={{ desde: ubicacion.pathname }} />;
+    return <Navigate to="/login" replace state={{ desde: ubicacion.pathname + ubicacion.search }} />;
   }
   if (roles && !tieneRol(...roles)) {
     return <Navigate to="/no-autorizado" replace />;

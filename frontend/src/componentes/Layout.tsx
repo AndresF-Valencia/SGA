@@ -11,7 +11,7 @@ export function Layout() {
   return (
     <>
       <Encabezado nombreAlojamiento={import.meta.env.VITE_NOMBRE_ALOJAMIENTO} />
-      <main className="container py-4">
+      <main className="container pt-4 pb-5">
         <Suspense fallback={<Cargando />}>
           <Outlet />
         </Suspense>

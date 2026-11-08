@@ -6,9 +6,10 @@ const ANIO_ACTUAL = new Date().getFullYear();
 // Muestra el año y el curso
 export function PiePagina() {
   return (
-    <footer className="bg-body-tertiary border-top py-3 mt-4">
-      <div className="container text-center text-body-secondary small">
-        © {ANIO_ACTUAL} Universidad del Quindío — Programación Avanzada
+    <footer className="pie py-4">
+      <div className="container d-flex flex-column flex-md-row justify-content-between gap-2 small">
+        <span>Apartamentos Turísticos San Rocco, Salento (Quindío)</span>
+        <span>Programación Avanzada, Universidad del Quindío, {ANIO_ACTUAL}. Fotos ilustrativas de <a href="https://unsplash.com" target="_blank" rel="noreferrer">Unsplash</a>.</span>
       </div>
     </footer>
   );

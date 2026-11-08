@@ -9,6 +9,12 @@ import { AuthProvider } from './contexto/AuthProvider.tsx';
 // Orden importante: primero Bootstrap, después los estilos propios
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.min.css';
+import '@fontsource/cormorant-garamond/400.css';
+import '@fontsource/cormorant-garamond/500.css';
+import '@fontsource/cormorant-garamond/400-italic.css';
+import '@fontsource/alegreya-sans/400.css';
+import '@fontsource/alegreya-sans/500.css';
+import '@fontsource/alegreya-sans/700.css';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(

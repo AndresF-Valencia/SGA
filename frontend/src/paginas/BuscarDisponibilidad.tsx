@@ -1,29 +1,46 @@
 // Página "/disponibilidad" (pública, 7.5): valida con esquemaDisponibilidad y consulta
 // disponibilidadServicio (GET /api/disponibilidad). Resultados en tarjetas con formatearPesos.
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Campo } from '../componentes/Campo';
 import { Cargando } from '../componentes/Cargando';
+import { Puerta } from '../componentes/Puerta';
 import { esquemaDisponibilidad, type FormularioDisponibilidad } from '../esquemas/disponibilidad';
 import type { DisponibilidadResponse } from '../modelos/disponibilidad';
 import { buscarDisponibilidad } from '../servicios/disponibilidadServicio';
 import { mensajeDeError } from '../utilidades/errores';
 import { formatearFecha, formatearPesos } from '../utilidades/formato';
+import { colorPuerta, miniatura } from '../utilidades/identidad';
+import { enlaceCotizacion, enlaceDetalle } from '../utilidades/enlaces';
+
+// Lee un número de la URL; si no viene o no es válido, usa el valor por defecto
+function numeroDe(texto: string | null, porDefecto: number): number {
+  const n = Number(texto);
+  return texto !== null && Number.isFinite(n) ? n : porDefecto;
+}
 
 // Formulario de búsqueda y grid de apartamentos disponibles en todas las noches del rango
 export default function BuscarDisponibilidad() {
   const [resultado, setResultado] = useState<DisponibilidadResponse | null>(null);
+  // La búsqueda de Inicio llega con los criterios en la URL: ?fechaEntrada=...&fechaSalida=...
+  const [parametros] = useSearchParams();
   const {
     register,
     handleSubmit,
+    getValues,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormularioDisponibilidad>({
     resolver: zodResolver(esquemaDisponibilidad),
     mode: 'onTouched',
-    defaultValues: { fechaEntrada: '', fechaSalida: '', personas: 2, mascotas: 0 },
+    defaultValues: {
+      fechaEntrada: parametros.get('fechaEntrada') ?? '',
+      fechaSalida: parametros.get('fechaSalida') ?? '',
+      personas: numeroDe(parametros.get('personas'), 2),
+      mascotas: numeroDe(parametros.get('mascotas'), 0),
+    },
   });
 
   // El formulario ya tiene la forma de los parámetros de la consulta
@@ -36,9 +53,26 @@ export default function BuscarDisponibilidad() {
     }
   }
 
+  // Si llegó con fechas desde Inicio, busca de una vez
+  const vieneConFechas = parametros.has('fechaEntrada') && parametros.has('fechaSalida');
+  useEffect(() => {
+    if (vieneConFechas) void handleSubmit(alEnviar)();
+    // Solo al abrir la página
+  }, []);
+
+  // Las fechas y personas buscadas viajan al detalle y a la cotización
+  const estancia = resultado
+    ? { fechaEntrada: resultado.fechaEntrada, fechaSalida: resultado.fechaSalida, personas: getValues('personas') }
+    : {};
+
   return (
     <section>
-      <h1 className="h3 mb-3"><i className="bi bi-search me-2" aria-hidden="true"></i>Buscar disponibilidad</h1>
+      <div className="titulo-pagina">
+        <div>
+          <h1 className="h2">Buscar fechas</h1>
+          <p className="text-body-secondary mb-0">Elige las fechas y el tamaño del grupo para ver qué apartamentos están libres.</p>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit(alEnviar)} noValidate className="card card-body mb-4">
         <div className="row align-items-end">
@@ -79,31 +113,35 @@ export default function BuscarDisponibilidad() {
       {resultado && resultado.totalDisponibles > 0 && (
         <>
           <p className="text-body-secondary">
-            {resultado.totalDisponibles} apartamento(s) disponibles del {formatearFecha(resultado.fechaEntrada)} al{' '}
-            {formatearFecha(resultado.fechaSalida)}.
+            {resultado.totalDisponibles === 1 ? '1 apartamento libre' : `${resultado.totalDisponibles} apartamentos libres`} del{' '}
+            {formatearFecha(resultado.fechaEntrada)} al {formatearFecha(resultado.fechaSalida)}.
           </p>
           <div className="row g-3">
             {resultado.apartamentosDisponibles.map((apto) => (
               <div key={apto.identificacionApartamento} className="col-12 col-md-6 col-lg-4">
-                <article className="card h-100 shadow-sm">
-                  <div className="card-body">
-                    <h2 className="h5 card-title">{apto.nombre}</h2>
-                    <p className="text-body-secondary small mb-2">
-                      {apto.identificacionApartamento}
-                      <span className="mx-2">·</span>
-                      <i className="bi bi-people me-1" aria-hidden="true"></i>hasta {apto.capacidadMaxima} personas
-                    </p>
-                    <p className="mb-0">
-                      {apto.tarifaEstimadaPorNoche !== null
-                        ? <><strong>{formatearPesos(apto.tarifaEstimadaPorNoche)}</strong> <small className="text-body-secondary">por noche (estimado)</small></>
-                        : <small className="text-body-secondary">Sin tarifa estimada</small>}
-                    </p>
+                <article className="card h-100 shadow-sm tarjeta-apto"
+                  style={{ '--puerta': colorPuerta(apto.identificacionApartamento) } as CSSProperties}>
+                  {apto.imagenes[0] && <img src={miniatura(apto.imagenes[0])} alt="" className="tarjeta-apto-foto" loading="lazy" />}
+                  <div className="card-body d-flex gap-3">
+                    <Puerta identificacion={apto.identificacionApartamento} tamano="md" />
+                    <div>
+                      <h2 className="h4 card-title mb-1">{apto.nombre}</h2>
+                      <p className="text-body-secondary mb-3">
+                        <i className="bi bi-people me-1" aria-hidden="true"></i>Hasta {apto.capacidadMaxima} personas
+                      </p>
+                      <p className="mb-0">
+                        {apto.tarifaEstimadaPorNoche !== null
+                          ? <><strong className="fs-5 cifra">{formatearPesos(apto.tarifaEstimadaPorNoche)}</strong> <span className="text-body-secondary">por noche, aprox.</span></>
+                          : <span className="text-body-secondary">Precio por confirmar</span>}
+                      </p>
+                    </div>
                   </div>
                   <div className="card-footer bg-transparent d-flex gap-2">
-                    <Link to={`/apartamentos/${apto.identificacionApartamento}`} className="btn btn-outline-primary btn-sm">
+                    <Link to={enlaceDetalle(apto.identificacionApartamento, estancia)} className="btn btn-outline-primary btn-sm">
                       Ver detalle
                     </Link>
-                    <Link to="/cotizacion" className="btn btn-outline-secondary btn-sm">Cotizar</Link>
+                    <Link to={enlaceCotizacion({ ...estancia, apartamento: apto.identificacionApartamento })}
+                      className="btn btn-primary btn-sm">Cotizar y reservar</Link>
                   </div>
                 </article>
               </div>

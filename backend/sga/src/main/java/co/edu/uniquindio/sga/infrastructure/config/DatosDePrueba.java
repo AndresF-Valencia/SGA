@@ -195,21 +195,40 @@ public class DatosDePrueba implements ApplicationRunner {
 
     private static final List<String> DOTACION = List.of("Cocina", "Wifi", "TV", "Lavadora", "Amoblado");
 
-    private void cargarApartamentos() {
-        apartamento("AP001", "Familiar 4", 4, 10, "2 baños", "4 TV");
-        apartamento("AP002", "Parejas VIP", 1, 2, "Jacuzzi", "Balcón");
-        apartamento("AP003", "Familiar 3", 1, 3, "Cama sencilla y doble", "Balcón");
-        apartamento("AP004", "Familiar 2", 2, 5, "2 baños");
-        apartamento("AP005", "Parejas", 1, 2, "Balcón");
+    /**
+     * Fotos ilustrativas de Unsplash (licencia libre de Unsplash, https://unsplash.com/license).
+     * No son los apartamentos reales; los créditos están en frontend/CREDITOS-FOTOS.md.
+     */
+    private static String foto(String id) {
+        return "https://images.unsplash.com/photo-" + id + "?auto=format&fit=crop&w=1600&q=80";
     }
 
-    private void apartamento(String id, String nombre, int dormitorios, int capacidad, String... extras) {
+    private void cargarApartamentos() {
+        apartamento("AP001", "Familiar 4", 4, 10,
+                List.of(foto("1522708323590-d24dbb6b0267"), foto("1484154218962-a197022b5858"), foto("1512918728675-ed5a9ecdebfd")),
+                "2 baños", "4 TV");
+        apartamento("AP002", "Parejas VIP", 1, 2,
+                List.of(foto("1586023492125-27b2c045efd7"), foto("1560448204-e02f11c3d0e2")),
+                "Jacuzzi", "Balcón");
+        apartamento("AP003", "Familiar 3", 1, 3,
+                List.of(foto("1502672260266-1c1ef2d93688"), foto("1583847268964-b28dc8f51f92")),
+                "Cama sencilla y doble", "Balcón");
+        apartamento("AP004", "Familiar 2", 2, 5,
+                List.of(foto("1564078516393-cf04bd966897"), foto("1628592102751-ba83b0314276")),
+                "2 baños");
+        apartamento("AP005", "Parejas", 1, 2,
+                List.of(foto("1763827513396-5917fc6c84f3"), foto("1774311237295-a65a4c1ff38a")),
+                "Balcón");
+    }
+
+    private void apartamento(String id, String nombre, int dormitorios, int capacidad, List<String> imagenes,
+            String... extras) {
         List<String> caracteristicas = new ArrayList<>(DOTACION);
         caracteristicas.addAll(List.of(extras));
         apartamentos.guardar(new Apartamento(new IdentificacionApartamento(id), nombre,
                 new TiempoPreparacion(3), SANROCCO, new Dormitorio(dormitorios),
                 new CapacidadOcupantes(capacidad), new LimiteMascota(2),   // RNP-02: hasta 2 mascotas
-                caracteristicas, List.of()));
+                caracteristicas, imagenes));
     }
 
     /** Tarifa por persona y noche en temporada BAJA. Media = +15 %, Alta = +30 % (Ficha A.3). */

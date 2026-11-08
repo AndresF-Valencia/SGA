@@ -34,15 +34,12 @@ export default function Login() {
   }
 
   return (
-    <div className="row justify-content-center">
+    <div className="row justify-content-center py-lg-4">
       <div className="col-12 col-sm-10 col-md-7 col-lg-5">
         <div className="card shadow-sm">
-          <div className="card-header text-center py-3">
-            <h1 className="h5 mb-0">
-              <i className="bi bi-box-arrow-in-right me-2" aria-hidden="true"></i>Ingresar
-            </h1>
-          </div>
-          <div className="card-body">
+          <div className="card-body p-4">
+            <h1 className="h3 mb-1">Ingresa a tu cuenta</h1>
+            <p className="text-body-secondary mb-4">Para ver tus reservas o reservar en línea.</p>
             {avisoSesion && <div className="alert alert-warning">{avisoSesion}</div>}
 
             <form onSubmit={handleSubmit(alEnviar)} noValidate>
