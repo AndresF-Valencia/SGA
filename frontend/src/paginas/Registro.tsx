@@ -100,7 +100,7 @@ export default function Registro() {
               )}
               {correoCreado && (
                 <div className="alert alert-success mt-3 mb-0">
-                  Cuenta {correoCreado} creada. <Link to="/login">Ingrese aquí</Link>.
+                  Cuenta {correoCreado} creada. <Link to="/login">Ingresa aquí</Link>.
                 </div>
               )}
             </form>

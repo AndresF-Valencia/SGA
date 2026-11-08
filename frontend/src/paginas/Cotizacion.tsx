@@ -60,7 +60,7 @@ export default function Cotizacion() {
   }, []);
 
   // Las opciones del select llegan después de pintar el formulario: al llegar se vuelve a
-  // marcar el apartamento elegido, si no el navegador lo deja en "Seleccione…"
+  // marcar el apartamento elegido, si no el navegador lo deja en "Elige…"
   useEffect(() => {
     if (apartamentoInicial && apartamentos.length > 0) setValue('identificacionApartamento', apartamentoInicial);
   }, [apartamentos, apartamentoInicial, setValue]);

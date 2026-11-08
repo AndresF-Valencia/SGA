@@ -43,14 +43,17 @@ export default function MisReservas() {
 
   return (
     <section>
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <h1 className="h3 mb-0"><i className="bi bi-suitcase2 me-2" aria-hidden="true"></i>Mis reservas</h1>
-        <Link to="/disponibilidad" className="btn btn-outline-primary">
-          <i className="bi bi-search me-1" aria-hidden="true"></i>Buscar disponibilidad
-        </Link>
-        <Link to="/reservas/nueva" className="btn btn-primary">
-          <i className="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva reserva
-        </Link>
+      <div className="titulo-pagina">
+        <div>
+          <h1 className="h2">Mis reservas</h1>
+          <p className="text-body-secondary mb-0">Tus estancias en San Rocco: las próximas, la que está en curso y las pasadas.</p>
+        </div>
+        <div className="d-flex flex-wrap gap-2">
+          <Link to="/disponibilidad" className="btn btn-outline-primary">Buscar fechas</Link>
+          <Link to="/reservas/nueva" className="btn btn-primary">
+            <i className="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva reserva
+          </Link>
+        </div>
       </div>
 
       <div className="mb-3" style={{ maxWidth: '16rem' }}>
@@ -69,7 +72,8 @@ export default function MisReservas() {
       {!cargando && !error && reservas.length === 0 && (
         <div className="text-center text-body-secondary py-5">
           <i className="bi bi-inbox fs-1 d-block mb-2" aria-hidden="true"></i>
-          No tiene reservas{estado ? ` en estado ${ETIQUETA_ESTADO[estado]}` : ''}.
+          <p className="mb-3">{estado ? `No tienes reservas en estado ${ETIQUETA_ESTADO[estado]}.` : 'Todavía no tienes reservas.'}</p>
+          {!estado && <Link to="/disponibilidad" className="btn btn-primary">Buscar fechas</Link>}
         </div>
       )}
 

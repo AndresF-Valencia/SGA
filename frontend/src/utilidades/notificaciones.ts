@@ -32,7 +32,7 @@ export async function pedirMotivo(titulo: string): Promise<string | null> {
   const resultado = await Swal.fire({
     input: 'textarea',
     inputLabel: 'Motivo',
-    inputPlaceholder: 'Escriba el motivo de la cancelación',
+    inputPlaceholder: 'Escribe el motivo de la cancelación',
     inputAttributes: { 'aria-label': 'Motivo de la cancelación' },
     title: titulo,
     showCancelButton: true,

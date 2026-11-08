@@ -63,7 +63,7 @@ export default function Login() {
               />
 
               <div className="mb-3 text-end">
-                <Link to="/recuperar-contrasena" className="small">¿Olvidó su contraseña?</Link>
+                <Link to="/recuperar-contrasena" className="small">¿Olvidaste tu contraseña?</Link>
               </div>
 
               <div className="d-grid">
@@ -79,7 +79,7 @@ export default function Login() {
             </form>
           </div>
           <div className="card-footer text-center small">
-            ¿No tiene cuenta? <Link to="/registro">Regístrese</Link>
+            ¿No tienes cuenta? <Link to="/registro">Regístrate</Link>
           </div>
         </div>
       </div>

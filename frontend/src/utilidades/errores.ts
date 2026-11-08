@@ -6,20 +6,20 @@ import type { ErrorResponse } from '../modelos/error';
 // Mensaje para el usuario: el de negocio si el backend lo envió, o uno genérico
 export function mensajeDeError(error: unknown): string {
   if (!axios.isAxiosError<ErrorResponse>(error)) {
-    return 'Ocurrió un error inesperado.';
+    return 'Algo salió mal. Intenta de nuevo en un momento.';
   }
   if (!error.response) {
     // Backend apagado, URL mal escrita o CORS bloqueado
-    return 'No fue posible conectar con el servidor.';
+    return 'No pudimos conectar con el servidor. Revisa tu conexión e intenta de nuevo en un momento.';
   }
   const { status, data } = error.response;
   if (data?.message) {
     return data.message;
   }
   if (status === 403) {
-    return 'No tiene permisos para realizar esta acción.';
+    return 'Tu cuenta no tiene permiso para hacer esto.';
   }
-  return `Error inesperado del servidor (${status}).`;
+  return `El servidor respondió con un error (${status}). Intenta de nuevo en un momento.`;
 }
 
 // Código HTTP de la respuesta, o undefined si no hubo respuesta

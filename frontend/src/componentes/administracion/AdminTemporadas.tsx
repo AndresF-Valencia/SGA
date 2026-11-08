@@ -60,7 +60,7 @@ export function AdminTemporadas() {
     const temporadas = await listarTodasLasTemporadas();
     const temporadasDelTipo = temporadas.filter((temporada) => temporada.tipoTemporada === asignacionRapida.tipo);
     if (!asignacionRapida.identificacion.trim() || asignacionRapida.valorTarifa < 1) {
-      await notificarError('Ingrese el apartamento y un valor válido.');
+      await notificarError('Elige el apartamento y escribe un valor válido.');
       return;
     }
     if (temporadasDelTipo.length === 0) {
@@ -109,7 +109,7 @@ export function AdminTemporadas() {
           <input className="form-control mb-2" placeholder="Apartamento AP001" value={tarifa.identificacion} onChange={(e) => setTarifa({ ...tarifa, identificacion: e.target.value })} required />
           <label className="form-label">Temporada existente
             <select className="form-select" value={tarifa.temporadaId} onChange={(e) => setTarifa({ ...tarifa, temporadaId: e.target.value })} required>
-              <option value="">Seleccione una temporada…</option>
+              <option value="">Elige una temporada…</option>
               {temporadas.map((temporada) => <option key={temporada.id} value={temporada.id}>{temporada.nombre} · {temporada.fechaInicio} a {temporada.fechaFin}</option>)}
             </select>
           </label>

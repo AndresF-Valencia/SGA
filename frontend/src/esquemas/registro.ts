@@ -6,18 +6,18 @@ import { hoyISO } from '../utilidades/fechas';
 
 export const esquemaRegistro = z
   .object({
-    nombre: z.string().trim().min(1, 'Ingrese su nombre'),
-    correo: z.email('Ingrese un correo electrónico válido'),
+    nombre: z.string().trim().min(1, 'Escribe tu nombre'),
+    correo: z.email('Escribe un correo electrónico válido'),
     contrasena: z
       .string()
       .min(8, 'Mínimo 8 caracteres')
       .regex(/[A-Z]/, 'Debe tener al menos una mayúscula')
       .regex(/[0-9]/, 'Debe tener al menos un número'),
-    confirmacion: z.string().min(1, 'Confirme la contraseña'),
-    telefono: z.string().trim().min(1, 'Ingrese su teléfono'),
-    documento: z.string().trim().min(1, 'Ingrese su documento'),
+    confirmacion: z.string().min(1, 'Confirma la contraseña'),
+    telefono: z.string().trim().min(1, 'Escribe tu teléfono'),
+    documento: z.string().trim().min(1, 'Escribe tu documento'),
     fechaNacimiento: z
-      .iso.date('Ingrese su fecha de nacimiento')
+      .iso.date('Escribe tu fecha de nacimiento')
       .refine((fecha) => fecha < hoyISO(), 'La fecha de nacimiento debe ser en el pasado'),
   })
   // Compara dos campos: el error se muestra junto a la confirmación
