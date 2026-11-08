@@ -1,0 +1,24 @@
+/* Estilos globales: afectan a toda la app. Se importan en main.tsx DESPUÉS de Bootstrap
+   para que estas reglas puedan ganarle por cascada. */
+
+/* El pie de página queda abajo aunque la página tenga poco contenido */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+/* Marca del alojamiento en el encabezado */
+#marca {
+  letter-spacing: 0.04em;
+}

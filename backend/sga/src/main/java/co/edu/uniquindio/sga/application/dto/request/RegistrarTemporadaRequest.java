@@ -10,7 +10,7 @@ import java.time.LocalDate;
  * DTO de entrada para registrar una nueva temporada (CU-18).
  * Mapea al endpoint: POST /api/temporadas.
  * 
- * Nota de diseño: Permite crear una temporada sin solaparse con otras, 
+ * Nota de dise@sanrocco.ño: Permite crear una temporada sin solaparse con otras, 
  * definiendo su nombre, rango de fechas y la estancia mínima requerida.
  */
 public record RegistrarTemporadaRequest(
