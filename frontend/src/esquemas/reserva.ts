@@ -6,25 +6,25 @@ import { hoyISO } from '../utilidades/fechas';
 
 // Un ocupante; el de la posición 0 es el titular
 const esquemaOcupante = z.object({
-  documento: z.string().trim().min(1, 'Ingrese el documento'),
-  nombre: z.string().trim().min(1, 'Ingrese el nombre'),
+  documento: z.string().trim().min(1, 'Escribe el documento'),
+  nombre: z.string().trim().min(1, 'Escribe el nombre'),
   fechaNacimiento: z
-    .iso.date('Ingrese la fecha de nacimiento')
+    .iso.date('Escribe la fecha de nacimiento')
     .refine((fecha) => fecha <= hoyISO(), 'La fecha de nacimiento no puede ser futura'),
 });
 
 export const esquemaNuevaReserva = z
   .object({
-    apartamentoId: z.string().trim().min(1, 'Indique el apartamento'),
+    apartamentoId: z.string().trim().min(1, 'Elige el apartamento'),
     fechaEntrada: z
-      .iso.date('Ingrese la fecha de entrada')
+      .iso.date('Escribe la fecha de entrada')
       .refine((fecha) => fecha > hoyISO(), 'La fecha de entrada debe ser en el futuro'),
-    fechaSalida: z.iso.date('Ingrese la fecha de salida'),
-    horaEstimadaLlegada: z.iso.time('Ingrese la hora estimada de llegada'),
-    emailTitular: z.email('Ingrese un correo válido para el titular'),
-    telefonoTitular: z.string().trim().min(1, 'Ingrese el teléfono del titular'),
+    fechaSalida: z.iso.date('Escribe la fecha de salida'),
+    horaEstimadaLlegada: z.iso.time('Escribe la hora estimada de llegada'),
+    emailTitular: z.email('Escribe un correo válido para el titular'),
+    telefonoTitular: z.string().trim().min(1, 'Escribe el teléfono del titular'),
     cantidadMascotas: z
-      .number('Ingrese un número')
+      .number('Escribe un número')
       .int('Debe ser un número entero')
       .min(0, 'No puede ser negativa'),
     ocupantes: z.array(esquemaOcupante).min(1, 'La reserva debe tener al menos un ocupante'),

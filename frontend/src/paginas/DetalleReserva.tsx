@@ -3,8 +3,10 @@ import { Link, useParams } from 'react-router';
 import { Cargando } from '../componentes/Cargando';
 import { Puerta } from '../componentes/Puerta';
 import { EstadoReservaBadge } from '../componentes/EstadoReservaBadge';
+import type { Alojamiento } from '../modelos/alojamiento';
 import type { Folio } from '../modelos/folio';
 import type { ReservaResponse } from '../modelos/reserva';
+import { obtenerAlojamiento } from '../servicios/alojamientoServicio';
 import { cerrarFolio, obtenerFolio, registrarCargo, registrarPago } from '../servicios/folioServicio';
 import { cancelarReserva, confirmarReserva, declararNoShow, modificarReserva, obtenerReserva, registrarLlegada, registrarSalida } from '../servicios/reservaServicio';
 import { mensajeDeError } from '../utilidades/errores';
@@ -21,12 +23,18 @@ export default function DetalleReserva() {
   const [reserva, setReserva] = useState<ReservaResponse | null>(null);
   const [folio, setFolio] = useState<Folio | null>(null);
   const [cargando, setCargando] = useState(true);
+  // Reglas del anticipo (porcentaje y plazo) para explicarle al huésped cómo confirmar
+  const [alojamiento, setAlojamiento] = useState<Alojamiento | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editando, setEditando] = useState(false);
   const [modificacion, setModificacion] = useState({ apartamentoId: '', fechaEntrada: '', fechaSalida: '', cantidadMascotas: 0 });
   const [salida, setSalida] = useState({ motivo: '', observaciones: '' });
   const [cargo, setCargo] = useState({ concepto: '', monto: 0 });
   const [pago, setPago] = useState({ monto: 0, medioPago: 'EFECTIVO', fechaPago: FECHA_HOY });
+
+  useEffect(() => {
+    obtenerAlojamiento().then(setAlojamiento).catch(() => setAlojamiento(null));
+  }, []);
 
   useEffect(() => {
     obtenerReserva(codigo)
@@ -130,6 +138,9 @@ export default function DetalleReserva() {
   const rutaRegreso = tieneRol('HUESPED') ? '/mis-reservas' : '/reservas';
 
   const noches = Math.round((new Date(`${reserva.fechaSalida}T00:00:00`).getTime() - new Date(`${reserva.fechaEntrada}T00:00:00`).getTime()) / 864e5);
+  // Mismo cálculo que ConfirmacionReservaService: porcentaje del valor total
+  const anticipo = alojamiento?.exigeAnticipo ? Math.ceil((reserva.valorTotal * alojamiento.porcentajeAnticipo) / 100) : null;
+  const avisoPago = tieneRol('HUESPED') && reserva.estadoReserva === 'PENDIENTE';
   const MEDIOS: Record<string, string> = { EFECTIVO: 'Efectivo', TARJETA_CREDITO: 'Tarjeta de crédito', TARJETA_DEBITO: 'Tarjeta débito' };
 
   return (
@@ -139,17 +150,39 @@ export default function DetalleReserva() {
         <div className="d-flex align-items-center gap-3">
           <Puerta identificacion={reserva.apartamentoId} tamano="lg" />
           <div>
-            <h1 className="h2 mb-1">Reserva {reserva.codigoReserva}</h1>
+            <h1 className="h2 mb-1 d-flex flex-wrap align-items-center gap-2">
+              Reserva {reserva.codigoReserva}
+              <span className="fs-6"><EstadoReservaBadge estado={reserva.estadoReserva} /></span>
+            </h1>
             <p className="text-body-secondary mb-0">
               Apartamento {reserva.apartamentoId}, {noches === 1 ? '1 noche' : `${noches} noches`}
             </p>
           </div>
         </div>
-        <EstadoReservaBadge estado={reserva.estadoReserva} />
       </div>
 
       <div className="row g-4">
         <div className="col-12 col-lg-8 order-lg-1">
+          {avisoPago && (
+            <div className="aviso-pago mb-4" role="status">
+              <h2 className="h4 mb-1">Falta un paso para confirmar</h2>
+              {anticipo !== null ? (
+                <p className="mb-2">
+                  Paga el anticipo de <strong className="cifra">{formatearPesos(anticipo)}</strong>{' '}
+                  ({alojamiento?.porcentajeAnticipo} % del valor) en efectivo o con tarjeta, en la recepción del alojamiento
+                  o llamando a recepción. Cuando lo registremos, tu reserva pasa a <strong>confirmada</strong>.
+                </p>
+              ) : (
+                <p className="mb-2">La recepción revisará tu reserva y la confirmará; te avisaremos por correo.</p>
+              )}
+              <p className="small mb-0 opacidad-media">
+                {alojamiento?.horasPlazoConfirmacion
+                  ? `Tienes ${alojamiento.horasPlazoConfirmacion === 1 ? '1 hora' : `${alojamiento.horasPlazoConfirmacion} horas`} para hacerlo; si no, las noches se liberan.`
+                  : 'Mientras esté pendiente, tus noches quedan apartadas.'}
+                {alojamiento?.direccion && <> Dirección: {alojamiento.direccion}.</>}
+              </p>
+            </div>
+          )}
           <div className="card mb-4">
             <div className="card-body">
               <dl className="ficha">

@@ -349,27 +349,6 @@ h4, h5, h6, .h4, .h5, .h6 {
   color: rgba(237, 230, 216, 0.72);
 }
 
-/* Rótulo corto de sección: texto pequeño con una línea café al lado */
-.rotulo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.85rem;
-  color: var(--sr-cafe);
-  margin-bottom: 1rem;
-}
-
-.rotulo::after {
-  content: '';
-  width: 2.5rem;
-  height: 1px;
-  background: currentColor;
-}
-
-.banda-oscura .rotulo, .banda-negra .rotulo {
-  color: var(--sr-arena);
-}
-
 .enlace-linea {
   display: inline-block;
   color: var(--sr-arena);
@@ -574,31 +553,22 @@ h4, h5, h6, .h4, .h5, .h6 {
 }
 
 /* Datos del alojamiento: cifras grandes en serif */
-.datos {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
-}
-
-.dato-cifra {
-  display: block;
+/* Declaración: una frase grande en la banda negra, en lugar de cifras sueltas */
+.declaracion {
   font-family: var(--sr-display);
-  font-size: clamp(3rem, 5vw, 4.2rem);
-  line-height: 1;
+  font-weight: 400;
+  font-size: clamp(1.9rem, 4.2vw, 3.4rem);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  max-width: 24ch;
+  margin: 0;
+  color: #f6f1e7;
+  text-wrap: balance;
+}
+
+.declaracion em {
+  font-style: italic;
   color: var(--sr-arena);
-}
-
-.dato-texto {
-  display: block;
-  margin-top: 0.5rem;
-  color: rgba(237, 230, 216, 0.8);
-  max-width: 16ch;
-}
-
-@media (max-width: 767.98px) {
-  .datos {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 /* Cómo reservar: pasos en orden sobre una línea */
@@ -880,4 +850,322 @@ h4, h5, h6, .h4, .h5, .h6 {
 
 .ficha dd {
   margin: 0;
+}
+
+/* ---------- Aviso de anticipo para el huésped (DetalleReserva) ---------- */
+
+.aviso-pago {
+  background: var(--sr-monte);
+  color: var(--sr-crema);
+  border-radius: var(--bs-border-radius-lg);
+  padding: 1.5rem 1.75rem;
+  box-shadow: 0 10px 30px -18px rgba(20, 21, 19, 0.55);
+}
+
+.aviso-pago h2 {
+  color: var(--sr-crema);
+}
+
+.aviso-pago strong {
+  color: #fff;
+}
+
+.aviso-pago .opacidad-media {
+  color: rgba(237, 230, 216, 0.8);
+}
+
+/* ---------- Portada: fachada de puertas ---------- */
+
+.portada-rejilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: 2rem;
+}
+
+.fachada {
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .portada-rejilla {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .fachada {
+    display: flex;
+    align-items: flex-end;
+    gap: 1.1rem;
+    margin-bottom: 2.25rem;
+    padding: 0 0.5rem 0.9rem;
+    /* El andén: una línea fina bajo las puertas, como la calle frente a la fachada */
+    border-bottom: 1px solid rgba(237, 230, 216, 0.4);
+  }
+}
+
+.fachada-puerta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: 4.75rem;
+  color: var(--sr-crema);
+  text-decoration: none;
+}
+
+/* El vano: el hueco en la pared, con el interior del apartamento detrás de la hoja */
+.fachada-vano {
+  position: relative;
+  display: block;
+  width: 3.9rem;
+  height: 6.6rem;
+  border-radius: 999px 999px 3px 3px;
+  overflow: hidden;
+  background: var(--sr-negro);
+  outline: 2px solid rgba(237, 230, 216, 0.75);
+  outline-offset: 3px;
+  perspective: 420px;
+}
+
+.fachada-vano img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(1.1);
+}
+
+/* La hoja de la puerta gira sobre su bisagra izquierda */
+.fachada-hoja {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.06) 45%, rgba(0, 0, 0, 0.1)),
+    var(--puerta, var(--sr-cafe));
+  transform-origin: left center;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Tablero y pomo */
+.fachada-hoja::before {
+  content: '';
+  position: absolute;
+  inset: 22% 18% 12%;
+  border: 1px solid rgba(20, 21, 19, 0.22);
+  border-radius: 999px 999px 2px 2px;
+}
+
+.fachada-hoja::after {
+  content: '';
+  position: absolute;
+  right: 14%;
+  top: 58%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--sr-crema);
+}
+
+.fachada-puerta:hover .fachada-hoja,
+.fachada-puerta:focus-visible .fachada-hoja {
+  transform: rotateY(-72deg);
+  filter: brightness(0.8);
+}
+
+.fachada-nombre {
+  font-size: 0.8rem;
+  line-height: 1.2;
+  text-align: center;
+  color: rgba(237, 230, 216, 0.92);
+  text-shadow: 0 1px 6px rgba(20, 21, 19, 0.8);
+  transition: color 0.3s ease;
+}
+
+.fachada-puerta:hover .fachada-nombre,
+.fachada-puerta:focus-visible .fachada-nombre {
+  color: #fff;
+}
+
+.fachada-puerta:focus-visible {
+  outline: none;
+}
+
+.fachada-puerta:focus-visible .fachada-vano {
+  outline-color: var(--sr-arena);
+  outline-width: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fachada-hoja {
+    transition: none;
+  }
+}
+
+/* ---------- Superficies del navegador con la paleta ---------- */
+
+::selection {
+  background: var(--sr-arena);
+  color: var(--sr-negro);
+}
+
+input,
+textarea {
+  caret-color: var(--sr-cafe);
+}
+
+:root {
+  accent-color: var(--sr-monte);
+  scrollbar-color: var(--sr-arena) var(--sr-papel);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--sr-cafe);
+  outline-offset: 2px;
+}
+
+/* ---------- Encabezados de tarjeta: sin el gris de Bootstrap ---------- */
+
+.card-header {
+  background: transparent;
+  border-bottom-color: var(--sr-borde);
+  font-weight: 600;
+}
+
+.card-footer {
+  background: rgba(237, 230, 216, 0.45);
+  border-top-color: var(--sr-borde);
+}
+
+/* ---------- Pestañas de administración: se deslizan en el celular ---------- */
+
+@media (max-width: 767.98px) {
+  .pestanas {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pestanas::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pestanas .nav-link {
+    white-space: nowrap;
+  }
+}
+
+/* ---------- 404: una puerta tapiada ---------- */
+
+.no-encontrada {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-block: clamp(3rem, 10vh, 6rem);
+}
+
+.puerta-tapiada {
+  position: relative;
+  width: 5rem;
+  height: 8.5rem;
+  margin-bottom: 1.75rem;
+  border-radius: 999px 999px 3px 3px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 14px, rgba(20, 21, 19, 0.12) 14px 15px),
+    var(--sr-arena);
+  outline: 2px solid var(--sr-borde);
+  outline-offset: 4px;
+}
+
+.puerta-tapiada::after {
+  content: '';
+  position: absolute;
+  left: -0.75rem;
+  right: -0.75rem;
+  top: 46%;
+  height: 0.7rem;
+  background: var(--sr-cafe);
+  border-radius: 2px;
+  transform: rotate(-12deg);
+}
+
+/* ---------- El alojamiento ---------- */
+
+.alojamiento-cabecera {
+  max-width: 62ch;
+  margin-bottom: 2.5rem;
+}
+
+.alojamiento-cabecera h1 {
+  font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  font-weight: 400;
+  line-height: 1.05;
+  margin-bottom: 1rem;
+}
+
+.horarios {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-block: 1px solid var(--sr-borde);
+  margin-bottom: 3rem;
+}
+
+.horarios > div {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0;
+}
+
+.horarios > div + div {
+  border-left: 1px solid var(--sr-borde);
+  padding-left: clamp(1rem, 4vw, 2.5rem);
+}
+
+.horario-etiqueta {
+  font-size: 0.9rem;
+  color: var(--sr-cafe);
+}
+
+.horario-hora {
+  font-family: var(--sr-display);
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  line-height: 1;
+  color: var(--sr-negro);
+}
+
+.reglas dt {
+  font-weight: 600;
+  margin-top: 1.1rem;
+}
+
+.reglas dd {
+  margin: 0.2rem 0 0;
+  color: var(--bs-secondary-color);
+  max-width: 55ch;
+}
+
+/* Carta de servicios: nombre, puntos de relleno y precio */
+.carta {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.carta li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding-block: 0.55rem;
+}
+
+.carta-relleno {
+  flex: 1;
+  border-bottom: 1px dotted var(--sr-arena);
+  transform: translateY(-0.3em);
 }

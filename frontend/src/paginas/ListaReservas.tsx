@@ -66,8 +66,11 @@ export default function ListaReservas() {
 
   return (
     <section>
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <h1 className="h3 mb-0"><i className="bi bi-journal-text me-2" aria-hidden="true"></i>Reservas</h1>
+      <div className="titulo-pagina">
+        <div>
+          <h1 className="h2">Reservas</h1>
+          <p className="text-body-secondary mb-0">Todas las reservas del alojamiento. Filtra por estado o por el documento del titular.</p>
+        </div>
         <Link to="/reservas/nueva" className="btn btn-primary">
           <i className="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva reserva
         </Link>
@@ -108,14 +111,14 @@ export default function ListaReservas() {
         <>
           {/* El backend entrega de a 10; la paginación con botones llega en la Guía 19 */}
           <p className="text-body-secondary small">
-            Mostrando {reservas.length} de {pagina?.totalElementos} reserva(s).
+            Mostrando {reservas.length} de {pagina?.totalElementos} {pagina?.totalElementos === 1 ? 'reserva' : 'reservas'}.
           </p>
           <div className="row g-3">
             {reservas.map((reserva) => (
               <div key={reserva.codigoReserva} className="col-12 col-md-6 col-lg-4">
                 <TarjetaReserva
                   reserva={reserva}
-                  acciones={(
+                  acciones={['PENDIENTE', 'CONFIRMADA'].includes(reserva.estadoReserva) ? (
                     <>
                       {reserva.estadoReserva === 'PENDIENTE' && (
                         <button type="button" className="btn btn-sm btn-success" onClick={() => void confirmar(reserva.codigoReserva)}>
@@ -128,7 +131,7 @@ export default function ListaReservas() {
                         </button>
                       )}
                     </>
-                  )}
+                  ) : undefined}
                 />
               </div>
             ))}

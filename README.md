@@ -27,11 +27,11 @@ cd sga/backend/sga
 
 sh ./gradlew bootRun        # API en http://localhost:8080
 
-# En una terminal nueva: 
- cd frontend && npm install && npm run dev # http://localhost:5173 
+# En una terminal nueva, desde la raíz del repositorio:
+cd frontend && npm install && npm run dev   # http://localhost:5173
 ```
 
-> En Mac o Linux se usa `sh ./git commit -m "feat: crear proyecto frontend con Vite, React y React Router" -m "Incluye login, registro, nueva reserva y cotización con React Hook Form y Zod conectados al backend."gradlew` porque el archivo puede venir sin permiso de ejecución. En Windows se usa `gradlew.bat bootRun`.
+> En Mac o Linux se usa `sh ./gradlew` porque el archivo puede venir sin permiso de ejecución. En Windows se usa `gradlew.bat bootRun`.
 
 Al arrancar, Hibernate crea las tablas solo (`ddl-auto=update`).
 
@@ -155,13 +155,13 @@ Si el correo falla o tarda más de 5 segundos, **la reserva se crea igual** y el
 | **Persistencia JPA en H2 de todos los repositorios** | ✅ |
 | Controllers REST, mappers REST y `GlobalExceptionHandler` | ✅ (faltan novedades, correcciones del folio y tablero de estados: Corte 3) |
 | Datos de prueba al iniciar (12.3): alojamiento, apartamentos, temporadas, tarifas, política, canal, bloqueos y reservas en todos los estados | ✅ |
-| Seguridad: usuarios, registro, login con JWT, roles por endpoint y verificación del propietario | ✅ |
+| Seguridad: usuarios, registro, login con JWT, roles por endpoint y verificación del propietario. El token deja de servir si el usuario se elimina y usa el rol actual si se lo cambian | ✅ |
 | Perfil, cambio y recuperación de contraseña, eliminación lógica, listar usuarios y cambiar rol | ✅ |
 | Canal externo: credencial (`X-Canal-Credencial`), idempotencia, conflictos registrados y simulador `.http` (10.3.1) | ✅ |
 | Vencimiento automático de reservas pendientes (cada minuto) | ✅ |
 | Notificación por correo al crear, confirmar y cancelar (integración de salida, 10.3.2) | ✅ |
 | Asistente con IA (10.2) | ⬜ |
-| Frontend | ⬜ |
+| Frontend en React: búsqueda, detalle, cotización, reserva, mis reservas, folio, preparación y administración | ✅ |
 
 ## 4. Arquitectura
 
@@ -278,13 +278,32 @@ Hay **294 pruebas unitarias** y además las de integración:
 - **Unitarias** del dominio, los servicios, los value objects y los mappers. No arrancan Spring.
 - **De integración:** `SgaApplicationTests`, `ReservaRepositoryJpaTest`, `RepositoriosJpaTest` y `SeguridadTest`. Arrancan Spring con H2; `SeguridadTest` además levanta el servidor y hace peticiones HTTP de verdad (login, 401, 403, registro).
 
+### Pruebas del front
+
+```bash
+cd frontend
+npm test
+```
+
+Prueban con Vitest y Testing Library los esquemas de los formularios (las mismas reglas del backend), la traducción de errores del backend, los enlaces que llevan los datos de una página a otra y los componentes que se pintan sin backend.
+
+### Recorrido completo a mano
+
+Con el backend y el front encendidos, este recorrido toca todo el ciclo de una reserva:
+
+1. Sin sesión, en el Inicio, busca fechas y elige un apartamento con **Cotizar y reservar**.
+2. Cotiza y presiona **Reservar con estos datos**. Ingresa con `huesped@sanrocco.co`: vuelves a la reserva con todo lleno.
+3. Completa los acompañantes y la hora de llegada y crea la reserva. Queda **pendiente** y el huésped ve cuánto debe pagar de anticipo.
+4. Sal e ingresa con `recepcion@sanrocco.co`. En **Reservas**, abre la reserva, registra el pago del anticipo en el folio y presiona **Confirmar**.
+5. El día de llegada, con el apartamento en **Listo para recibir** (lo marca `servicio@sanrocco.co` en **Preparación**), registra la llegada.
+6. Registra la salida: el apartamento pasa a **Por preparar**. Paga el saldo y cierra el folio.
+
 ## 9. Pendientes
 
 - [ ] Endpoints de Corte 3 que ya están en el contrato: novedades, bloqueos por apartamento, correcciones del folio y tablero de estados.
 - [ ] Bitácora de eventos intercambiados con los canales (7.8).
 - [ ] Leer el plazo de confirmación desde `Alojamiento` en `VencerReservasPendientesUseCase`, en lugar de `application.properties`, para no tenerlo en dos lugares.
 - [ ] Ajustes de DTOs: gravedad de la novedad, autor y motivo en las autorizaciones (RN-17), y `horaEstimadaLlegada` en `CrearReservaRequest`.
-- [ ] Que un token deje de valer en cuanto el usuario se elimina o cambia de rol (hoy vale hasta que vence, máximo 120 minutos).
 - [ ] Opcional: H2 en archivo para que los datos queden guardados entre reinicios.
 
 ## 10. Documentación

@@ -5,10 +5,10 @@ import { z } from 'zod';
 
 export const esquemaDisponibilidad = z
   .object({
-    fechaEntrada: z.iso.date('Ingrese la fecha de entrada'),
-    fechaSalida: z.iso.date('Ingrese la fecha de salida'),
-    personas: z.number('Ingrese un número').int('Debe ser un número entero').min(1, 'Al menos 1 persona'),
-    mascotas: z.number('Ingrese un número').int('Debe ser un número entero').min(0, 'No puede ser negativa'),
+    fechaEntrada: z.iso.date('Escribe la fecha de entrada'),
+    fechaSalida: z.iso.date('Escribe la fecha de salida'),
+    personas: z.number('Escribe un número').int('Debe ser un número entero').min(1, 'Al menos 1 persona'),
+    mascotas: z.number('Escribe un número').int('Debe ser un número entero').min(0, 'No puede ser negativa'),
   })
   // Ayuda al usuario; la regla vive en Estancia del backend
   .refine((datos) => datos.fechaSalida > datos.fechaEntrada, {

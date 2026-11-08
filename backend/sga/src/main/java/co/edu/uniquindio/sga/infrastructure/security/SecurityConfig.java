@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga.infrastructure.security;
 
+import co.edu.uniquindio.sga.domain.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,7 +36,8 @@ public class SecurityConfig {
     private static final String PERSONAL_SERVICIO = "PERSONAL_SERVICIO";
 
     @Bean
-    public SecurityFilterChain cadenaDeSeguridad(HttpSecurity http, JwtServicio jwtServicio) throws Exception {
+    public SecurityFilterChain cadenaDeSeguridad(HttpSecurity http, JwtServicio jwtServicio,
+            UsuarioRepository usuarioRepository) throws Exception {
         ManejadorErroresSeguridad errores = new ManejadorErroresSeguridad();
 
         http
@@ -95,7 +97,7 @@ public class SecurityConfig {
 
                         // Cualquier otra ruta: al menos haber iniciado sesión
                         .anyRequest().authenticated())
-                .addFilterBefore(new FiltroJwt(jwtServicio), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new FiltroJwt(jwtServicio, usuarioRepository), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -174,4 +174,26 @@ class SeguridadTest {
         assertEquals(201, respuesta.statusCode(), respuesta.body());
         assertTrue(respuesta.body().contains("\"rol\":\"RECEPCIONISTA\""), respuesta.body());
     }
+
+    @Test
+    @DisplayName("Un token deja de servir si el usuario se elimina, y usa el rol actual si se lo cambian")
+    void tokenSigueAlUsuario() throws Exception {
+        String admin = iniciarSesion("admin@sanrocco.co");
+        String json = "{\"nombre\":\"Rol Cambiante\",\"correo\":\"cambiante@sanrocco.co\",\"contrasena\":\"Sanrocco123\","
+                + "\"telefono\":\"3005550000\",\"documento\":\"1000000077\",\"fechaNacimiento\":\"1991-03-03\","
+                + "\"rol\":\"RECEPCIONISTA\"}";
+        assertEquals(201, enviar("POST", "/api/usuarios", admin, json).statusCode());
+
+        String token = iniciarSesion("cambiante@sanrocco.co");
+        assertEquals(200, enviar("GET", "/api/reservas", token, null).statusCode(), "Como recepcionista ve las reservas");
+
+        // El administrador lo pasa a personal de servicio: el mismo token ya no ve las reservas
+        assertEquals(200, enviar("PUT", "/api/usuarios/cambiante@sanrocco.co/rol", admin,
+                "{\"rol\":\"PERSONAL_SERVICIO\"}").statusCode());
+        assertEquals(403, enviar("GET", "/api/reservas", token, null).statusCode(), "Con el rol nuevo ya no puede");
+
+        // Y si lo elimina, el token deja de servir del todo
+        assertEquals(204, enviar("DELETE", "/api/usuarios/cambiante@sanrocco.co", admin, null).statusCode());
+        assertEquals(401, enviar("GET", "/api/usuarios/me", token, null).statusCode(), "Usuario eliminado: 401");
+    }
 }

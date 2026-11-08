@@ -9,7 +9,7 @@ import { formatearFecha, formatearPesos } from '../utilidades/formato';
 import { EstadoReservaBadge } from './EstadoReservaBadge';
 import estilos from './TarjetaReserva.module.css';
 
-// Solo los estados activos llevan borde de color
+// Solo los estados activos llevan franja de color arriba
 const BORDE_ESTADO: Partial<Record<EstadoReserva, string>> = {
   PENDIENTE: estilos.pendiente,
   CONFIRMADA: estilos.confirmada,

@@ -106,7 +106,8 @@ export default function BuscarDisponibilidad() {
       {resultado && resultado.totalDisponibles === 0 && (
         <div className="text-center text-body-secondary py-5">
           <i className="bi bi-calendar-x fs-1 d-block mb-2" aria-hidden="true"></i>
-          No hay apartamentos disponibles para esas fechas.
+          <p className="mb-1">Ningún apartamento está libre para esas fechas y ese grupo.</p>
+          <p className="small mb-0">Prueba moviendo un día la llegada o la salida, o dividiendo el grupo en dos apartamentos.</p>
         </div>
       )}
 

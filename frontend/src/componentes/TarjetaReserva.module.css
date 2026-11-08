@@ -1,20 +1,26 @@
 /* CSS Module de TarjetaReserva: estas clases solo existen dentro de ese componente
-   (Vite las renombra). El color del borde sigue el estado de la reserva. */
+   (Vite las renombra). El estado ya se ve en la etiqueta; la tarjeta solo marca
+   con una franja superior las reservas activas y apaga las terminadas. */
 
 .tarjeta {
-  border-left: 4px solid var(--bs-secondary);
-  transition: box-shadow 0.2s ease;
+  border-top: 3px solid transparent;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .tarjeta:hover {
-  box-shadow: var(--bs-box-shadow);
+  box-shadow: 0 12px 28px -18px rgba(20, 21, 19, 0.45);
+  transform: translateY(-2px);
 }
 
 /* Reserva en estado terminal (finalizada, cancelada, no-show): se ve apagada */
 .tarjeta.terminada {
-  opacity: 0.7;
+  opacity: 0.72;
 }
 
-.pendiente { border-left-color: var(--bs-warning); }
-.confirmada { border-left-color: var(--bs-primary); }
-.enCurso { border-left-color: var(--bs-success); }
+.pendiente { border-top-color: #b98a3e; }
+.confirmada { border-top-color: var(--sr-monte); }
+.enCurso { border-top-color: #4d6148; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tarjeta:hover { transform: none; }
+}

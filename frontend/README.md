@@ -30,6 +30,7 @@ Comandos disponibles:
 | `npm run build` | Verifica TypeScript y genera `dist/`. |
 | `npm run lint` | Analiza el código con Oxlint. |
 | `npm run preview` | Sirve localmente la compilación de producción. |
+| `npm test` | Corre las pruebas con Vitest (esquemas, errores, enlaces y componentes). |
 
 Para levantar el proyecto completo, use dos terminales:
 

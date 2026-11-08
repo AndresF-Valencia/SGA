@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return registrarManejadorNoAutorizado(() => {
       borrarSesion();
       setSesion(null);
-      setAvisoSesion('Su sesión expiró. Ingrese nuevamente.');
+      setAvisoSesion('Tu sesión expiró. Ingresa de nuevo.');
     });
   }, []);
 

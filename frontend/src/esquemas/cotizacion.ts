@@ -5,20 +5,20 @@ import { hoyISO } from '../utilidades/fechas';
 
 export const esquemaCotizacion = z
   .object({
-    identificacionApartamento: z.string().trim().min(1, 'Indique el apartamento'),
+    identificacionApartamento: z.string().trim().min(1, 'Elige el apartamento'),
     fechaEntrada: z
-      .iso.date('Ingrese la fecha de entrada')
+      .iso.date('Escribe la fecha de entrada')
       .refine((fecha) => fecha > hoyISO(), 'La fecha de entrada debe ser en el futuro'),
-    fechaSalida: z.iso.date('Ingrese la fecha de salida'),
+    fechaSalida: z.iso.date('Escribe la fecha de salida'),
     ocupantes: z
       .array(
         z.object({
           fechaNacimiento: z
-            .iso.date('Ingrese la fecha de nacimiento')
+            .iso.date('Escribe la fecha de nacimiento')
             .refine((fecha) => fecha <= hoyISO(), 'La fecha de nacimiento no puede ser futura'),
         }),
       )
-      .min(1, 'Incluya al menos un ocupante'),
+      .min(1, 'Agrega al menos una persona'),
   })
   // Ayuda al usuario; la regla vive en Estancia del backend
   .refine((datos) => datos.fechaSalida > datos.fechaEntrada, {
