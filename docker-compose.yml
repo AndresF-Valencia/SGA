@@ -1,0 +1,23 @@
+# Base de datos MySQL del SGA para todo el equipo.
+#   Encender:            docker compose up -d
+#   Apagar:              docker compose down
+#   Borrar los datos:    docker compose down -v   (al volver a encender se cargan los datos de prueba)
+# Usa el puerto 3308 para no chocar con un MySQL instalado (3306) ni con otros proyectos (3307).
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: sga-db
+    environment:
+      MYSQL_DATABASE: sga
+      MYSQL_USER: sga
+      MYSQL_PASSWORD: sga123
+      MYSQL_ROOT_PASSWORD: root123
+      TZ: America/Bogota
+    ports: ["3308:3306"]
+    volumes: [sga_datos:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-usga", "-psga123"]
+      interval: 5s
+      retries: 10
+volumes:
+  sga_datos:

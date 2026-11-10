@@ -6,16 +6,18 @@ Programación Avanzada · Universidad del Quindío.
 | Capa | Tecnología |
 |---|---|
 | Backend | Java 25 · Spring Boot 4.1 · Spring Data JPA (Hibernate) · Spring Security + JWT (jjwt) · Gradle 9.7 (wrapper) · Lombok · MapStruct |
-| Base de datos | H2 en memoria (`jdbc:h2:mem:sgadb`) |
+| Base de datos | MySQL 8 en Docker · H2 en memoria solo para las pruebas |
 | Arquitectura | Hexagonal (puertos y adaptadores) + DDD |
 | API | REST · contrato OpenAPI 3.1 |
-| Pruebas | JUnit 5 · `@SpringBootTest` con H2 |
+| Pruebas | JUnit 5 · `@SpringBootTest` con H2 · Vitest en el front |
 
 ---
 
 ## 1. Requisitos
 
 - **JDK 25.** Gradle no hace falta instalarlo: el proyecto trae el *wrapper* (`gradlew`).
+- **Docker Desktop**, para la base de datos MySQL.
+- **Node.js 22 o superior**, para el front.
 - Git
 - VS Code con *Extension Pack for Java*, o IntelliJ IDEA
 
@@ -23,7 +25,11 @@ Programación Avanzada · Universidad del Quindío.
 
 ```bash
 git clone https://github.com/AndresF-Valencia/sga.git
-cd sga/backend/sga
+cd sga
+
+docker compose up -d        # 1) base de datos MySQL (una vez; queda encendida)
+
+cd backend/sga
 
 sh ./gradlew bootRun        # API en http://localhost:8080
 
@@ -33,17 +39,25 @@ cd frontend && npm install && npm run dev   # http://localhost:5173
 
 > En Mac o Linux se usa `sh ./gradlew` porque el archivo puede venir sin permiso de ejecución. En Windows se usa `gradlew.bat bootRun`.
 
-Al arrancar, Hibernate crea las tablas solo (`ddl-auto=update`).
+Al arrancar, Hibernate crea las tablas solo (`ddl-auto=update`) y, si la base está vacía, carga los datos de prueba (sección 2.2).
 
-**Consola de la base de datos:** http://localhost:8080/h2-console
+**Base de datos:** MySQL 8 en un contenedor de Docker (`docker-compose.yml` en la raíz). Los datos **se guardan entre reinicios**.
 
 | Campo | Valor |
 |---|---|
-| JDBC URL | `jdbc:h2:mem:sgadb` |
-| Usuario | `sa` |
-| Contraseña | *(vacía)* |
+| Servidor | `localhost:3308` |
+| Base | `sga` |
+| Usuario / contraseña | `sga` / `sga123` |
 
-> La base es **en memoria**: todo se borra al apagar la aplicación, y al arrancar se vuelven a cargar los datos de prueba (sección 2.2).
+Se puede abrir con cualquier cliente (MySQL Workbench, DBeaver, la extensión de VS Code) o desde la terminal con `docker exec -it sga-db mysql -usga -psga123 sga`.
+
+| Para… | Comando |
+|---|---|
+| Encender la base | `docker compose up -d` |
+| Apagarla (los datos quedan) | `docker compose down` |
+| Borrar todo y volver a los datos de prueba | `docker compose down -v && docker compose up -d` |
+
+> En otro servidor se cambia la conexión con las variables `SGA_DB_URL`, `SGA_DB_USUARIO` y `SGA_DB_CLAVE`, sin tocar el código. Las pruebas (`./gradlew test`) no usan Docker: corren con H2 en memoria (perfil `test`).
 
 **Documentación interactiva (Swagger):** http://localhost:8080/swagger-ui.html. Para probar rutas protegidas: haz login, copia el `token` y pégalo en el botón **Authorize**.
 
@@ -99,7 +113,7 @@ En `backend/sga/http/` hay dos archivos listos para enviar peticiones desde VS C
 | `simulador-canal.http` | **Simulador del canal externo (10.3.1):** reserva aceptada, reserva en conflicto rechazada y registrada, mensaje repetido que no duplica, revisión del conflicto por el administrador y cancelación. |
 | `demo-corte2.http` | Catálogo público, cotización, login, perfil, reserva del huésped, mis reservas, folio, 401/403, pago y confirmación por recepción, recuperación de contraseña y listado de usuarios. |
 
-Las fechas se calculan a partir de hoy, así que funcionan cualquier día con los datos de prueba recién cargados (reinicia la aplicación para empezar de cero).
+Las fechas se calculan a partir de hoy, así que funcionan cualquier día con los datos de prueba recién cargados. Para empezar de cero con fechas nuevas: `docker compose down -v && docker compose up -d` y vuelve a arrancar el backend.
 
 ## 2.2 Datos de prueba (12.3)
 
@@ -152,7 +166,7 @@ Si el correo falla o tarda más de 5 segundos, **la reserva se crea igual** y el
 | DTOs de request y response (records) | ✅ |
 | Contrato de la API: 54 operaciones en `docs/api/openapi.yaml`, con seguridad, roles y 401/403 por ruta | ✅ |
 | Beans de Spring: `UseCaseConfig` y `DomainServiceConfig` | ✅ |
-| **Persistencia JPA en H2 de todos los repositorios** | ✅ |
+| **Persistencia JPA en MySQL (Docker) de todos los repositorios; H2 en las pruebas** | ✅ |
 | Controllers REST, mappers REST y `GlobalExceptionHandler` | ✅ (faltan novedades, correcciones del folio y tablero de estados: Corte 3) |
 | Datos de prueba al iniciar (12.3): alojamiento, apartamentos, temporadas, tarifas, política, canal, bloqueos y reservas en todos los estados | ✅ |
 | Seguridad: usuarios, registro, login con JWT, roles por endpoint y verificación del propietario. El token deja de servir si el usuario se elimina y usa el rol actual si se lo cambian | ✅ |
@@ -304,7 +318,6 @@ Con el backend y el front encendidos, este recorrido toca todo el ciclo de una r
 - [ ] Bitácora de eventos intercambiados con los canales (7.8).
 - [ ] Leer el plazo de confirmación desde `Alojamiento` en `VencerReservasPendientesUseCase`, en lugar de `application.properties`, para no tenerlo en dos lugares.
 - [ ] Ajustes de DTOs: gravedad de la novedad, autor y motivo en las autorizaciones (RN-17), y `horaEstimadaLlegada` en `CrearReservaRequest`.
-- [ ] Opcional: H2 en archivo para que los datos queden guardados entre reinicios.
 
 ## 10. Documentación
 
