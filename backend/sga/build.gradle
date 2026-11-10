@@ -31,6 +31,9 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 	// Notificaciones por correo (10.3.2, Opción A)
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	// Chatbot FAQ: límite de peticiones por IP y caché de buckets con expiración
+	implementation 'com.bucket4j:bucket4j-core:8.10.1'
+	implementation 'com.github.ben-manes.caffeine:caffeine'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	testRuntimeOnly 'com.h2database:h2'
@@ -49,4 +52,10 @@ tasks.named('test') {
 	useJUnitPlatform()
 	// Las pruebas usan H2 en memoria (src/test/resources/application-test.properties), sin Docker
 	systemProperty 'spring.profiles.active', 'test'
+}
+
+tasks.named('bootRun') {
+	// Solo carga la API key local (application-local.properties, no versionado).
+	// La conexión a base de datos es la de application.properties (MySQL), sin cambios.
+	environment 'SPRING_PROFILES_ACTIVE', System.getenv('SPRING_PROFILES_ACTIVE') ?: 'local'
 }
