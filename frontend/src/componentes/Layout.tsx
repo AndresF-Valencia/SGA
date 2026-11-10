@@ -2,6 +2,7 @@
 // la página de la ruta activa. El nombre del alojamiento sale de .env.
 import { Suspense } from 'react';
 import { Outlet } from 'react-router';
+import { AsistenteChat } from './AsistenteChat';
 import { Cargando } from './Cargando';
 import { Encabezado } from './Encabezado';
 import { PiePagina } from './PiePagina';
@@ -17,6 +18,8 @@ export function Layout() {
         </Suspense>
       </main>
       <PiePagina />
+      {/* El propio componente se oculta si no hay sesión iniciada */}
+      <AsistenteChat />
     </>
   );
 }

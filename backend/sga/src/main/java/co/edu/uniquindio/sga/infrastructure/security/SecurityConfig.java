@@ -90,6 +90,9 @@ public class SecurityConfig {
                         // ---------- Mi cuenta: cualquier usuario con sesión, sobre la suya ----------
                         .requestMatchers("/api/usuarios/me", "/api/usuarios/me/**").authenticated()
 
+                        // ---------- Chatbot FAQ: solo usuarios con sesión iniciada ----------
+                        .requestMatchers(HttpMethod.POST, "/api/chat").authenticated()
+
                         // ---------- Solo administrador ----------
                         .requestMatchers("/api/usuarios/**", "/api/alojamiento/**", "/api/apartamentos/**",
                                 "/api/bloqueos/**", "/api/temporadas/**", "/api/politicas-cancelacion/**",

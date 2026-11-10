@@ -35,6 +35,6 @@ Thumbs.db
 
 # ---------- Logs ----------
 *.log
-# ---------- Archivos sueltos que no son del proyecto ----------
-*.zip
-/*.pdf
+
+# ---------- Secretos locales (API key del chatbot) ----------
+application-local.properties
