@@ -35,3 +35,6 @@ Thumbs.db
 
 # ---------- Logs ----------
 *.log
+# ---------- Archivos sueltos que no son del proyecto ----------
+*.zip
+/*.pdf
