@@ -14,7 +14,9 @@ import java.net.URI;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,29 +28,35 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RequiredArgsConstructor
 public class BloqueoController {
 
-    private final GestionarBloqueoUseCase gestionarBloqueoUseCase;
-    private final BloqueoMapper bloqueoMapper;
+        private final GestionarBloqueoUseCase gestionarBloqueoUseCase;
+        private final BloqueoMapper bloqueoMapper;
 
-    /** Crea un bloqueo administrativo y genera su identificador en el servidor. */
-    @PostMapping
-    @Operation(summary = "Registrar un bloqueo administrativo", description = "Bloquea un apartamento durante un periodo sin reservas activas.")
-    @ApiResponse(responseCode = "201", description = "Bloqueo registrado")
-    @ApiResponse(responseCode = "400", description = "Solicitud invalida")
-    @ApiResponse(responseCode = "404", description = "Apartamento no encontrado")
-    @ApiResponse(responseCode = "409", description = "El bloqueo viola una regla de negocio")
-    public ResponseEntity<BloqueoResponse> crearBloqueo(
-            @Valid @RequestBody CrearBloqueoRequest request) {
-        IdentificacionBloqueo identificacion = new IdentificacionBloqueo(UUID.randomUUID().toString());
-        var bloqueo = gestionarBloqueoUseCase.crearBloqueo(
-                identificacion,
-                bloqueoMapper.aApartamento(request),
-                bloqueoMapper.aPeriodo(request),
-                MotivoBloqueo.valueOf(request.motivo()));
-        BloqueoResponse response = bloqueoMapper.aBloqueo(bloqueo);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(response.id())
-                .toUri();
-        return ResponseEntity.created(location).body(response);
-    }
+        /** Crea un bloqueo administrativo y genera su identificador en el servidor. */
+        @PostMapping
+        @Operation(summary = "Registrar un bloqueo administrativo", description = "Bloquea un apartamento durante un periodo sin reservas activas.")
+        @ApiResponse(responseCode = "201", description = "Bloqueo registrado")
+        @ApiResponse(responseCode = "400", description = "Solicitud invalida")
+        @ApiResponse(responseCode = "404", description = "Apartamento no encontrado")
+        @ApiResponse(responseCode = "409", description = "El bloqueo viola una regla de negocio")
+        public ResponseEntity<BloqueoResponse> crearBloqueo(
+                        @Valid @RequestBody CrearBloqueoRequest request) {
+                IdentificacionBloqueo identificacion = new IdentificacionBloqueo(UUID.randomUUID().toString());
+                var bloqueo = gestionarBloqueoUseCase.crearBloqueo(
+                                identificacion,
+                                bloqueoMapper.aApartamento(request),
+                                bloqueoMapper.aPeriodo(request),
+                                MotivoBloqueo.valueOf(request.motivo()));
+                BloqueoResponse response = bloqueoMapper.aBloqueo(bloqueo);
+                URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                                .path("/{id}")
+                                .buildAndExpand(response.id())
+                                .toUri();
+                return ResponseEntity.created(location).body(response);
+        }
+
+        @PutMapping("/{id}/levantar")
+        public ResponseEntity<Void> levantarBloqueo(@PathVariable String id) {
+                gestionarBloqueoUseCase.levantarBloqueo(new IdentificacionBloqueo(id));
+                return ResponseEntity.noContent().build();
+        }
 }

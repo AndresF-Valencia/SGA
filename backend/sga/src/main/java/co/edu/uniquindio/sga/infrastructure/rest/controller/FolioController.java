@@ -1,12 +1,15 @@
 package co.edu.uniquindio.sga.infrastructure.rest.controller;
 
 import co.edu.uniquindio.sga.application.dto.request.CerrarFolioRequest;
+import co.edu.uniquindio.sga.application.dto.request.CorregirMovimientoRequest;
 import co.edu.uniquindio.sga.application.dto.request.RegistrarCargoRequest;
 import co.edu.uniquindio.sga.application.dto.request.RegistrarPagoRequest;
 import co.edu.uniquindio.sga.application.dto.response.FolioResponse;
+import co.edu.uniquindio.sga.application.exception.AccesoDenegadoException;
 import co.edu.uniquindio.sga.application.usecase.CerrarFolioUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarFolioUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarReservaUseCase;
+import co.edu.uniquindio.sga.application.usecase.CorregirMovimientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarCargoUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarPagoUseCase;
 import co.edu.uniquindio.sga.domain.entity.Folio;
@@ -27,6 +30,8 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,6 +54,7 @@ public class FolioController {
     private final ConsultarReservaUseCase consultarReservaUseCase;
     private final RegistrarPagoUseCase registrarPagoUseCase;
     private final CerrarFolioUseCase cerrarFolioUseCase;
+    private final CorregirMovimientoUseCase corregirMovimientoUseCase;
     private final FolioMapper folioMapper;
 
     /** Registra un cargo adicional y devuelve el estado actualizado del folio. */
@@ -67,8 +73,8 @@ public class FolioController {
                 request.concepto(),
                 TipoCargo.SERVICIO_ADICIONAL,
                 ahora);
-        
-        CodigoReserva codigoReserva = resolverCodigoReserva(codigo); 
+
+        CodigoReserva codigoReserva = resolverCodigoReserva(codigo);
 
         var folio = registrarCargoUseCase.ejecutar(codigoReserva, cargo);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().build().toUri();
@@ -89,7 +95,7 @@ public class FolioController {
                 Dinero.de(request.monto()),
                 MedioPago.valueOf(request.medioPago()),
                 request.fechaPago().atStartOfDay());
-        
+
         CodigoReserva codigoReserva = resolverCodigoReserva(codigo);
         var folio = registrarPagoUseCase.ejecutar(codigoReserva, pago);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().build().toUri();
@@ -108,7 +114,7 @@ public class FolioController {
             @Valid @RequestBody CerrarFolioRequest request) {
         AutorizacionCierre autorizacion = new AutorizacionCierre(
                 request.autor(), request.motivo(), LocalDateTime.now());
-        
+
         CodigoReserva codigoReserva = resolverCodigoReserva(codigo);
         var folio = cerrarFolioUseCase.ejecutar(codigoReserva, autorizacion);
         return ResponseEntity.ok(folioMapper.aFolio(folio));
@@ -121,24 +127,48 @@ public class FolioController {
     @ApiResponse(responseCode = "404", description = "Folio no encontrado")
     public ResponseEntity<FolioResponse> consultarFolio(@PathVariable String codigo,
             @AuthenticationPrincipal UsuarioAutenticado usuario) {
-        // 7.2: un huésped solo ve el folio de SUS reservas (se verifica el titular, no solo el rol)
         if (usuario.esHuesped()) {
             consultarReservaUseCase.ejecutarComoHuesped(codigo, new DocumentoIdentidad(usuario.documento()));
         }
-        // Soporta código interno (RES-...) o externo del canal
         Folio folio = consultarFolioUseCase.ejecutar(codigo);
         return ResponseEntity.ok(folioMapper.aFolio(folio));
     }
 
+    @PostMapping("/correcciones")
+    @Operation(summary = "Corregir movimiento del folio", description = "Registra un movimiento inverso de corrección (RN-16).")
+    @ApiResponse(responseCode = "201", description = "Corrección registrada")
+    @ApiResponse(responseCode = "400", description = "Solicitud inválida")
+    @ApiResponse(responseCode = "404", description = "Folio o movimiento no encontrado")
+    @ApiResponse(responseCode = "409", description = "El folio está cerrado o la regla lo impide")
+    public ResponseEntity<FolioResponse> corregirMovimiento(
+            @PathVariable String codigo,
+            @Valid @RequestBody CorregirMovimientoRequest request,
+            @AuthenticationPrincipal UsuarioAutenticado usuario) {
+
+        // Blindaje de seguridad: Un huésped no tiene permitido hacer correcciones financieras
+        if (usuario.esHuesped()) {
+            throw new AccesoDenegadoException("Los huéspedes no tienen permiso para realizar correcciones en el folio.");
+        }
+        
+        CodigoReserva codigoReserva = resolverCodigoReserva(codigo);
+        Folio folio = corregirMovimientoUseCase.ejecutar(
+                codigoReserva,
+                request.movimientoIdOriginal(),
+                request.motivo(),
+                usuario.nombre(),
+                LocalDateTime.now());
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(folioMapper.aFolio(folio));
+    }
+
     /**
-     * Helper privado para soportar tanto códigos internos (RES-...) como externos en los POST/PUT del folio.
-     * Si deseas simplificarlo, puedes inyectar el ReservaRepository o crear un método auxiliar.
+     * Helper privado para soportar tanto códigos internos (RES-...) como externos
+     * en los POST/PUT del folio.
      */
     private CodigoReserva resolverCodigoReserva(String codigo) {
         if (codigo.startsWith("RES-")) {
             return new CodigoReserva(codigo);
         }
-        // Si es externo, consultamos el folio usando el caso de uso de consulta que ya resuelve ambos mundos
         Folio folio = consultarFolioUseCase.ejecutar(codigo);
         return folio.getReserva();
     }
