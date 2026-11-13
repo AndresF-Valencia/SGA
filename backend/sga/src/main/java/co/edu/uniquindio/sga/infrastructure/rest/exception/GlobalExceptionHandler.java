@@ -6,6 +6,7 @@ import co.edu.uniquindio.sga.application.exception.CodigoRecuperacionInvalidoExc
 import co.edu.uniquindio.sga.application.exception.AccesoDenegadoException;
 import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
 import co.edu.uniquindio.sga.application.exception.ApartamentoNoEncontradoException;
+import co.edu.uniquindio.sga.application.exception.BloqueoNoEncontradoException;
 import co.edu.uniquindio.sga.application.exception.CredencialCanalInvalidaException;
 import co.edu.uniquindio.sga.application.exception.CredencialesInvalidasException;
 import co.edu.uniquindio.sga.application.exception.FolioNoEncontradoException;
@@ -39,7 +40,8 @@ public class GlobalExceptionHandler {
             AlojamientoNoEncontradoException.class,
             PoliticaCancelacionNoEncontradaException.class,
             UsuarioNoEncontradoException.class,
-            ConflictoCanalNoEncontradoException.class
+            ConflictoCanalNoEncontradoException.class,
+            BloqueoNoEncontradoException.class
     })
     ResponseEntity<ErrorResponse> noEncontrado(RuntimeException exception, HttpServletRequest request) {
         return error(HttpStatus.NOT_FOUND, exception.getMessage(), request, List.of());
