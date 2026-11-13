@@ -15,6 +15,8 @@ public interface ApartamentoRepository {
 
     boolean existePorId(IdentificacionApartamento id);
 
+    Optional<Apartamento> buscarPorIdConBloqueo(IdentificacionApartamento id);
+
     /** Solo los apartamentos activos: la eliminación es lógica (7.3). */
     List<Apartamento> listarActivos();
 

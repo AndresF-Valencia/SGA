@@ -97,8 +97,8 @@ public class ModificarReservaUseCase {
         Folio folio = folioRepository.buscarPorReserva(codigoReserva)
                 .orElseThrow(() -> new FolioNoEncontradoException(codigoReserva));
 
-        // 2. Buscar entidades relacionadas
-        Apartamento apartamento = apartamentoRepository.buscarPorId(nuevoApartamentoId)
+        // 2. Buscar entidades relacionadas (Utilizando bloqueo pesimista para serializar concurrencia)
+        Apartamento apartamento = apartamentoRepository.buscarPorIdConBloqueo(nuevoApartamentoId)
                 .orElseThrow(() -> new ApartamentoNoEncontradoException(nuevoApartamentoId));
         Alojamiento alojamiento = alojamientoRepository.buscarPorId(alojamientoId)
                 .orElseThrow(() -> new AlojamientoNoEncontradoException(alojamientoId));

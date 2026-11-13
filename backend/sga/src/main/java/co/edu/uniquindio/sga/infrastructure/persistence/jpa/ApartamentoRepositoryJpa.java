@@ -35,6 +35,14 @@ public class ApartamentoRepositoryJpa implements ApartamentoRepository {
     }
 
     @Override
+    public Optional<Apartamento> buscarPorIdConBloqueo(IdentificacionApartamento id) {
+        if (id == null) {
+            return Optional.empty();
+        }
+        return jpa.findByIdWithLock(id.valor()).map(ApartamentoPersistenceMapper::aDominio);
+    }
+
+    @Override
     public boolean existePorId(IdentificacionApartamento id) {
         return id != null && jpa.existsById(id.valor());
     }

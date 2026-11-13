@@ -27,6 +27,12 @@ public class ApartamentoRepositoryEnMemoria extends AlmacenEnMemoria<Identificac
     }
 
     @Override
+    public Optional<Apartamento> buscarPorIdConBloqueo(IdentificacionApartamento id) {
+        // En memoria no requerimos bloqueo físico, por lo que actúa igual que la búsqueda por ID
+        return porId(id);
+    }
+
+    @Override
     public boolean existePorId(IdentificacionApartamento id) {
         return porId(id).isPresent();
     }

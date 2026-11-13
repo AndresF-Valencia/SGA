@@ -107,7 +107,9 @@ public class RecibirReservaExternaUseCase {
         Alojamiento alojamiento = alojamientoRepository.obtenerUnico()
                 .orElseThrow(() -> new AlojamientoNoEncontradoException());
 
-        Apartamento apartamento = apartamentoRepository.buscarPorId(idApartamento)
+        // CORRECCIÓN DE CONCURRENCIA (TOCTOU): Se adquiere un bloqueo pesimista sobre el apartamento
+        // antes de realizar cualquier validación de disponibilidad o persistencia posterior.
+        Apartamento apartamento = apartamentoRepository.buscarPorIdConBloqueo(idApartamento)
                 .orElseThrow(() -> new ApartamentoNoEncontradoException(idApartamento));
 
         // 3. Construir la Estancia
