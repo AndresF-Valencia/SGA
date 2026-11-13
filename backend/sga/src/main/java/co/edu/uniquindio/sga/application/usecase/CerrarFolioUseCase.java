@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga.application.usecase;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.uniquindio.sga.application.exception.FolioNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Folio;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
@@ -35,7 +36,7 @@ public class CerrarFolioUseCase {
 
         // 1. Buscar el folio a través del repositorio
         Folio folio = folioRepository.buscarPorReserva(codigoReserva)
-                .orElseThrow(() -> new ReglaDominioException("No se encontró el folio asociado a la reserva: " + codigoReserva));
+                .orElseThrow(() -> new FolioNoEncontradoException(codigoReserva));
 
         // 2. Aplicar la regla de cierre según el saldo (RN-17)
         if (folio.saldo().esCero() && autorizacionCierre == null) {

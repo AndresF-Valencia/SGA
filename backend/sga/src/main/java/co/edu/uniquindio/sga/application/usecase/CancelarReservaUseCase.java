@@ -88,9 +88,7 @@ public class CancelarReservaUseCase {
 
                 // 1. Buscar la reserva por su código externo de la OTA
                 Reserva reserva = reservaRepository.buscarPorCodigoExterno(codigoExterno)
-                                .orElseThrow(() -> new ReglaDominioException(
-                                                "No se encontró ninguna reserva externa con el código: "
-                                                                + codigoExterno));
+                                .orElseThrow(() -> new ReservaNoEncontradaException(codigoExterno));
 
                 // 2. Obtener el alojamiento único del sistema (como se maneja un único
                 // alojamiento)

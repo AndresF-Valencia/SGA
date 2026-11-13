@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga.application.usecase;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.uniquindio.sga.application.exception.ApartamentoNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Apartamento;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.ApartamentoRepository;
@@ -38,7 +39,7 @@ public class RegistrarNovedadUseCase {
 
         // 1. Buscar el apartamento a través del repositorio
         Apartamento apartamento = apartamentoRepository.buscarPorId(apartamentoId)
-                .orElseThrow(() -> new ReglaDominioException("No se encontró el apartamento con identificador: " + apartamentoId));
+                .orElseThrow(() -> new ApartamentoNoEncontradoException(apartamentoId));
 
         // 2. Delegar el registro de la novedad a la entidad de dominio
         apartamento.registrarNovedad(novedad);

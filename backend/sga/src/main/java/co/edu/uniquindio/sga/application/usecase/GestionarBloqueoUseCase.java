@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga.application.usecase;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.uniquindio.sga.application.exception.BloqueoNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Bloqueo;
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
@@ -67,7 +68,7 @@ public class GestionarBloqueoUseCase {
 
         // 1. Buscar el bloqueo a través del repositorio
         Bloqueo bloqueo = bloqueoRepository.buscarPorId(idBloqueo)
-                .orElseThrow(() -> new ReglaDominioException("No se encontró el bloqueo con identificador: " + idBloqueo));
+                .orElseThrow(() -> new BloqueoNoEncontradoException("No se encontró el bloqueo con identificador: " + idBloqueo));
 
         // 2. Delegar la acción de levantamiento a la entidad (eliminación lógica, 12.4)
         bloqueo.levantar();

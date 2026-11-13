@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga.application.usecase;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository; // Asegúrate de tener este repositorio
@@ -38,7 +39,7 @@ public class PublicarPoliticaCancelacionUseCase {
 
         // 1. Obtener el agregado Alojamiento para gestionar la versión vigente
         Alojamiento alojamiento = alojamientoRepository.obtenerUnico()
-                .orElseThrow(() -> new ReglaDominioException("No se encontró la configuración del alojamiento"));
+                .orElseThrow(() -> new AlojamientoNoEncontradoException());
 
         // 2. El sistema asigna la nueva versión llamando al método del dominio
         VersionPolitica nuevaVersion = alojamiento.publicarNuevaVersionPolitica();

@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga.application.usecase;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
@@ -56,7 +57,7 @@ public class ConfigurarParametrosAlojamientoUseCase {
 
         // 1. Obtener la entidad Alojamiento
         Alojamiento alojamiento = alojamientoRepository.buscarPorId(alojamientoId)
-                .orElseThrow(() -> new ReglaDominioException("No se encontró el alojamiento con identificador: " + alojamientoId));
+                .orElseThrow(() -> new AlojamientoNoEncontradoException(alojamientoId));
 
         // 2. Delegar la actualización de los diferentes bloques de parámetros
         alojamiento.actualizarParametrosOperativos(horaEntrada, horaSalida, tiempoPreparacion, plazoConfirmacion);

@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga.application.usecase;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
@@ -45,7 +46,7 @@ public class VencerReservasPendientesUseCase {
 
         // 1. Obtener la configuración del alojamiento para extraer el plazo vigente
         Alojamiento alojamiento = alojamientoRepository.obtenerUnico()
-                .orElseThrow(() -> new ReglaDominioException("No se encontró la configuración del alojamiento"));
+                .orElseThrow(() -> new AlojamientoNoEncontradoException());
         
         PlazoConfirmacion plazoConfirmacion = alojamiento.getPlazoConfirmacion(); // Asegúrate de tener este getter en Alojamiento
 

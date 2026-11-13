@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga.application.usecase;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.uniquindio.sga.application.exception.FolioNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Folio;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
@@ -39,7 +40,7 @@ public class CorregirMovimientoUseCase {
         }
 
         Folio folio = folioRepository.buscarPorReserva(codigoReserva)
-                .orElseThrow(() -> new ReglaDominioException("No se encontró el folio asociado a la reserva: " + codigoReserva));
+                .orElseThrow(() -> new FolioNoEncontradoException(codigoReserva));
 
         // Se registra el movimiento inverso en el folio abierto (Respeta RN-16)
         folio.registrarCargo(cargoInverso);
@@ -63,7 +64,7 @@ public class CorregirMovimientoUseCase {
         }
 
         Folio folio = folioRepository.buscarPorReserva(codigoReserva)
-                .orElseThrow(() -> new ReglaDominioException("No se encontró el folio asociado a la reserva: " + codigoReserva));
+                .orElseThrow(() -> new FolioNoEncontradoException(codigoReserva));
 
         // Se registra el pago inverso en el folio abierto (Respeta RN-16)
         folio.registrarPago(pagoInverso);

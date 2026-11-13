@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga.application.usecase;
 
+import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
 import co.edu.uniquindio.sga.application.exception.ApartamentoNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 import co.edu.uniquindio.sga.domain.entity.Apartamento;
@@ -74,7 +75,7 @@ public class ConsultarDisponibilidadUseCase {
 
     private Alojamiento obtenerAlojamientoUnico() {
         return alojamientoRepository.obtenerUnico()
-                .orElseThrow(() -> new IllegalStateException("No se ha configurado el alojamiento en el sistema"));
+                .orElseThrow(() -> new AlojamientoNoEncontradoException());
     }
     /**
      * Verifica si un apartamento específico está disponible para una estancia,
