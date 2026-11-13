@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
@@ -40,21 +42,37 @@ public class BloqueoController {
         @ApiResponse(responseCode = "409", description = "El bloqueo viola una regla de negocio")
         public ResponseEntity<BloqueoResponse> crearBloqueo(
                         @Valid @RequestBody CrearBloqueoRequest request) {
+                
+                MotivoBloqueo motivo;
+                try {
+                        motivo = MotivoBloqueo.valueOf(request.motivo());
+                } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST, 
+                                "Motivo de bloqueo inválido o no proporcionado: '" + request.motivo() + "'"
+                        );
+                }
+
                 IdentificacionBloqueo identificacion = new IdentificacionBloqueo(UUID.randomUUID().toString());
                 var bloqueo = gestionarBloqueoUseCase.crearBloqueo(
                                 identificacion,
                                 bloqueoMapper.aApartamento(request),
                                 bloqueoMapper.aPeriodo(request),
-                                MotivoBloqueo.valueOf(request.motivo()));
+                                motivo);
+                                
                 BloqueoResponse response = bloqueoMapper.aBloqueo(bloqueo);
                 URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                                 .path("/{id}")
                                 .buildAndExpand(response.id())
                                 .toUri();
+                                
                 return ResponseEntity.created(location).body(response);
         }
 
         @PutMapping("/{id}/levantar")
+        @Operation(summary = "Levantar un bloqueo administrativo", description = "Libera un apartamento previamente bloqueado.")
+        @ApiResponse(responseCode = "204", description = "Bloqueo levantado exitosamente")
+        @ApiResponse(responseCode = "404", description = "Bloqueo no encontrado")
         public ResponseEntity<Void> levantarBloqueo(@PathVariable String id) {
                 gestionarBloqueoUseCase.levantarBloqueo(new IdentificacionBloqueo(id));
                 return ResponseEntity.noContent().build();

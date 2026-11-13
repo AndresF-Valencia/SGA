@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga.application.usecase;
 
 import org.springframework.transaction.annotation.Transactional;
 import co.edu.uniquindio.sga.application.exception.FolioNoEncontradoException;
+import co.edu.uniquindio.sga.application.exception.MovimientoNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Folio;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
@@ -33,7 +34,7 @@ public class CorregirMovimientoUseCase {
         Cargo cargoOriginal = folio.getCargos().stream()
                 .filter(c -> c.descripcion().equals(movimientoIdOriginal) || c.toString().contains(movimientoIdOriginal))
                 .findFirst()
-                .orElseThrow(() -> new ReglaDominioException("No se encontró el movimiento original con ID o concepto: " + movimientoIdOriginal));
+                .orElseThrow(() -> new MovimientoNoEncontradoException( movimientoIdOriginal));
 
         // Crear movimiento inverso (compensatorio) asegurando compatibilidad aritmética con Dinero
         Dinero valorInverso = Dinero.CERO.menos(cargoOriginal.valor());

@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga.infrastructure.rest.mapper;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.mapstruct.Mapper;
@@ -10,6 +11,7 @@ import org.mapstruct.ReportingPolicy;
 import co.edu.uniquindio.sga.application.dto.request.CancelarReservaRequest;
 import co.edu.uniquindio.sga.application.dto.request.CrearReservaRequest;
 import co.edu.uniquindio.sga.application.dto.request.ModificarReservaRequest;
+import co.edu.uniquindio.sga.application.dto.request.NotificarRetrasoRequest;
 import co.edu.uniquindio.sga.application.dto.request.RecibirReservaExternaRequest;
 import co.edu.uniquindio.sga.application.dto.response.ReservaResponse;
 import co.edu.uniquindio.sga.application.dto.response.ReservaResumenResponse;
@@ -18,6 +20,7 @@ import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.valueobject.DocumentoIdentidad;
 import co.edu.uniquindio.sga.domain.valueobject.Dinero;
 import co.edu.uniquindio.sga.domain.valueobject.Estancia;
+import co.edu.uniquindio.sga.domain.valueobject.NotificacionRetraso;
 import co.edu.uniquindio.sga.domain.valueobject.ValorCongelado;
 
 /**
@@ -122,6 +125,16 @@ public interface ReservaMapper {
 	// Extrae el motivo que el caso de uso aplica sobre la reserva existente.
 	default String aMotivo(CancelarReservaRequest request) {
 		return request.motivo();
+	}
+
+	default NotificacionRetraso aNotificacionRetraso(NotificarRetrasoRequest request, LocalDateTime ahora) {
+		if (request == null) {
+			return null;
+		}
+		return NotificacionRetraso.registrar(
+				request.nuevaHoraEstimadaLlegada(),
+				request.motivo(),
+				ahora);
 	}
 
 	/**

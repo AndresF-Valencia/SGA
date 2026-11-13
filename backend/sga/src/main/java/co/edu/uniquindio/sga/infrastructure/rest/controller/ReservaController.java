@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga.infrastructure.rest.controller;
 import co.edu.uniquindio.sga.application.dto.request.CancelarReservaRequest;
 import co.edu.uniquindio.sga.application.dto.request.CrearReservaRequest;
 import co.edu.uniquindio.sga.application.dto.request.ModificarReservaRequest;
+import co.edu.uniquindio.sga.application.dto.request.NotificarRetrasoRequest;
 import co.edu.uniquindio.sga.application.dto.request.RegistrarSalidaRequest;
 import co.edu.uniquindio.sga.application.dto.response.ReservaResponse;
 import co.edu.uniquindio.sga.application.exception.AccesoDenegadoException;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import co.edu.uniquindio.sga.application.usecase.CrearReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.DeclararNoShowUseCase;
 import co.edu.uniquindio.sga.application.usecase.ModificarReservaUseCase;
+import co.edu.uniquindio.sga.application.usecase.NotificarRetrasoUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarLlegadaUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarSalidaUseCase;
 import co.edu.uniquindio.sga.application.usecase.VerificarAccesoReservaUseCase;
@@ -31,7 +33,9 @@ import co.edu.uniquindio.sga.domain.valueobject.Correo;
 import co.edu.uniquindio.sga.domain.valueobject.DocumentoIdentidad;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
+import co.edu.uniquindio.sga.domain.valueobject.NotificacionRetraso;
 import co.edu.uniquindio.sga.domain.entity.Ocupante;
+import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.infrastructure.rest.mapper.ReservaMapper;
 import co.edu.uniquindio.sga.infrastructure.security.UsuarioAutenticado;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,6 +53,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -78,6 +84,7 @@ public class ReservaController {
     private final ConsultarReservaUseCase consultarReservaUseCase;
     private final ConsultarReservasUseCase consultarReservasUseCase;
     private final ConsultarAlojamientoUseCase consultarAlojamientoUseCase;
+    private final NotificarRetrasoUseCase notificarRetrasoUseCase;
     private final ReservaMapper reservaMapper;
 
     /** Pendiente: cotizar, porque el request no permite construir todos los ocupantes. */
@@ -199,6 +206,47 @@ public class ReservaController {
         .buildAndExpand(response.codigoReserva())
         .toUri();
     return ResponseEntity.created(location).body(response);
+    }
+
+    @PutMapping("/{codigo}/notificar-retraso")
+    @Operation(
+            summary = "Notificar retraso en la llegada",
+            description = "Permite registrar una nueva hora estimada de llegada para una reserva existente."
+    )
+    @ApiResponse(responseCode = "200", description = "Retraso notificado y reserva actualizada")
+    @ApiResponse(responseCode = "400", description = "Datos de solicitud inválidos")
+    @ApiResponse(responseCode = "401", description = "No autenticado")
+    @ApiResponse(responseCode = "404", description = "Reserva no encontrada")
+    @ApiResponse(responseCode = "409", description = "Conflicto con el estado actual de la reserva")
+    public ResponseEntity<ReservaResponse> notificarRetraso(
+            @PathVariable String codigo,
+            @Valid @RequestBody NotificarRetrasoRequest request,
+            @AuthenticationPrincipal UsuarioAutenticado usuario) {
+
+        // Validar que exista un usuario en sesión
+        if (usuario == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado");
+        }
+
+        CodigoReserva codigoReserva = new CodigoReserva(codigo);
+        LocalDateTime ahora = LocalDateTime.now();
+        
+        // Construir el Value Object con el método de fábrica
+        NotificacionRetraso notificacion = NotificacionRetraso.registrar(
+                request.nuevaHoraEstimadaLlegada(),
+                request.motivo(),
+                ahora
+        );
+
+        // Ejecutar caso de uso pasando el nombre del usuario autenticado como autor
+        Reserva reservaActualizada = notificarRetrasoUseCase.ejecutar(
+                codigoReserva, 
+                notificacion, 
+                usuario.nombre(), 
+                ahora
+        );
+
+        return ResponseEntity.ok(reservaMapper.aReserva(reservaActualizada));
     }
 
     /** Modifica las fechas, apartamento y cantidad de mascotas de una reserva. */

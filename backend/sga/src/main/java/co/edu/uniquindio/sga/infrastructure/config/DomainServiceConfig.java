@@ -10,8 +10,6 @@ import co.edu.uniquindio.sga.domain.service.ModificacionReservaService;
 import co.edu.uniquindio.sga.domain.service.NoShowService;
 import co.edu.uniquindio.sga.domain.service.RegistroLlegadaService;
 import co.edu.uniquindio.sga.domain.service.RegistroSalidaService;
-import co.edu.uniquindio.sga.domain.valueobject.PlazoConfirmacion;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -25,12 +23,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class DomainServiceConfig {
 
-    /** Parámetro de la Ficha del Alojamiento (RN-21): se lee de application.properties, no se quema en el código. */
-    @Bean
-    public PlazoConfirmacion plazoConfirmacion(
-            @Value("${sga.alojamiento.plazo-confirmacion-horas}") int horas) {
-        return new PlazoConfirmacion(horas);
-    }
+
 
     @Bean
     public DisponibilidadApartamentoService disponibilidadApartamentoService() {

@@ -74,6 +74,9 @@ public class SecurityConfig {
                                 .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)
                         .requestMatchers(HttpMethod.PUT, "/api/reservas/*/cancelar")
                                 .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)
+                        // El huesped notifica su retraso
+                        .requestMatchers(HttpMethod.PUT, "/api/reservas/*/notificar-retraso")
+                                .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)
                         // Listado general solo para el personal; el huésped usa "mis reservas"
                         .requestMatchers(HttpMethod.GET, "/api/reservas")
                                 .hasAnyRole(RECEPCIONISTA, ADMINISTRADOR)
