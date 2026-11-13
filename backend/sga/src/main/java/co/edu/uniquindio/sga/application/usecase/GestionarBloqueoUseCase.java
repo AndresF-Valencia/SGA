@@ -61,7 +61,7 @@ public class GestionarBloqueoUseCase {
      * Levanta un bloqueo existente de forma lógica (12.4).
      */
     @Transactional
-    public void levantarBloqueo(IdentificacionBloqueo idBloqueo) {
+    public Bloqueo levantarBloqueo(IdentificacionBloqueo idBloqueo) {
         if (idBloqueo == null) {
             throw new ReglaDominioException("El identificador del bloqueo es obligatorio para levantarlo");
         }
@@ -75,5 +75,6 @@ public class GestionarBloqueoUseCase {
 
         // 3. Persistir los cambios del bloqueo actualizado
         bloqueoRepository.guardar(bloqueo);
+        return bloqueo;
     }
 }

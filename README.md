@@ -230,7 +230,6 @@ Si algo cambia de un alojamiento a otro, **no puede estar quemado en el código*
 | Umbral de edad facturable | 5 años | `Alojamiento` |
 | Hora de entrada / salida | 2:00 p. m. / 11:00 a. m. | `Alojamiento` |
 | Tiempo de preparación | 3 horas | `Alojamiento` y `Apartamento` |
-| Plazo de confirmación (RN-21) | 1 hora | `Alojamiento` y `sga.alojamiento.plazo-confirmacion-horas` |
 | Anticipo (RNP-03) | 50 %, el resto al llegar | `Alojamiento` |
 | Mascotas (RNP-02) | Máximo 2, recargo de $70.000 | `Apartamento` (`LimiteMascota`) |
 | Política de cancelación | 1 semana o más: 0 % de retención · menos de 1 semana: 100 % | `PoliticaCancelacion`, versionada |

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +21,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
@@ -33,48 +32,45 @@ public class BloqueoController {
         private final GestionarBloqueoUseCase gestionarBloqueoUseCase;
         private final BloqueoMapper bloqueoMapper;
 
-        /** Crea un bloqueo administrativo y genera su identificador en el servidor. */
         @PostMapping
         @Operation(summary = "Registrar un bloqueo administrativo", description = "Bloquea un apartamento durante un periodo sin reservas activas.")
         @ApiResponse(responseCode = "201", description = "Bloqueo registrado")
         @ApiResponse(responseCode = "400", description = "Solicitud invalida")
         @ApiResponse(responseCode = "404", description = "Apartamento no encontrado")
         @ApiResponse(responseCode = "409", description = "El bloqueo viola una regla de negocio")
-        public ResponseEntity<BloqueoResponse> crearBloqueo(
-                        @Valid @RequestBody CrearBloqueoRequest request) {
-                
-                MotivoBloqueo motivo;
-                try {
-                        motivo = MotivoBloqueo.valueOf(request.motivo());
-                } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST, 
-                                "Motivo de bloqueo inválido o no proporcionado: '" + request.motivo() + "'"
-                        );
-                }
-
+        public ResponseEntity<BloqueoResponse> crearBloqueo(@Valid @RequestBody CrearBloqueoRequest request) {
                 IdentificacionBloqueo identificacion = new IdentificacionBloqueo(UUID.randomUUID().toString());
                 var bloqueo = gestionarBloqueoUseCase.crearBloqueo(
                                 identificacion,
                                 bloqueoMapper.aApartamento(request),
                                 bloqueoMapper.aPeriodo(request),
-                                motivo);
-                                
+                                aMotivo(request.motivo()));
+
                 BloqueoResponse response = bloqueoMapper.aBloqueo(bloqueo);
                 URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                                 .path("/{id}")
                                 .buildAndExpand(response.id())
                                 .toUri();
-                                
                 return ResponseEntity.created(location).body(response);
         }
 
         @PutMapping("/{id}/levantar")
         @Operation(summary = "Levantar un bloqueo administrativo", description = "Libera un apartamento previamente bloqueado.")
-        @ApiResponse(responseCode = "204", description = "Bloqueo levantado exitosamente")
+        @ApiResponse(responseCode = "200", description = "Bloqueo levantado")
         @ApiResponse(responseCode = "404", description = "Bloqueo no encontrado")
-        public ResponseEntity<Void> levantarBloqueo(@PathVariable String id) {
-                gestionarBloqueoUseCase.levantarBloqueo(new IdentificacionBloqueo(id));
-                return ResponseEntity.noContent().build();
+        @ApiResponse(responseCode = "409", description = "El bloqueo ya estaba levantado")
+        public ResponseEntity<BloqueoResponse> levantarBloqueo(@PathVariable String id) {
+                var bloqueo = gestionarBloqueoUseCase.levantarBloqueo(new IdentificacionBloqueo(id));
+                return ResponseEntity.ok(bloqueoMapper.aBloqueo(bloqueo));
+        }
+
+        /** IllegalArgumentException ya se responde como 400 con ErrorResponse. */
+        private MotivoBloqueo aMotivo(String texto) {
+                try {
+                        return MotivoBloqueo.valueOf(texto.trim().toUpperCase());
+                } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new IllegalArgumentException("Motivo de bloqueo inválido. Valores permitidos: "
+                                        + Arrays.toString(MotivoBloqueo.values()));
+                }
         }
 }
