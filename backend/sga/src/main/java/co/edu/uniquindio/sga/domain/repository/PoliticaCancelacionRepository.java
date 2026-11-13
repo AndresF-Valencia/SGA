@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga.domain.repository;
 import co.edu.uniquindio.sga.domain.valueobject.PoliticaCancelacion;
 import co.edu.uniquindio.sga.domain.valueobject.VersionPolitica;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -23,4 +24,6 @@ public interface PoliticaCancelacionRepository {
      * reserva.
      */
     Optional<PoliticaCancelacion> buscarPorVersion(VersionPolitica version);
+
+    Map<VersionPolitica, PoliticaCancelacion> obtenerTodas();
 }
