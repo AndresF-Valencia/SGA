@@ -136,20 +136,30 @@ public class ModificarReservaUseCase {
         );
 
         // 6. Delegar la modificación a la entidad de dominio (RN-14, RN-22)
-        Dinero ajuste = reserva.modificar(nuevoApartamentoId, nuevaEstancia, ocupantes, nuevoValor, autor, ahora);
+        Dinero ajuste = reserva.modificar(nuevoApartamentoId, nuevaEstancia, ocupantes,
+        nuevoValor, nuevasMascotas, autor, ahora);
 
         // 7. La diferencia de valor va al folio como AJUSTE (positivo o negativo)
         if (!ajuste.esCero()) {
             folio.registrarCargo(new Cargo(ajuste, "Ajuste por modificación de la reserva", TipoCargo.AJUSTE, ahora));
         }
 
-        // 8. RNP-02: Garantizar el cobro del recargo fijo por mascota en el folio si la reserva modificada incluye mascotas
-        if (nuevasMascotas != null) {
-            boolean yaTieneRecargoMascota = folio.getCargos().stream()
-                    .anyMatch(c -> c.descripcion() != null && c.descripcion().toLowerCase().contains("mascota"));
-            if (!yaTieneRecargoMascota) {
-                folio.registrarCargo(new Cargo(alojamiento.getRecargoMascota(), "Recargo por mascota", TipoCargo.SERVICIO_ADICIONAL, ahora));
-            }
+        // 8. RNP-02: el recargo por mascota sigue a la cantidad de mascotas
+        boolean conMascotas = nuevasMascotas != null && nuevasMascotas.cantidad() > 0;
+
+        // Neto de lo que el folio ya tiene por este concepto (cargo + reversiones)
+        Dinero recargoCobrado = folio.getCargos().stream()
+                .filter(c -> c.descripcion().toLowerCase().contains("recargo por mascota"))
+                .map(Cargo::valor)
+                .reduce(Dinero.CERO, Dinero::mas);
+        boolean yaCobrado = !recargoCobrado.esCero();
+
+        if (conMascotas && !yaCobrado) {
+                folio.registrarCargo(new Cargo(alojamiento.getRecargoMascota(),
+                        "Recargo por mascota", TipoCargo.SERVICIO_ADICIONAL, ahora));
+        } else if (!conMascotas && yaCobrado) {
+                folio.registrarCargo(new Cargo(Dinero.CERO.menos(recargoCobrado),
+                         "Reversión del recargo por mascota", TipoCargo.AJUSTE, ahora));
         }
 
         // 9. Persistir

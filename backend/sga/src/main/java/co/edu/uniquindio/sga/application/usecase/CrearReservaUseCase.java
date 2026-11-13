@@ -131,7 +131,7 @@ public class CrearReservaUseCase {
                 cargosIniciales.add(new Cargo(valor.total(), "Alojamiento", TipoCargo.ALOJAMIENTO, ahora));
 
                 // RNP-02: Cargar el recargo fijo por mascota al folio si la reserva incluye mascotas
-                if (mascotas != null) {
+                if ( mascotas != null && mascotas.cantidad() > 0) {
                         cargosIniciales.add(new Cargo(alojamiento.getRecargoMascota(), "Recargo por mascota", TipoCargo.SERVICIO_ADICIONAL, ahora));
                 }
 

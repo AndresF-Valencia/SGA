@@ -41,7 +41,7 @@ import co.edu.uniquindio.sga.domain.valueobject.VersionPolitica;
 public class Reserva {
 
     private final CodigoReserva codigo;
-    private final String codigoExterno; 
+    private final String codigoExterno;
     private final CanalOrigen canalOrigen;
     private final LocalDateTime creadaEn;
     private final Ocupante titular;
@@ -90,21 +90,33 @@ public class Reserva {
     /**
      * Creación de reserva externa (RN-19) proveniente de Booking / OTAs.
      */
-    public static Reserva crearExterna(CodigoReserva codigo, String codigoExterno, IdentificacionApartamento apartamento,
+    public static Reserva crearExterna(CodigoReserva codigo, String codigoExterno,
+            IdentificacionApartamento apartamento,
             Estancia estancia, Ocupante titular, List<Ocupante> ocupantes,
             CanalOrigen canalOrigen, ValorCongelado valor,
             VersionPolitica politica, LocalDateTime ahora, CantidadMascota cantidadMascotas) {
-        if (codigo == null) throw new ReglaDominioException("La reserva debe tener un código");
-        if (apartamento == null) throw new ReglaDominioException("La reserva debe indicar el apartamento");
-        if (estancia == null) throw new ReglaDominioException("La reserva debe tener una estancia");
-        if (titular == null) throw new ReglaDominioException("La reserva debe tener un titular");
-        if (canalOrigen == null) throw new ReglaDominioException("La reserva debe indicar su canal de origen");
-        if (valor == null || politica == null) throw new ReglaDominioException("La reserva debe nacer con su valor y política congelados");
-        if (ocupantes == null || ocupantes.isEmpty()) throw new ReglaDominioException("La reserva debe tener al menos un ocupante");
-        if (!ocupantes.contains(titular)) throw new ReglaDominioException("El titular debe ser uno de los ocupantes");
-        if (ocupantes.stream().distinct().count() != ocupantes.size()) throw new ReglaDominioException("No se puede repetir un ocupante");
-        if (cantidadMascotas == null) throw new ReglaDominioException("La reserva debe indicar la cantidad de mascotas");
-        if (ahora == null) throw new ReglaDominioException("La reserva debe indicar el momento de creación");
+        if (codigo == null)
+            throw new ReglaDominioException("La reserva debe tener un código");
+        if (apartamento == null)
+            throw new ReglaDominioException("La reserva debe indicar el apartamento");
+        if (estancia == null)
+            throw new ReglaDominioException("La reserva debe tener una estancia");
+        if (titular == null)
+            throw new ReglaDominioException("La reserva debe tener un titular");
+        if (canalOrigen == null)
+            throw new ReglaDominioException("La reserva debe indicar su canal de origen");
+        if (valor == null || politica == null)
+            throw new ReglaDominioException("La reserva debe nacer con su valor y política congelados");
+        if (ocupantes == null || ocupantes.isEmpty())
+            throw new ReglaDominioException("La reserva debe tener al menos un ocupante");
+        if (!ocupantes.contains(titular))
+            throw new ReglaDominioException("El titular debe ser uno de los ocupantes");
+        if (ocupantes.stream().distinct().count() != ocupantes.size())
+            throw new ReglaDominioException("No se puede repetir un ocupante");
+        if (cantidadMascotas == null)
+            throw new ReglaDominioException("La reserva debe indicar la cantidad de mascotas");
+        if (ahora == null)
+            throw new ReglaDominioException("La reserva debe indicar el momento de creación");
 
         if (estancia.fechaEntrada().isBefore(ahora.toLocalDate())) {
             throw new ReglaDominioException("La fecha de entrada no puede ser anterior a la fecha actual");
@@ -116,7 +128,9 @@ public class Reserva {
         Reserva reserva = new Reserva(codigo, codigoExterno, apartamento, estancia, titular, ocupantes,
                 canalOrigen, valor, politica, ahora, cantidadMascotas);
         reserva.registrarEvento("CREACION", titular.getNombre(), null,
-                EstadoReserva.PENDIENTE, "Reserva creada por el canal " + canalOrigen + (codigoExterno != null ? " (Ext: " + codigoExterno + ")" : ""), ahora);
+                EstadoReserva.PENDIENTE, "Reserva creada por el canal " + canalOrigen
+                        + (codigoExterno != null ? " (Ext: " + codigoExterno + ")" : ""),
+                ahora);
         return reserva;
     }
 
@@ -137,7 +151,10 @@ public class Reserva {
 
     // ---------- Comportamiento del negocio ----------
 
-    /** 7.8: correo al que se le notifica al titular la creación, confirmación y cancelación. */
+    /**
+     * 7.8: correo al que se le notifica al titular la creación, confirmación y
+     * cancelación.
+     */
     public void registrarCorreoContacto(Correo correo) {
         if (correo == null) {
             throw new ReglaDominioException("El correo de contacto no puede ser nulo");
@@ -248,7 +265,7 @@ public class Reserva {
 
     /**
      * RN-11:
-     * Declara el no-show basándose estrictamente en los parámetros configurados 
+     * Declara el no-show basándose estrictamente en los parámetros configurados
      * en el agregado Alojamiento (hora de entrada y límite de tolerancia).
      * después de la hora estimada de llegada (o de la hora estándar 14:00 si no la
      * indicó).
@@ -269,13 +286,15 @@ public class Reserva {
                             + this.notificacionRetraso.motivo() + ")");
         }
 
-        // 2. Obtener la hora base: la estimada por el huésped o la hora de entrada oficial del Alojamiento
+        // 2. Obtener la hora base: la estimada por el huésped o la hora de entrada
+        // oficial del Alojamiento
         LocalTime horaBase = (this.horaEstimadaLlegada != null)
                 ? this.horaEstimadaLlegada.horaEstimada()
                 : alojamiento.getHoraEntrada();
 
-        // 3. Obtener el momento límite utilizando la configuración del Alojamiento 
-        // (Si el alojamiento tiene una hora límite específica configurada, se usa; de lo contrario, se calcula con la tolerancia o regla del negocio)
+        // 3. Obtener el momento límite utilizando la configuración del Alojamiento
+        // (Si el alojamiento tiene una hora límite específica configurada, se usa; de
+        // lo contrario, se calcula con la tolerancia o regla del negocio)
         LocalTime horaLimiteEfectiva = (alojamiento.getHoraLimiteNoShow() != null)
                 ? alojamiento.getHoraLimiteNoShow()
                 : horaBase.plusHours(2); // O el parámetro de tolerancia parametrizado en Alojamiento
@@ -305,25 +324,36 @@ public class Reserva {
      * RN-22: la política congelada NO se recalcula.
      */
     /**
-     * 7.5: modifica fechas y/o apartamento de una reserva no iniciada. Las validaciones de
-     * disponibilidad ya las hizo el caso de uso; aquí se protege el estado y se registra el cambio.
+     * 7.5: modifica fechas y/o apartamento de una reserva no iniciada. Las
+     * validaciones de
+     * disponibilidad ya las hizo el caso de uso; aquí se protege el estado y se
+     * registra el cambio.
      * Devuelve el ajuste (nuevo valor − valor anterior) que va al folio.
      */
     public Dinero modificar(IdentificacionApartamento nuevoApartamento, Estancia nuevaEstancia,
-            List<Ocupante> nuevosOcupantes, ValorCongelado nuevoValor, String autor, LocalDateTime ahora) {
+            List<Ocupante> nuevosOcupantes, ValorCongelado nuevoValor,
+            CantidadMascota nuevasMascotas, String autor, LocalDateTime ahora) {
         if (nuevoApartamento == null) {
             throw new ReglaDominioException("La modificación debe indicar el apartamento");
         }
+        if (nuevasMascotas == null) {
+            throw new ReglaDominioException("La modificación debe indicar la cantidad de mascotas");
+        }
         IdentificacionApartamento anterior = this.apartamento;
-        Dinero ajuste = modificarEstancia(nuevaEstancia, nuevoValor, autor, ahora);   // valida antes de cambiar
+        Dinero ajuste = modificarEstancia(nuevaEstancia, nuevoValor, autor, ahora); // valida antes de cambiar
+
         if (!nuevoApartamento.equals(anterior)) {
             this.apartamento = nuevoApartamento;
             registrarEvento("CAMBIO_APARTAMENTO", autor, this.estado, this.estado,
                     "Apartamento " + anterior.valor() + " → " + nuevoApartamento.valor(), ahora);
         }
-        // Si el grupo cambia, se reemplaza completo (ya se recotizó con estos ocupantes)
         if (nuevosOcupantes != null && !nuevosOcupantes.isEmpty()) {
             this.ocupantes = List.copyOf(nuevosOcupantes);
+        }
+        if (!nuevasMascotas.equals(this.cantidadMascotas)) {
+            registrarEvento("CAMBIO_MASCOTAS", autor, this.estado, this.estado,
+                    "Mascotas " + this.cantidadMascotas.cantidad() + " → " + nuevasMascotas.cantidad(), ahora);
+            this.cantidadMascotas = nuevasMascotas;
         }
         return ajuste;
     }
@@ -446,11 +476,13 @@ public class Reserva {
         return cantidadMascotas;
     }
 
-    /** null si la reserva no tiene correo de contacto (por ejemplo, llegó por un canal externo). */
+    /**
+     * null si la reserva no tiene correo de contacto (por ejemplo, llegó por un
+     * canal externo).
+     */
     public Correo getCorreoContacto() {
         return correoContacto;
     }
-
 
     @Override
     public boolean equals(Object o) {
