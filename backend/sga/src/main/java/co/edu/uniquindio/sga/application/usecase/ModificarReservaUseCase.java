@@ -38,8 +38,8 @@ import java.util.List;
 
 /**
  * Caso de uso: Modificar una reserva existente (fechas, apartamento, ocupantes o mascotas).
+ * Incluye la aplicación del recargo por mascota en el folio (RNP-02).
  */
- 
 public class ModificarReservaUseCase {
 
     private final ReservaRepository reservaRepository;
@@ -78,10 +78,10 @@ public class ModificarReservaUseCase {
 
     /**
      * Modifica la estancia de una reserva existente, validando disponibilidad,
-     * recotizando y aplicando las reglas del dominio.
+     * recotizando y aplicando las reglas del dominio, incluido el recargo por mascota (RNP-02).
      */
-        @Transactional
-        public Reserva ejecutar(
+    @Transactional
+    public Reserva ejecutar(
             CodigoReserva codigoReserva,
             IdentificacionAlojamiento alojamientoId,
             IdentificacionApartamento nuevoApartamentoId,
@@ -138,12 +138,21 @@ public class ModificarReservaUseCase {
         // 6. Delegar la modificación a la entidad de dominio (RN-14, RN-22)
         Dinero ajuste = reserva.modificar(nuevoApartamentoId, nuevaEstancia, ocupantes, nuevoValor, autor, ahora);
 
-        // 7. 7.5: la diferencia de valor va al folio como AJUSTE (positivo o negativo)
+        // 7. La diferencia de valor va al folio como AJUSTE (positivo o negativo)
         if (!ajuste.esCero()) {
             folio.registrarCargo(new Cargo(ajuste, "Ajuste por modificación de la reserva", TipoCargo.AJUSTE, ahora));
         }
 
-        // 8. Persistir
+        // 8. RNP-02: Garantizar el cobro del recargo fijo por mascota en el folio si la reserva modificada incluye mascotas
+        if (nuevasMascotas != null) {
+            boolean yaTieneRecargoMascota = folio.getCargos().stream()
+                    .anyMatch(c -> c.descripcion() != null && c.descripcion().toLowerCase().contains("mascota"));
+            if (!yaTieneRecargoMascota) {
+                folio.registrarCargo(new Cargo(alojamiento.getRecargoMascota(), "Recargo por mascota", TipoCargo.SERVICIO_ADICIONAL, ahora));
+            }
+        }
+
+        // 9. Persistir
         reservaRepository.guardar(reserva);
         folioRepository.guardar(folio);
 

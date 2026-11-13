@@ -37,21 +37,25 @@ public class Folio {
 
     /**
      * Constructor del folio.
-     * F-08: el folio se abre al crear la reserva, con su cargo de alojamiento
-     * (7.7).
+     * F-08: el folio se abre al crear la reserva, con su cargo de alojamiento[cite: 1]
+     * y opcionalmente otros cargos iniciales (como el recargo por mascota).
      */
-    public Folio(CodigoReserva reserva, Cargo cargoAlojamiento) {
+    public Folio(CodigoReserva reserva, List<Cargo> cargosIniciales) {
         if (reserva == null) {
             throw new ReglaDominioException("El folio debe estar asociado a una reserva");
         }
-        if (cargoAlojamiento == null) {
-            throw new ReglaDominioException("El folio debe iniciar con un cargo de alojamiento");
+        if (cargosIniciales == null || cargosIniciales.isEmpty()) {
+            throw new ReglaDominioException("El folio debe iniciar al menos con un cargo de alojamiento");
         }
-        if (cargoAlojamiento.tipo() != TipoCargo.ALOJAMIENTO) {
-            throw new ReglaDominioException("El folio solo puede abrirse con un cargo de tipo alojamiento");
+        
+        // Validar que el primer cargo obligatorio sea de tipo ALOJAMIENTO
+        Cargo primerCargo = cargosIniciales.get(0);
+        if (primerCargo.tipo() != TipoCargo.ALOJAMIENTO) {
+            throw new ReglaDominioException("El folio solo puede abrirse con un cargo principal de tipo alojamiento");
         }
+
         this.reserva = reserva;
-        this.cargos.add(cargoAlojamiento);
+        this.cargos.addAll(cargosIniciales); // Añade todos los cargos iniciales correctamente de forma masiva
     }
 
     public CodigoReserva getReserva() {

@@ -56,7 +56,7 @@ public final class FolioPersistenceMapper {
             cargos.add(new Cargo(new Dinero(fila.getValor()), fila.getDescripcion(), fila.getTipo(), fila.getFecha()));
         }
 
-        Folio folio = new Folio(new CodigoReserva(entity.getReservaCodigo()), cargos.get(0));
+        Folio folio = new Folio(new CodigoReserva(entity.getReservaCodigo()), cargos);
         for (Cargo cargo : cargos.subList(1, cargos.size())) {
             folio.registrarCargo(cargo);
         }

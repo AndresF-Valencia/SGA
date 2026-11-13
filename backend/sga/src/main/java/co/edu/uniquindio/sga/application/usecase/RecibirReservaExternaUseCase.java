@@ -31,6 +31,7 @@ import co.edu.uniquindio.sga.domain.valueobject.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -174,11 +175,18 @@ public class RecibirReservaExternaUseCase {
                 cantidadMascotas
         );
 
-        // 7. Persistir la reserva y abrir su respectivo folio (F-08)
+        // 7. Persistir la reserva y abrir su respectivo folio con cargos (F-08 y RNP-02)
         reservaRepository.guardar(reservaExterna);
 
-        folioRepository.guardar(new Folio(codigoReserva,
-                new Cargo(valorCongelado.total(), "Alojamiento", TipoCargo.ALOJAMIENTO, ahora)));
+        List<Cargo> cargosIniciales = new ArrayList<>();
+        cargosIniciales.add(new Cargo(valorCongelado.total(), "Alojamiento", TipoCargo.ALOJAMIENTO, ahora));
+
+        // RNP-02: Cargar el recargo fijo por mascota al folio si la reserva externa incluye mascotas
+        if (cantidadMascotas != null && cantidadMascotas.cantidad() > 0) {
+            cargosIniciales.add(new Cargo(alojamiento.getRecargoMascota(), "Recargo por mascota", TipoCargo.SERVICIO_ADICIONAL, ahora));
+        }
+
+        folioRepository.guardar(new Folio(codigoReserva, cargosIniciales));
 
         return reservaExterna;
     }

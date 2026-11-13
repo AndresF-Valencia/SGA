@@ -74,4 +74,7 @@ public class AlojamientoEntity {
 
     @Column(name = "version_politica_vigente", nullable = false)
     private int versionPoliticaVigente;
+
+    @Column(name = "recargo_mascota", precision = 12, scale = 2)
+    private BigDecimal recargoMascota;
 }

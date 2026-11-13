@@ -2,41 +2,51 @@ package co.edu.uniquindio.sga.application.usecase;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
+import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository; // Asegúrate de tener este repositorio
 import co.edu.uniquindio.sga.domain.repository.PoliticaCancelacionRepository;
 import co.edu.uniquindio.sga.domain.valueobject.PoliticaCancelacion;
 import co.edu.uniquindio.sga.domain.valueobject.VersionPolitica;
 
 /**
  * Caso de uso: Publicar política de cancelación (CU-19).
- * Publica y congela una nueva versión de la política de cancelación.
+ * El sistema asigna la nueva versión a través del Alojamiento y la congela.
  */
- 
 public class PublicarPoliticaCancelacionUseCase {
 
+    private final AlojamientoRepository alojamientoRepository;
     private final PoliticaCancelacionRepository politicaCancelacionRepository;
 
-    public PublicarPoliticaCancelacionUseCase(PoliticaCancelacionRepository politicaCancelacionRepository) {
+    public PublicarPoliticaCancelacionUseCase(AlojamientoRepository alojamientoRepository,
+                                              PoliticaCancelacionRepository politicaCancelacionRepository) {
+        this.alojamientoRepository = alojamientoRepository;
         this.politicaCancelacionRepository = politicaCancelacionRepository;
     }
 
     /**
-     * Publica una versión específica de la política de cancelación para ser utilizada por las futuras reservas.
+     * Publica una nueva versión de la política de cancelación asignada automáticamente por el sistema.
      * 
-     * @param version  Versión de la política que se desea publicar y congelar.
      * @param politica Objeto de valor PoliticaCancelacion que contiene las reglas y tramos.
+     * @return La versión que el sistema asignó y entró en vigor.
      */
     @Transactional
-    public PoliticaCancelacion ejecutar(VersionPolitica version, PoliticaCancelacion politica) {
-        if (version == null) {
-            throw new ReglaDominioException("La versión de la política es obligatoria");
-        }
+    public VersionPolitica ejecutar(PoliticaCancelacion politica) {
         if (politica == null) {
             throw new ReglaDominioException("La política de cancelación es obligatoria");
         }
 
-        // Persistir la versión y sus reglas correspondientes a través del repositorio
-        politicaCancelacionRepository.guardar(version, politica);
-        return politica;
+        // 1. Obtener el agregado Alojamiento para gestionar la versión vigente
+        Alojamiento alojamiento = alojamientoRepository.obtenerUnico()
+                .orElseThrow(() -> new ReglaDominioException("No se encontró la configuración del alojamiento"));
+
+        // 2. El sistema asigna la nueva versión llamando al método del dominio
+        VersionPolitica nuevaVersion = alojamiento.publicarNuevaVersionPolitica();
+
+        // 3. Persistir la política ligada a la nueva versión y actualizar el alojamiento
+        politicaCancelacionRepository.guardar(nuevaVersion, politica);
+        alojamientoRepository.guardar(alojamiento);
+
+        return nuevaVersion;
     }
 }

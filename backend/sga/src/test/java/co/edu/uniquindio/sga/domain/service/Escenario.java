@@ -82,14 +82,14 @@ public final class Escenario {
             new TramoCancelacion(30, 365, 100)));
 
     public static Alojamiento alojamiento() {
-        return alojamiento(LocalTime.of(15, 0), LocalTime.of(11, 0), true, 50);
+        return alojamiento(LocalTime.of(15, 0), LocalTime.of(11, 0), true, 50, 70000);
     }
 
     public static Alojamiento alojamiento(LocalTime horaEntrada, LocalTime horaSalida,
-                                   boolean exigeAnticipo, int porcentajeAnticipo) {
+                                   boolean exigeAnticipo, int porcentajeAnticipo, Dinero recargoMascota) {
         return new Alojamiento(SAN_ROCCO, "San Rocco", "Armenia", "Apartamentos turísticos",
                 horaEntrada, horaSalida, LocalTime.of(20, 0), new UmbralEdadFacturable(3),
-                TiempoPreparacion.estandar(), PlazoConfirmacion.unaHora(), exigeAnticipo, porcentajeAnticipo);
+                TiempoPreparacion.estandar(), PlazoConfirmacion.unaHora(), exigeAnticipo, porcentajeAnticipo, recargoMascota);
     }
 
     /** Apartamento para 4 personas y hasta 1 mascota, con 3 horas de preparación. */

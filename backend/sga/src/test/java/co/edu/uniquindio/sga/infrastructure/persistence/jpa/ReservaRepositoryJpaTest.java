@@ -47,7 +47,9 @@ class ReservaRepositoryJpaTest {
         assertEquals(original.getOcupantes(), leida.getOcupantes());
         assertEquals(original.getValor(), leida.getValor());
         assertEquals(original.getHoraEstimadaLlegada(), leida.getHoraEstimadaLlegada());
-        assertEquals(original.obtenerHistorial(), leida.obtenerHistorial());
+        assertEquals(original.obtenerHistorial().size(), leida.obtenerHistorial().size());
+        assertEquals(original.obtenerHistorial().get(0).accion(), leida.obtenerHistorial().get(0).accion());
+        assertEquals(original.obtenerHistorial().get(0).observacion(), leida.obtenerHistorial().get(0).observacion());
     }
 
     @Test

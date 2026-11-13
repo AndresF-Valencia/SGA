@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga.application.dto.request.PublicarPoliticaCancelacion
 import co.edu.uniquindio.sga.application.dto.response.PoliticaCancelacionResponse;
 import co.edu.uniquindio.sga.application.usecase.PublicarPoliticaCancelacionUseCase;
 import co.edu.uniquindio.sga.domain.valueobject.PoliticaCancelacion;
+import co.edu.uniquindio.sga.domain.valueobject.VersionPolitica;
 import co.edu.uniquindio.sga.infrastructure.rest.mapper.PoliticaCancelacionMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -27,7 +28,7 @@ public class PoliticaCancelacionController {
     private final PublicarPoliticaCancelacionUseCase publicarPoliticaUseCase;
     private final PoliticaCancelacionMapper politicaMapper;
 
-    /** Publica una versión de política y conserva las versiones anteriores. */
+    /** Publica una versión de política asignada automáticamente y conserva las versiones anteriores. */
     @PostMapping
     @Operation(summary = "Publicar una nueva versión de la política")
     @ApiResponse(responseCode = "201", description = "Política publicada")
@@ -35,21 +36,23 @@ public class PoliticaCancelacionController {
     @ApiResponse(responseCode = "409", description = "La política viola una regla de negocio")
     public ResponseEntity<PoliticaCancelacionResponse> publicarPolitica(
             @Valid @RequestBody PublicarPoliticaCancelacionRequest request) {
-        var version = politicaMapper.aVersion(request);
+        
+        // 1. Construir el objeto de dominio con los tramos del request
         PoliticaCancelacion politica = new PoliticaCancelacion(
-                "Politica de cancelacion v" + version.numero(),
+                "Política de cancelación",
                 politicaMapper.aTramos(request));
-        var politicaPublicada = publicarPoliticaUseCase.ejecutar(version, politica);
-        PoliticaCancelacionResponse response = politicaMapper.aPolitica(politicaPublicada);
+
+        // 2. Ejecutar el caso de uso (el sistema asigna la versión automáticamente)
+        VersionPolitica nuevaVersion = publicarPoliticaUseCase.ejecutar(politica);
+
+        // 3. Mapear la respuesta y construir la URI de ubicación con la versión asignada
+        PoliticaCancelacionResponse response = politicaMapper.aPolitica(politica); // O el método de mapeo que uses para el DTO de respuesta
+        
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{version}")
-                .buildAndExpand(version.numero())
+                .buildAndExpand(nuevaVersion.numero())
                 .toUri();
+                
         return ResponseEntity.created(location).body(response);
     }
-
-    /**
-     * Pendiente: consultar el historial porque no existe caso de uso ni método
-     * de repository para listar las versiones publicadas.
-     */
 }

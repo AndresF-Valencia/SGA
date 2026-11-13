@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga.domain.entity;
 
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
+import co.edu.uniquindio.sga.domain.valueobject.Dinero;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionAlojamiento;
 import co.edu.uniquindio.sga.domain.valueobject.NormasConvivencia;
 import co.edu.uniquindio.sga.domain.valueobject.PlazoConfirmacion;
@@ -37,6 +38,7 @@ public class Alojamiento {
     private UmbralEdadFacturable umbralEdadFacturable;
     private TiempoPreparacion tiempoPreparacion;
     private PlazoConfirmacion plazoConfirmacion;
+    private final Dinero recargoMascota;
     private boolean exigeAnticipo;
     private int porcentajeAnticipo; // Ej: 50%
     // F-07: una sola política de cancelación, versionada. Cada reserva congela la
@@ -47,7 +49,7 @@ public class Alojamiento {
             String descripcion, LocalTime horaEntrada, LocalTime horaSalida,
             LocalTime horaLimiteNoShow, UmbralEdadFacturable umbralEdadFacturable,
             TiempoPreparacion tiempoPreparacion, PlazoConfirmacion plazoConfirmacion,
-            boolean exigeAnticipo, int porcentajeAnticipo) {
+            boolean exigeAnticipo, int porcentajeAnticipo,Dinero recargoMascota) {
         if (identificacion == null) {
             throw new ReglaDominioException("El alojamiento debe tener una identificación");
         }
@@ -72,6 +74,9 @@ public class Alojamiento {
         if (exigeAnticipo && (porcentajeAnticipo <= 0 || porcentajeAnticipo > 100)) {
             throw new ReglaDominioException("El porcentaje de anticipo debe estar entre 1 y 100");
         }
+        if (recargoMascota == null) {
+            throw new ReglaDominioException("El alojamiento debe definir el recargo por mascota");
+        }
 
         this.identificacion = identificacion;
         this.nombre = nombre;
@@ -85,6 +90,7 @@ public class Alojamiento {
         this.plazoConfirmacion = plazoConfirmacion;
         this.exigeAnticipo = exigeAnticipo;
         this.porcentajeAnticipo = porcentajeAnticipo;
+        this.recargoMascota = recargoMascota;
     }
 
     /**
@@ -95,10 +101,10 @@ public class Alojamiento {
             String ciudad, String descripcion, LocalTime horaEntrada, LocalTime horaSalida,
             LocalTime horaLimiteNoShow, UmbralEdadFacturable umbralEdadFacturable,
             TiempoPreparacion tiempoPreparacion, PlazoConfirmacion plazoConfirmacion,
-            boolean exigeAnticipo, int porcentajeAnticipo, VersionPolitica versionPoliticaVigente) {
+            boolean exigeAnticipo, int porcentajeAnticipo, Dinero recargoMascota, VersionPolitica versionPoliticaVigente) {
         Alojamiento alojamiento = new Alojamiento(identificacion, nombre, ciudad, descripcion,
                 horaEntrada, horaSalida, horaLimiteNoShow, umbralEdadFacturable, tiempoPreparacion,
-                plazoConfirmacion, exigeAnticipo, porcentajeAnticipo);
+                plazoConfirmacion, exigeAnticipo, porcentajeAnticipo, recargoMascota);
         alojamiento.versionPoliticaVigente = versionPoliticaVigente;
         return alojamiento;
     }
@@ -155,6 +161,10 @@ public class Alojamiento {
 
     public IdentificacionAlojamiento getIdentificacion() {
         return identificacion;
+    }
+
+    public Dinero getRecargoMascota() {
+        return recargoMascota;
     }
 
     public String getNombre() {

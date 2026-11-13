@@ -12,6 +12,8 @@ import co.edu.uniquindio.sga.domain.valueobject.VersionPolitica;
 import co.edu.uniquindio.sga.infrastructure.persistence.jpa.entity.AlojamientoEntity;
 import co.edu.uniquindio.sga.infrastructure.persistence.jpa.entity.ServicioAdicionalEmbeddable;
 
+import java.math.BigDecimal;
+
 public final class AlojamientoPersistenceMapper {
 
     private AlojamientoPersistenceMapper() {
@@ -41,11 +43,22 @@ public final class AlojamientoPersistenceMapper {
         entity.setPlazoConfirmacionHoras(alojamiento.getPlazoConfirmacion().horas());
         entity.setExigeAnticipo(alojamiento.isExigeAnticipo());
         entity.setPorcentajeAnticipo(alojamiento.getPorcentajeAnticipo());
+        
+        // Mapear recargo por mascota (RNP-02)
+        if (alojamiento.getRecargoMascota() != null) {
+            entity.setRecargoMascota(alojamiento.getRecargoMascota().valor());
+        }
+
         entity.setVersionPoliticaVigente(alojamiento.getVersionPoliticaVigente().numero());
         return entity;
     }
 
     public static Alojamiento aDominio(AlojamientoEntity entity) {
+        BigDecimal valorRecargo = entity.getRecargoMascota() != null 
+                ? entity.getRecargoMascota() 
+                : BigDecimal.ZERO;
+        Dinero recargoMascota = new Dinero(valorRecargo);
+
         Alojamiento alojamiento = Alojamiento.reconstruir(
                 new IdentificacionAlojamiento(entity.getId()),
                 entity.getNombre(),
@@ -59,7 +72,9 @@ public final class AlojamientoPersistenceMapper {
                 new PlazoConfirmacion(entity.getPlazoConfirmacionHoras()),
                 entity.isExigeAnticipo(),
                 entity.getPorcentajeAnticipo(),
+                recargoMascota,
                 new VersionPolitica(entity.getVersionPoliticaVigente()));
+
         // Los alojamientos guardados antes de la ficha 7.3 no tienen dirección: se dejan sin ella
         if (entity.getDireccion() != null && entity.getLatitud() != null && entity.getLongitud() != null) {
             alojamiento.actualizarFichaDescriptiva(entity.getDireccion(), entity.getLatitud(),

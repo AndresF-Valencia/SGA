@@ -60,7 +60,6 @@ import co.edu.uniquindio.sga.domain.service.EstanciaMinimaTemporadaAltaService;
 import co.edu.uniquindio.sga.domain.service.NoShowService;
 import co.edu.uniquindio.sga.domain.service.RegistroLlegadaService;
 import co.edu.uniquindio.sga.domain.service.RegistroSalidaService;
-import co.edu.uniquindio.sga.domain.valueobject.PlazoConfirmacion;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -153,8 +152,8 @@ public class UseCaseConfig {
     @Bean
     public VencerReservasPendientesUseCase vencerReservasPendientesUseCase(
             ReservaRepository reservaRepository,
-            PlazoConfirmacion plazoConfirmacion) {
-        return new VencerReservasPendientesUseCase(reservaRepository, plazoConfirmacion);
+            AlojamientoRepository alojamientoRepository) {
+        return new VencerReservasPendientesUseCase(reservaRepository, alojamientoRepository);
     }
 
     @Bean
@@ -262,9 +261,9 @@ public class UseCaseConfig {
     }
 
     @Bean
-    public PublicarPoliticaCancelacionUseCase publicarPoliticaCancelacionUseCase(
+    public PublicarPoliticaCancelacionUseCase publicarPoliticaCancelacionUseCase(AlojamientoRepository alojamientoRepository,
             PoliticaCancelacionRepository politicaCancelacionRepository) {
-        return new PublicarPoliticaCancelacionUseCase(politicaCancelacionRepository);
+        return new PublicarPoliticaCancelacionUseCase(alojamientoRepository,politicaCancelacionRepository);
     }
 
     // ---------- Canales externos ----------

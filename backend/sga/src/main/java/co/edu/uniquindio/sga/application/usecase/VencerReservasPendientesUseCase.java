@@ -2,8 +2,10 @@ package co.edu.uniquindio.sga.application.usecase;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.uniquindio.sga.domain.entity.Alojamiento;
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
+import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
 import co.edu.uniquindio.sga.domain.repository.ReservaRepository;
 import co.edu.uniquindio.sga.domain.valueobject.PlazoConfirmacion;
 
@@ -14,24 +16,24 @@ import java.util.List;
 /**
  * Caso de uso: Vencer automáticamente las reservas pendientes cuyo plazo de
  * confirmación ha expirado (RN-21).
+ * Lee el plazo directamente de la configuración vigente del Alojamiento.
  */
- 
 public class VencerReservasPendientesUseCase {
 
     private final ReservaRepository reservaRepository;
-    private final PlazoConfirmacion plazoConfirmacion;
+    private final AlojamientoRepository alojamientoRepository;
 
-    public VencerReservasPendientesUseCase(ReservaRepository reservaRepository, PlazoConfirmacion plazoConfirmacion) {
+    public VencerReservasPendientesUseCase(ReservaRepository reservaRepository,
+                                           AlojamientoRepository alojamientoRepository) {
         this.reservaRepository = reservaRepository;
-        this.plazoConfirmacion = plazoConfirmacion;
+        this.alojamientoRepository = alojamientoRepository;
     }
 
     /**
      * Revisa todas las reservas en estado PENDIENTE y vence aquellas que superen el
-     * plazo establecido.
+     * plazo configurado en el Alojamiento.
      * 
-     * @param ahora Momento actual de ejecución del proceso automático (scheduler o
-     *              tarea programada).
+     * @param ahora Momento actual de ejecución del proceso automático (scheduler).
      * @return Lista de reservas que fueron vencidas y canceladas en este ciclo.
      */
     @Transactional
@@ -41,7 +43,13 @@ public class VencerReservasPendientesUseCase {
                     "Se requiere la fecha y hora actual para procesar el vencimiento de reservas");
         }
 
-        // 1. Obtener todas las reservas que actualmente se encuentran pendientes
+        // 1. Obtener la configuración del alojamiento para extraer el plazo vigente
+        Alojamiento alojamiento = alojamientoRepository.obtenerUnico()
+                .orElseThrow(() -> new ReglaDominioException("No se encontró la configuración del alojamiento"));
+        
+        PlazoConfirmacion plazoConfirmacion = alojamiento.getPlazoConfirmacion(); // Asegúrate de tener este getter en Alojamiento
+
+        // 2. Obtener todas las reservas pendientes
         List<Reserva> reservasPendientes = reservaRepository.buscarPendientes();
         List<Reserva> reservasVencidas = new ArrayList<>();
 
@@ -49,9 +57,8 @@ public class VencerReservasPendientesUseCase {
             return reservasVencidas;
         }
 
-        // 2. Iterar y evaluar cada reserva según el plazo de confirmación (RN-21)
+        // 3. Iterar y evaluar cada reserva según el plazo dinámico del alojamiento
         for (Reserva reserva : reservasPendientes) {
-            
             if (plazoConfirmacion.venceAntesDe(reserva.getCreadaEn(), ahora)) {
                 reserva.vencer(plazoConfirmacion, ahora);
                 reservaRepository.guardar(reserva);

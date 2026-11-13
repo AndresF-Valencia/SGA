@@ -1,6 +1,5 @@
 package co.edu.uniquindio.sga.application.usecase;
 
-
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
@@ -36,14 +35,15 @@ import co.edu.uniquindio.sga.domain.valueobject.ValorCongelado;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Caso de uso (Guía 06): crear una reserva.
  * Solo coordina: busca en los repositorios, deja que los servicios de dominio
- * validen (7.5) y calculen el valor, crea la reserva y abre su folio (F-08).
+ * validen (7.5) y calculen el valor, crea la reserva y abre su folio (F-08),
+ * incorporando el recargo fijo por mascota cuando aplique (RNP-02).
  */
- 
 public class CrearReservaUseCase {
 
         private final ReservaRepository reservaRepository;
@@ -81,8 +81,7 @@ public class CrearReservaUseCase {
         }
 
         /**
-         * @param horaEstimadaLlegada puede ser null: es requisito para confirmar
-         *                            (RN-09), no para crear
+         * @param horaEstimadaLlegada puede ser null: es requisito para confirmar (RN-09), no para crear
          */
         @Transactional
         public Reserva ejecutar(IdentificacionAlojamiento alojamientoId, IdentificacionApartamento apartamentoId,
@@ -90,6 +89,8 @@ public class CrearReservaUseCase {
                         Ocupante titular, List<Ocupante> ocupantes,
                         CanalOrigen canalOrigen, CantidadMascota mascotas, Correo correoContacto,
                         LocalDateTime ahora) {
+                        
+                CodigoReserva codigo = generadorCodigo.siguiente(ahora.getYear());
 
                 Apartamento apartamento = apartamentoRepository.buscarPorId(apartamentoId)
                                 .orElseThrow(() -> new ApartamentoNoEncontradoException(apartamentoId));
@@ -115,7 +116,6 @@ public class CrearReservaUseCase {
                                 tarifaRepository.buscarPorApartamento(apartamentoId));
 
                 // RN-03, RN-04 y el titular como ocupante se validan dentro de Reserva.crear
-                CodigoReserva codigo = generadorCodigo.siguiente(ahora.getYear());
                 Reserva reserva = Reserva.crear(codigo, apartamentoId, estancia, titular, ocupantes, canalOrigen,
                                 valor, alojamiento.getVersionPoliticaVigente(), ahora, mascotas);
                 if (horaEstimadaLlegada != null) {
@@ -126,9 +126,16 @@ public class CrearReservaUseCase {
                 }
                 reservaRepository.guardar(reserva);
 
-                // F-08 y 7.7: el folio se abre con el cargo de alojamiento
-                folioRepository.guardar(new Folio(codigo,
-                                new Cargo(valor.total(), "Alojamiento", TipoCargo.ALOJAMIENTO, ahora)));
+                // F-08 y 7.7: Apertura del folio con el cargo principal de alojamiento
+                List<Cargo> cargosIniciales = new ArrayList<>();
+                cargosIniciales.add(new Cargo(valor.total(), "Alojamiento", TipoCargo.ALOJAMIENTO, ahora));
+
+                // RNP-02: Cargar el recargo fijo por mascota al folio si la reserva incluye mascotas
+                if (mascotas != null) {
+                        cargosIniciales.add(new Cargo(alojamiento.getRecargoMascota(), "Recargo por mascota", TipoCargo.SERVICIO_ADICIONAL, ahora));
+                }
+
+                folioRepository.guardar(new Folio(codigo, cargosIniciales));
 
                 // 7.8: avisar al titular. Nunca falla: si el correo no sale, la reserva sigue creada (I-05)
                 notificador.reservaCreada(reserva);

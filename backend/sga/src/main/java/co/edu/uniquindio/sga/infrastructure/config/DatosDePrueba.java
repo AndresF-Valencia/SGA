@@ -75,14 +75,6 @@ import java.util.List;
 /**
  * 12.3: al iniciar, el sistema queda con datos suficientes para operar y demostrar.
  * Todo sale de la Ficha del Alojamiento (Anexo A) de SAN ROCCO.
- *
- * Las reservas NO se meten "a la fuerza" en un estado: cada una se crea con
- * Reserva.crear y pasa por los mismos servicios de dominio que en la vida real
- * (confirmar con anticipo, llegada con saldo pagado, salida, no-show, cancelación).
- * Así, si alguna regla cambia, los datos de prueba también la respetan.
- *
- * Las fechas son relativas a HOY, para que los datos tengan sentido el día que se arranque.
- * Se apaga con sga.datos-prueba.habilitado=false. Solo carga si la base no tiene alojamiento.
  */
 @Component
 public class DatosDePrueba implements ApplicationRunner {
@@ -173,7 +165,9 @@ public class DatosDePrueba implements ApplicationRunner {
                 new UmbralEdadFacturable(5),          // los menores de 5 años no pagan
                 new TiempoPreparacion(3),             // 3 h entre salida (11:00) y entrada (14:00)
                 new PlazoConfirmacion(1),             // 1 h para pagar el anticipo
-                true, 50);                            // anticipo del 50 % (RNP-03)
+                true, 50,                             // anticipo del 50 % (RNP-03)
+                Dinero.de(70000));                    // RNP-02: Recargo fijo por mascota
+        
         alojamiento.actualizarFichaDescriptiva("Armenia, Quindío", new BigDecimal("4.5339000"),
                 new BigDecimal("-75.6811000"),
                 new NormasConvivencia("Mascotas permitidas según el límite de cada apartamento. Silencio de 10 p. m. a 7 a. m. "
@@ -182,7 +176,6 @@ public class DatosDePrueba implements ApplicationRunner {
                         new ServicioAdicional("Lavandería", Dinero.de(20000))));
         alojamientos.guardar(alojamiento);
 
-        // 1 semana o más de anticipación: se devuelve el 100 %; menos: se retiene el 100 %
         politica = new PoliticaCancelacion("Política San Rocco v1", List.of(
                 new TramoCancelacion(7, 3650, 100),
                 new TramoCancelacion(0, 6, 0)));
@@ -195,10 +188,6 @@ public class DatosDePrueba implements ApplicationRunner {
 
     private static final List<String> DOTACION = List.of("Cocina", "Wifi", "TV", "Lavadora", "Amoblado");
 
-    /**
-     * Fotos ilustrativas de Unsplash (licencia libre de Unsplash, https://unsplash.com/license).
-     * No son los apartamentos reales; los créditos están en frontend/CREDITOS-FOTOS.md.
-     */
     private static String foto(String id) {
         return "https://images.unsplash.com/photo-" + id + "?auto=format&fit=crop&w=1600&q=80";
     }
@@ -227,24 +216,22 @@ public class DatosDePrueba implements ApplicationRunner {
         caracteristicas.addAll(List.of(extras));
         apartamentos.guardar(new Apartamento(new IdentificacionApartamento(id), nombre,
                 new TiempoPreparacion(3), SANROCCO, new Dormitorio(dormitorios),
-                new CapacidadOcupantes(capacidad), new LimiteMascota(2),   // RNP-02: hasta 2 mascotas
+                new CapacidadOcupantes(capacidad), new LimiteMascota(2),
                 caracteristicas, imagenes));
     }
 
-    /** Tarifa por persona y noche en temporada BAJA. Media = +15 %, Alta = +30 % (Ficha A.3). */
     private static long tarifaBase(String apartamento) {
         return switch (apartamento) {
-            case "AP002" -> 120_000;   // Parejas VIP
-            case "AP005" -> 90_000;    // Parejas
-            case "AP003" -> 70_000;    // Familiar 3
-            case "AP004" -> 65_000;    // Familiar 2
-            default -> 60_000;         // AP001 Familiar 4
+            case "AP002" -> 120_000;
+            case "AP005" -> 90_000;
+            case "AP003" -> 70_000;
+            case "AP004" -> 65_000;
+            default -> 60_000;
         };
     }
 
     // =====================================================================
-    // Temporadas y tarifas (Ficha A.3): cubren del 1 de enero del año pasado
-    // al 31 de diciembre del próximo, sin huecos y sin solaparse
+    // Temporadas y tarifas
     // =====================================================================
 
     private void cargarTemporadasYTarifas(int anio) {
@@ -265,7 +252,6 @@ public class DatosDePrueba implements ApplicationRunner {
                     "Media fiestas Armenia " + y, TipoTemporada.MEDIA));
         }
 
-        // Recortar al rango, ordenar y rellenar los huecos con temporada BAJA
         List<Temporada> todas = new ArrayList<>();
         LocalDate cursor = inicio;
         List<Temporada> ordenadas = especiales.stream()
@@ -299,7 +285,7 @@ public class DatosDePrueba implements ApplicationRunner {
 
     private static Temporada temporada(LocalDate desde, LocalDate hasta, String nombre, TipoTemporada tipo) {
         return new Temporada(new IdentificacionTemporada("T-" + tipo + "-" + desde), new Periodo(desde, hasta),
-                nombre, tipo, tipo == TipoTemporada.ALTA ? new EstanciaMinima(3) : null);   // RNP-01
+                nombre, tipo, tipo == TipoTemporada.ALTA ? new EstanciaMinima(3) : null);
     }
 
     private static long tarifa(long base, TipoTemporada tipo) {
@@ -308,10 +294,9 @@ public class DatosDePrueba implements ApplicationRunner {
             case MEDIA -> 1.15;
             default -> 1.0;
         };
-        return Math.round(base * factor / 1000.0) * 1000;   // redondeado a miles
+        return Math.round(base * factor / 1000.0) * 1000;
     }
 
-    /** Domingo de Pascua (algoritmo de Gauss/Meeus). Semana Santa = la semana anterior. */
     private static LocalDate domingoDePascua(int y) {
         int a = y % 19, b = y / 100, c = y % 100, d = b / 4, e = b % 4;
         int f = (b + 8) / 25, g = (b - f + 1) / 3, h = (19 * a + b - d - g + 15) % 30;
@@ -322,21 +307,20 @@ public class DatosDePrueba implements ApplicationRunner {
     }
 
     // =====================================================================
-    // Canales (7.8)
+    // Canales
     // =====================================================================
 
     private void cargarCanales() {
-        // Credencial de PRUEBA para el simulador de canal (10.3.1), no un secreto real
         canales.guardar(new Canal(new IdentificacionCanal("CANAL-BOOKING"), CanalOrigen.EXTERNO,
                 "Booking (simulado)", "clave-booking-demo"));
     }
 
     // =====================================================================
-    // Reservas: una en cada estado y de los tres canales (12.3)
+    // Reservas
     // =====================================================================
 
     private void cargarReservas(LocalDate hoy) {
-        // FINALIZADA · DIRECTO · AP001: llegó, pagó todo y ya salió (incluye una niña que no paga)
+        // FINALIZADA · DIRECTO · AP001
         Reservada finalizada = crear("AP001", hoy.minusDays(10), CanalOrigen.DIRECTO, 0,
                 "carlos.ramirez@example.com", hoy.minusDays(30).atTime(9, 0), LocalTime.of(15, 0),
                 persona("1094000101", "Carlos Ramírez", 1985), persona("1094000102", "Marta López", 1987),
@@ -345,29 +329,27 @@ public class DatosDePrueba implements ApplicationRunner {
         registrarLlegada(finalizada, hoy.minusDays(10).atTime(15, 0));
         Apartamento ap001 = apto("AP001");
         salida.registrarSalida(finalizada.reserva, ap001, finalizada.folio, null, RECEPCION, hoy.minusDays(7).atTime(10, 30));
-        ap001.marcarEnPreparacion();   // el personal la deja lista otra vez
+        ap001.marcarEnPreparacion();
         ap001.marcarPreparado();
         guardar(finalizada, ap001);
 
-        // EN_CURSO · PORTAL · AP002: la huésped de prueba (Laura) está alojada ahora, con 1 mascota
+        // EN_CURSO · PORTAL · AP002: con 1 mascota (incluye cargo por mascota en la lista inicial del folio)
         Reservada enCurso = crear("AP002", hoy.minusDays(1), CanalOrigen.PORTAL, 1,
                 "huesped@sanrocco.co", hoy.minusDays(20).atTime(20, 0), LocalTime.of(15, 30),
                 persona("1094000001", "Laura Gómez", 1995), persona("1094000002", "Andrés Gómez", 1994));
         confirmarConAnticipo(enCurso, hoy.minusDays(19).atTime(9, 0));
-        enCurso.folio.registrarCargo(new Cargo(Dinero.de(70_000), "Recargo de limpieza por mascota (RNP-02)",
-                TipoCargo.SERVICIO_ADICIONAL, hoy.minusDays(1).atTime(15, 30)));
         registrarLlegada(enCurso, hoy.minusDays(1).atTime(15, 30));
 
-        // NO_SHOW · EXTERNO · AP004: llegó por Booking, pagó el anticipo y nunca se presentó
+        // NO_SHOW · EXTERNO · AP004
         Reservada noPresentada = crear("AP004", hoy.minusDays(3), CanalOrigen.EXTERNO, 0,
                 null, hoy.minusDays(15).atTime(11, 0), LocalTime.of(16, 0),
                 persona("1094000301", "Jennifer Smith", 1990), persona("1094000302", "Mark Smith", 1989));
         confirmarConAnticipo(noPresentada, hoy.minusDays(14).atTime(11, 0));
         noShow.declararNoShow(noPresentada.reserva, noPresentada.folio, alojamiento, RECEPCION,
-                hoy.minusDays(3).atTime(20, 30));   // después de la hora límite (20:00)
+                hoy.minusDays(3).atTime(20, 30));
         guardar(noPresentada, null);
 
-        // CANCELADA · DIRECTO · AP001: canceló con más de una semana de anticipación (se devuelve el 100 %)
+        // CANCELADA · DIRECTO · AP001
         Reservada cancelada = crear("AP001", hoy.plusDays(20), CanalOrigen.DIRECTO, 0,
                 "luis.herrera@example.com", hoy.minusDays(5).atTime(10, 0), LocalTime.of(17, 0),
                 persona("1094000401", "Luis Herrera", 1980), persona("1094000402", "Ana Herrera", 1982),
@@ -377,14 +359,14 @@ public class DatosDePrueba implements ApplicationRunner {
                 "Cambio de planes del huésped", RECEPCION, hoy.minusDays(2).atTime(9, 0));
         guardar(cancelada, null);
 
-        // CONFIRMADA · EXTERNO · AP005: pagó el anticipo, llega en 10 días
+        // CONFIRMADA · EXTERNO · AP005
         Reservada confirmada = crear("AP005", hoy.plusDays(10), CanalOrigen.EXTERNO, 0,
                 "valentina.ruiz@example.com", hoy.minusDays(3).atTime(14, 0), LocalTime.of(14, 30),
                 persona("1094000501", "Valentina Ruiz", 1998), persona("1094000502", "Camilo Díaz", 1997));
         confirmarConAnticipo(confirmada, hoy.minusDays(3).atTime(14, 20));
         guardar(confirmada, null);
 
-        // PENDIENTE · DIRECTO · AP001: recién creada, falta pagar el anticipo
+        // PENDIENTE · DIRECTO · AP001
         Reservada pendiente = crear("AP001", hoy.plusDays(30), CanalOrigen.DIRECTO, 0,
                 "diego.torres@example.com", LocalDateTime.now(), LocalTime.of(16, 0),
                 persona("1094000601", "Diego Torres", 1992), persona("1094000602", "Laura Ríos", 1993),
@@ -392,9 +374,6 @@ public class DatosDePrueba implements ApplicationRunner {
         guardar(pendiente, null);
     }
 
-    // ---------- Ayudas para armar reservas ----------
-
-    /** Reserva + su folio, mientras se arma. */
     private record Reservada(Reserva reserva, Folio folio) {
     }
 
@@ -405,7 +384,6 @@ public class DatosDePrueba implements ApplicationRunner {
         return new Persona(documento, nombre, LocalDate.of(anioNacimiento, 3, 1));
     }
 
-    /** Crea la reserva (3 noches) cotizándola como lo haría CrearReservaUseCase, y abre su folio. */
     private Reservada crear(String apto, LocalDate entrada, CanalOrigen canal, int mascotas, String correo,
                             LocalDateTime creadaEn, LocalTime horaLlegada, Persona... personas) {
         IdentificacionApartamento id = new IdentificacionApartamento(apto);
@@ -418,6 +396,7 @@ public class DatosDePrueba implements ApplicationRunner {
         ValorCongelado valor = cotizador.cotizar(id, estancia, ocupantes, alojamiento.getUmbralEdadFacturable(),
                 temporadas.buscarEntre(entrada, estancia.fechaSalida().minusDays(1)),
                 tarifas.buscarPorApartamento(id));
+        
         Reserva reserva = Reserva.crear(generadorCodigo.siguiente(creadaEn.getYear()), id, estancia,
                 ocupantes.get(0), ocupantes, canal, valor, alojamiento.getVersionPoliticaVigente(), creadaEn,
                 new CantidadMascota(mascotas));
@@ -425,8 +404,15 @@ public class DatosDePrueba implements ApplicationRunner {
             reserva.registrarCorreoContacto(new Correo(correo));
         }
         reserva.indicarHoraEstimadaLlegada(horaLlegada, RECEPCION);
-        Folio folio = new Folio(reserva.getCodigo(),
-                new Cargo(valor.total(), "Alojamiento", TipoCargo.ALOJAMIENTO, creadaEn));
+
+        // Construir la lista inicial de cargos (F-08 y RNP-02)
+        List<Cargo> cargosIniciales = new ArrayList<>();
+        cargosIniciales.add(new Cargo(valor.total(), "Alojamiento", TipoCargo.ALOJAMIENTO, creadaEn));
+        if (mascotas > 0) {
+            cargosIniciales.add(new Cargo(alojamiento.getRecargoMascota(), "Recargo por mascota", TipoCargo.SERVICIO_ADICIONAL, creadaEn));
+        }
+
+        Folio folio = new Folio(reserva.getCodigo(), cargosIniciales);
         return new Reservada(reserva, folio);
     }
 
@@ -441,7 +427,6 @@ public class DatosDePrueba implements ApplicationRunner {
         confirmacion.autorizarConfirmacion(r.reserva, r.folio, alojamiento, cuando.plusMinutes(5), RECEPCION);
     }
 
-    /** RNP-03: el resto se paga al llegar; luego RegistroLlegadaService entrega el apartamento. */
     private void registrarLlegada(Reservada r, LocalDateTime cuando) {
         if (r.folio.saldo().esPositivo()) {
             r.folio.registrarPago(new Pago(r.folio.saldo(), MedioPago.EFECTIVO, cuando));
@@ -463,23 +448,16 @@ public class DatosDePrueba implements ApplicationRunner {
         }
     }
 
-    // =====================================================================
-    // Bloqueos y apartamento fuera de servicio (12.3)
-    // =====================================================================
-
     private void cargarBloqueosYFueraDeServicio(LocalDate hoy) {
-        // AP003 fuera de servicio por daño, con su bloqueo vigente de 15 días
         Apartamento ap003 = apto("AP003");
         ap003.marcarFueraDeServicio();
         apartamentos.guardar(ap003);
         bloqueos.guardar(new Bloqueo(new IdentificacionBloqueo("B-AP003-DANO"), ap003.getIdentificacion(),
                 new Periodo(hoy, hoy.plusDays(15)), MotivoBloqueo.FUERA_DE_SERVICIO));
 
-        // AP004 con mantenimiento programado (vigente)
         bloqueos.guardar(new Bloqueo(new IdentificacionBloqueo("B-AP004-MANT"), new IdentificacionApartamento("AP004"),
                 new Periodo(hoy.plusDays(40), hoy.plusDays(45)), MotivoBloqueo.MANTENIMIENTO));
 
-        // AP002 con una remodelación pasada, ya levantada (historial)
         Bloqueo remodelacion = new Bloqueo(new IdentificacionBloqueo("B-AP002-REMO"),
                 new IdentificacionApartamento("AP002"), new Periodo(hoy.minusDays(60), hoy.minusDays(50)),
                 MotivoBloqueo.REMODELACION);
