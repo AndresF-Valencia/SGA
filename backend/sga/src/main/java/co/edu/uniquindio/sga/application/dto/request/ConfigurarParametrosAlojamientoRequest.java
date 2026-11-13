@@ -53,6 +53,9 @@ public record ConfigurarParametrosAlojamientoRequest(
         @NotNull(message = "El plazo de confirmación es obligatorio")
         Integer horasPlazoConfirmacion,
 
+         @NotNull(message = "El recargo por mascota es obligatorio")
+        Integer recargoMascota,
+
         @NotNull(message = "El umbral de edad es obligatorio")
         Integer edadUmbralFacturable,
 
@@ -60,6 +63,6 @@ public record ConfigurarParametrosAlojamientoRequest(
 
         @Min(value = 0, message = "El porcentaje de anticipo no puede ser negativo")
         @Max(value = 100, message = "El porcentaje de anticipo no puede superar el 100%")
-        int porcentajeAnticipo
+        Integer porcentajeAnticipo
 
 ) {}

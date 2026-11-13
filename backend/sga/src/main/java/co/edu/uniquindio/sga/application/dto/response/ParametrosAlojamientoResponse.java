@@ -30,6 +30,7 @@ public record ParametrosAlojamientoResponse(
         LocalTime horaLimiteNoShow,
         int minutosPreparacion,
         int horasPlazoConfirmacion,
+        int recargoMascota,
         int edadUmbralFacturable,
         boolean exigeAnticipo,
         int porcentajeAnticipo,

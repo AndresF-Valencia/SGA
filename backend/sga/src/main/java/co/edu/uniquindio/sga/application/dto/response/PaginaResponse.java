@@ -29,26 +29,21 @@ public record PaginaResponse<T>(
     public static final int TAMANO_POR_DEFECTO = 10;
 
     /**
-     * Corta una lista completa en la página pedida; página y tamaño fuera de rango se ajustan.
-     *
-     * Por qué existe: el record define el contrato de todos los listados paginados (12.4),
-     * pero nadie lo construía. Con este método cada controlador arma la página en una sola
-     * línea, en vez de repetir la aritmética de subList, totalElementos y totalPaginas, y
-     * todos respetan el mismo tamaño máximo de 10.
-     *
-     * Cómo complementa a las otras clases: el caso de uso devuelve la lista completa del
-     * dominio (sin saber de páginas), el controlador la mapea a su DTO de respuesta y se la
-     * pasa a este método. Lo usa GET /api/temporadas y sirve igual para el historial de
-     * tarifas, las políticas de cancelación y las novedades. Si algún día la lista deja de
-     * caber en memoria, solo habría que reemplazar este método por paginación en el
-     * repositorio, sin cambiar el JSON que ve el cliente.
+     * Corta una lista completa en la página pedida usando siempre y estrictamente el tamaño por defecto (10).
      */
     public static <T> PaginaResponse<T> de(List<T> todos, int pagina, int tamano) {
-        int tam = Math.min(Math.max(tamano, 1), TAMANO_POR_DEFECTO);
+        int tam = TAMANO_POR_DEFECTO; // Forzado siempre a 10 (12.4)
         int pag = Math.max(pagina, 0);
         int desde = (int) Math.min((long) pag * tam, todos.size());
         int hasta = Math.min(desde + tam, todos.size());
         int totalPaginas = (todos.size() + tam - 1) / tam;
         return new PaginaResponse<>(todos.subList(desde, hasta), pag, tam, todos.size(), totalPaginas);
+    }
+
+    /**
+     * Sobrecarga práctica para construir la página omitiendo el parámetro de tamaño.
+     */
+    public static <T> PaginaResponse<T> de(List<T> todos, int pagina) {
+        return de(todos, pagina, TAMANO_POR_DEFECTO);
     }
 }
