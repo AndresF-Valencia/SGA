@@ -24,6 +24,7 @@ export interface Bloqueo {
   fechaInicio: string;
   fechaFin: string;
   motivo: string;
+  estado: 'VIGENTE' | 'LEVANTADO';
 }
 
 export interface ConflictoCanal {
@@ -42,3 +43,29 @@ export interface ConflictoCanal {
 
 export type ApartamentoAdmin = ApartamentoResumen;
 export type RolAdmin = Rol;
+
+// Espejo de NovedadResponse.java: daño o incidencia reportada en un apartamento
+export interface Novedad {
+  identificacionApartamento: string;
+  gravedad: string;
+  descripcion: string;
+  fechaRegistro: string;
+  reportadoPor: string;
+}
+
+// Espejo de ReporteResponse.java (GET /api/reportes)
+export interface ConteoReporte { nombre: string; cantidad: number }
+export interface OcupacionApartamento { identificacion: string; nombre: string; nochesOcupadas: number; porcentajeOcupacion: number }
+export interface Reporte {
+  desde: string;
+  hasta: string;
+  nochesDisponibles: number;
+  nochesOcupadas: number;
+  porcentajeOcupacion: number;
+  ingresos: number;
+  valorReservado: number;
+  totalReservas: number;
+  reservasPorEstado: ConteoReporte[];
+  reservasPorCanal: ConteoReporte[];
+  apartamentos: OcupacionApartamento[];
+}

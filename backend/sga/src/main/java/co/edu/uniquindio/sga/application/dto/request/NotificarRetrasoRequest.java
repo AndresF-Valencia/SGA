@@ -10,6 +10,6 @@ public record NotificarRetrasoRequest(
         LocalTime nuevaHoraEstimadaLlegada,
 
         @NotNull(message = "Debe registrar el motivo del retraso")
-        @Size(max = 500, message = "El motivo o detalle del retraso no puede superar los 500 caracteres")
+        @Size(max = 300, message = "El motivo del retraso no puede superar los 300 caracteres")
         String motivo
 ) {}

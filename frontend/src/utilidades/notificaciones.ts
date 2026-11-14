@@ -28,15 +28,15 @@ export async function confirmarAccion(titulo: string, texto: string): Promise<bo
   return resultado.isConfirmed;
 }
 
-export async function pedirMotivo(titulo: string): Promise<string | null> {
+export async function pedirMotivo(titulo: string, textoBoton = 'Cancelar reserva', ayuda = 'Escribe el motivo de la cancelación'): Promise<string | null> {
   const resultado = await Swal.fire({
     input: 'textarea',
     inputLabel: 'Motivo',
-    inputPlaceholder: 'Escribe el motivo de la cancelación',
-    inputAttributes: { 'aria-label': 'Motivo de la cancelación' },
+    inputPlaceholder: ayuda,
+    inputAttributes: { 'aria-label': ayuda },
     title: titulo,
     showCancelButton: true,
-    confirmButtonText: 'Cancelar reserva',
+    confirmButtonText: textoBoton,
     cancelButtonText: 'Volver',
     inputValidator: (valor) => {
       if (!valor || valor.trim().length < 5) return 'El motivo debe tener al menos 5 caracteres.';

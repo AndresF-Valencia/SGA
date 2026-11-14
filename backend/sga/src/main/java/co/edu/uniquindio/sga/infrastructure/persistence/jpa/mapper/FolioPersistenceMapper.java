@@ -47,8 +47,8 @@ public final class FolioPersistenceMapper {
 
     /**
      * Rearma el folio con sus propios métodos, en el mismo orden en que ocurrió:
-     * se abre con el primer cargo (el de alojamiento), se agregan los demás
-     * cargos y los pagos y, si estaba cerrado, se cierra igual que antes.
+     * se abre con sus cargos (el primero es el de alojamiento), se agregan
+     * los pagos y, si estaba cerrado, se cierra igual que antes.
      */
     public static Folio aDominio(FolioEntity entity) {
         List<Cargo> cargos = new ArrayList<>();
@@ -56,10 +56,8 @@ public final class FolioPersistenceMapper {
             cargos.add(new Cargo(new Dinero(fila.getValor()), fila.getDescripcion(), fila.getTipo(), fila.getFecha()));
         }
 
+        // El constructor ya recibe TODOS los cargos guardados: volver a registrarlos los duplicaría
         Folio folio = new Folio(new CodigoReserva(entity.getReservaCodigo()), cargos);
-        for (Cargo cargo : cargos.subList(1, cargos.size())) {
-            folio.registrarCargo(cargo);
-        }
         for (PagoEmbeddable fila : entity.getPagos()) {
             folio.registrarPago(new Pago(new Dinero(fila.getMonto()), fila.getMedioPago(), fila.getHoraPago()));
         }

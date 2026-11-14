@@ -45,6 +45,17 @@ public record MensajeReserva(String destinatario, String asunto, String cuerpo) 
                         + despedida());
     }
 
+    public static MensajeReserva recordatorio(Reserva reserva) {
+        return new MensajeReserva(destino(reserva),
+                "Te esperamos mañana: reserva " + codigo(reserva) + " - San Rocco",
+                saludo(reserva)
+                        + "Te recordamos que tu llegada es MAÑANA.\n\n"
+                        + resumen(reserva)
+                        + "\nSi vas a llegar más tarde de la hora que indicaste, avísanos desde el detalle de tu "
+                        + "reserva para que no se marque como no presentada.\n"
+                        + despedida());
+    }
+
     // ---------- Partes comunes ----------
 
     private static String destino(Reserva reserva) {

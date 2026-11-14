@@ -47,6 +47,8 @@ tags:
   description: Versiones de la política de cancelación
 - name: Canal Externo
   description: Contrato del canal externo (10.3.1), autenticado con credencial por canal
+- name: Reportes
+  description: Ocupación, ingresos y reservas de un periodo
 
 paths:
 
@@ -1254,9 +1256,72 @@ paths:
           $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
-      description: 'Roles: Administrador. Pendiente de implementar (Corte 3).'
+      description: 'Vigentes y levantados. Roles: Administrador.'
+
+  /api/reportes:
+    get:
+      tags:
+      - Reportes
+      summary: Consultar el reporte de gestión de un periodo
+      operationId: consultarReporte
+      description: 'Ocupación, ingresos y reservas entre dos fechas (ambas incluidas, máximo 366 días). Roles: Administrador.'
+      parameters:
+      - name: desde
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          example: '2026-11-01'
+      - name: hasta
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          example: '2026-11-30'
+      responses:
+        '200':
+          description: Reporte del periodo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReporteResponse'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
 
   /api/bloqueos:
+    get:
+      tags:
+      - Apartamentos y Operación
+      summary: Consultar todos los bloqueos
+      operationId: consultarTodosLosBloqueos
+      description: 'Vigentes y levantados, del más reciente al más antiguo. Roles: Administrador.'
+      parameters:
+      - name: apartamento
+        in: query
+        required: false
+        description: Si se envía, solo los bloqueos de ese apartamento.
+        schema:
+          type: string
+          example: AP003
+      - $ref: '#/components/parameters/Pagina'
+      - $ref: '#/components/parameters/Tamano'
+      responses:
+        '200':
+          description: Página de bloqueos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaBloqueo'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
     post:
       tags:
       - Apartamentos y Operación
@@ -2167,12 +2232,18 @@ components:
     FolioResponse.CargoResumenDto:
       type: object
       properties:
-        id:
-          type: string
-          example: BLOQ-001
         descripcion:
           type: string
-          example: Apartamento familiar con balcón
+          example: Recargo por mascota
+        tipo:
+          type: string
+          example: SERVICIO_ADICIONAL
+          enum:
+          - ALOJAMIENTO
+          - SERVICIO_ADICIONAL
+          - AJUSTE
+          - PENALIDAD_POR_CANCELACION
+          - PENALIDAD_NO_SHOW
         monto:
           type: integer
           format: int64
@@ -2181,16 +2252,24 @@ components:
           type: string
           format: date-time
           example: '2026-10-22T10:00:00-05:00'
-        registradoPor:
+
+    FolioResponse.CierreDto:
+      type: object
+      description: 'RN-17: autorización del cierre con saldo distinto de cero. No viene si el folio cerró en cero.'
+      properties:
+        autor:
           type: string
-          example: recepcion
+          example: recepcion@sanrocco.co
+        motivo:
+          type: string
+          example: Cortesía por la falla del agua caliente
+        fecha:
+          type: string
+          format: date-time
 
     FolioResponse.PagoResumenDto:
       type: object
       properties:
-        id:
-          type: string
-          example: BLOQ-001
         medioPago:
           type: string
           example: EFECTIVO
@@ -2204,11 +2283,8 @@ components:
           example: 300000
         fechaPago:
           type: string
-          format: date
-          example: '2026-10-22'
-        referencia:
-          type: string
-          example: TX-99887766
+          format: date-time
+          example: '2026-10-22T10:00:00-05:00'
 
     ModificarReservaRequest:
       type: object
@@ -2254,14 +2330,10 @@ components:
 
     PublicarPoliticaCancelacionRequest:
       type: object
+      description: El número de versión lo asigna el sistema.
       required:
-      - version
       - tramos
       properties:
-        version:
-          type: string
-          minLength: 1
-          example: '2'
         tramos:
           type: array
           items:
@@ -2537,9 +2609,22 @@ components:
         email:
           type: string
           example: laura@example.com
-        telefono:
+          description: Correo de contacto de la reserva. No viene si la reserva no lo tiene.
+
+    ReservaResponse.RetrasoDto:
+      type: object
+      description: 'RNP-04: aviso de retraso del titular. No viene si no ha avisado.'
+      properties:
+        nuevaHoraEstimada:
           type: string
-          example: '3100000000'
+          format: time
+          example: '21:30:00'
+        motivo:
+          type: string
+          example: El vuelo se retrasó
+        fechaNotificacion:
+          type: string
+          format: date-time
 
     ResolverConflictoCanalRequest:
       type: object
@@ -2614,7 +2699,7 @@ components:
       properties:
         id:
           type: string
-          example: BLOQ-001
+          example: B-AP003-DANO
         identificacionApartamento:
           type: string
           example: AP001
@@ -2628,13 +2713,93 @@ components:
           example: '2027-01-15'
         motivo:
           type: string
-          example: Mantenimiento de la cocina
-        registradoPor:
+          example: MANTENIMIENTO
+          enum:
+          - MANTENIMIENTO
+          - REMODELACION
+          - FUERA_DE_SERVICIO
+        estado:
           type: string
-          example: recepcion
-        fechaCreacion:
+          example: VIGENTE
+          enum:
+          - VIGENTE
+          - LEVANTADO
+
+    ReporteResponse:
+      type: object
+      properties:
+        desde:
           type: string
-          format: date-time
+          format: date
+        hasta:
+          type: string
+          format: date
+        nochesDisponibles:
+          type: integer
+          format: int32
+          example: 150
+        nochesOcupadas:
+          type: integer
+          format: int32
+          example: 64
+        porcentajeOcupacion:
+          type: integer
+          format: int32
+          example: 43
+        ingresos:
+          type: integer
+          format: int64
+          example: 5840000
+          description: Pagos registrados en los folios dentro del periodo.
+        valorReservado:
+          type: integer
+          format: int64
+          example: 7320000
+        totalReservas:
+          type: integer
+          format: int32
+          example: 14
+        reservasPorEstado:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReporteResponse.ConteoDto'
+        reservasPorCanal:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReporteResponse.ConteoDto'
+        apartamentos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReporteResponse.ApartamentoDto'
+
+    ReporteResponse.ConteoDto:
+      type: object
+      properties:
+        nombre:
+          type: string
+          example: CONFIRMADA
+        cantidad:
+          type: integer
+          format: int32
+          example: 4
+
+    ReporteResponse.ApartamentoDto:
+      type: object
+      properties:
+        identificacion:
+          type: string
+          example: AP001
+        nombre:
+          type: string
+          example: Familiar 4
+        nochesOcupadas:
+          type: integer
+          format: int32
+          example: 18
+        porcentajeOcupacion:
+          type: integer
+          format: int32
+          example: 60
 
     CotizacionResponse:
       type: object
@@ -2757,6 +2922,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FolioResponse.PagoResumenDto'
+        autorizacionCierre:
+          $ref: '#/components/schemas/FolioResponse.CierreDto'
 
     NovedadResponse:
       type: object
@@ -2944,20 +3111,13 @@ components:
     PoliticaCancelacionResponse:
       type: object
       properties:
-        id:
-          type: string
-          example: BLOQ-001
+        version:
+          type: integer
+          format: int32
+          example: 2
         nombre:
           type: string
-          example: Familiar
-        descripcion:
-          type: string
-          example: Apartamento familiar con balcón
-        activa:
-          type: boolean
-        fechaCreacion:
-          type: string
-          format: date-time
+          example: Política de cancelación
         tramos:
           type: array
           items:
@@ -3010,10 +3170,8 @@ components:
           type: integer
           format: int64
           example: 600000
-        saldoPendiente:
-          type: integer
-          format: int64
-          example: 300000
+        retraso:
+          $ref: '#/components/schemas/ReservaResponse.RetrasoDto'
         titular:
           $ref: '#/components/schemas/ReservaResponse.TitularResumenDto'
         ocupantes:

@@ -26,8 +26,7 @@ public interface BloqueoMapper {
     @Mapping(target = "fechaInicio", source = "periodo.desde")
     @Mapping(target = "fechaFin", source = "periodo.hasta")
     @Mapping(target = "motivo", source = "motivo")
-    @Mapping(target = "registradoPor", ignore = true)
-    @Mapping(target = "fechaCreacion", ignore = true)
+    @Mapping(target = "estado", source = "estado")
     BloqueoResponse aBloqueo(Bloqueo bloqueo);
 
     /** ==================== CONVERSIONES DE REQUEST ==================== */

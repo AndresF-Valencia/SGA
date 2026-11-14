@@ -1,17 +1,24 @@
+// Espejo de FolioResponse.java. Los movimientos no tienen identificador: una corrección
+// se pide con la descripción del cargo (CorregirMovimientoRequest.movimientoIdOriginal).
+
 export interface CargoFolio {
-  id: string;
   descripcion: string;
-  monto: number;
+  tipo: 'ALOJAMIENTO' | 'SERVICIO_ADICIONAL' | 'AJUSTE' | string;
+  monto: number; // negativo en los ajustes que corrigen un cargo
   fechaRegistro: string;
-  registradoPor: string;
 }
 
 export interface PagoFolio {
-  id: string;
   medioPago: string;
   monto: number;
   fechaPago: string;
-  referencia: string | null;
+}
+
+// RN-17: quién autorizó cerrar el folio con saldo, por qué y cuándo
+export interface CierreFolio {
+  autor: string;
+  motivo: string;
+  fecha: string;
 }
 
 export interface Folio {
@@ -22,4 +29,5 @@ export interface Folio {
   saldoPendiente: number;
   cargos: CargoFolio[];
   pagos: PagoFolio[];
+  autorizacionCierre?: CierreFolio | null;
 }

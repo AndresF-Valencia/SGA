@@ -82,7 +82,13 @@ public final class Escenario {
             new TramoCancelacion(30, 365, 100)));
 
     public static Alojamiento alojamiento() {
-        return alojamiento(LocalTime.of(15, 0), LocalTime.of(11, 0), true, 50, 70000);
+        return alojamiento(LocalTime.of(15, 0), LocalTime.of(11, 0), true, 50);
+    }
+
+    /** Con el recargo por mascota de los datos de prueba (70.000). */
+    public static Alojamiento alojamiento(LocalTime horaEntrada, LocalTime horaSalida,
+                                   boolean exigeAnticipo, int porcentajeAnticipo) {
+        return alojamiento(horaEntrada, horaSalida, exigeAnticipo, porcentajeAnticipo, Dinero.de(70_000));
     }
 
     public static Alojamiento alojamiento(LocalTime horaEntrada, LocalTime horaSalida,
@@ -146,8 +152,8 @@ public final class Escenario {
 
     /** Folio abierto con el cargo de alojamiento por el valor de la reserva. */
     public static Folio folio(Reserva reserva) {
-        return new Folio(reserva.getCodigo(), new Cargo(reserva.getValor().total(),
-                "Alojamiento", TipoCargo.ALOJAMIENTO, AHORA));
+        return new Folio(reserva.getCodigo(), List.of(new Cargo(reserva.getValor().total(),
+                "Alojamiento", TipoCargo.ALOJAMIENTO, AHORA)));
     }
 
     public static Pago pago(long pesos) {

@@ -230,7 +230,13 @@ public class ReservaController {
 
         CodigoReserva codigoReserva = new CodigoReserva(codigo);
         LocalDateTime ahora = LocalDateTime.now();
-        
+
+        // 7.2: el huésped solo notifica el retraso de SU reserva (se verifica el propietario, no solo el rol)
+        if (usuario.esHuesped()) {
+            verificarAccesoReservaUseCase.verificarTitular(codigoReserva,
+                    new DocumentoIdentidad(usuario.documento()));
+        }
+
         // Construir el Value Object con el método de fábrica
         NotificacionRetraso notificacion = NotificacionRetraso.registrar(
                 request.nuevaHoraEstimadaLlegada(),

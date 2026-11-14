@@ -58,6 +58,16 @@ public class GestionarBloqueoUseCase {
     }
 
     /**
+     * Consulta los bloqueos, vigentes y levantados. Sin apartamento devuelve los de todos.
+     */
+    @Transactional(readOnly = true)
+    public List<Bloqueo> listar(IdentificacionApartamento apartamentoId) {
+        return apartamentoId == null
+                ? bloqueoRepository.obtenerTodos()
+                : bloqueoRepository.buscarPorApartamento(apartamentoId);
+    }
+
+    /**
      * Levanta un bloqueo existente de forma lógica (12.4).
      */
     @Transactional

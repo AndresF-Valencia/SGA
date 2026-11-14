@@ -43,9 +43,9 @@ public interface ReservaMapper {
 	@Mapping(target = "fechaSalida", source = "estancia.fechaSalida")
 	@Mapping(target = "fechaCreacion", source = "creadaEn")
 	@Mapping(target = "horaEstimadaLlegada", source = "horaEstimadaLlegada.horaEstimada")
+	@Mapping(target = "retraso", expression = "java(aRetraso(reserva.getNotificacionRetraso()))")
 	@Mapping(target = "valorTotal", source = "valor")
-	@Mapping(target = "saldoPendiente", ignore = true)
-	@Mapping(target = "titular", source = "titular")
+	@Mapping(target = "titular", expression = "java(aTitular(reserva))")
 	@Mapping(target = "ocupantes", source = "ocupantes")
 	@Mapping(target = "cantidadMascotas", source = "cantidadMascotas.cantidad")
 	ReservaResponse aReserva(Reserva reserva);
@@ -62,9 +62,21 @@ public interface ReservaMapper {
 	ReservaResumenResponse aReservaResumen(Reserva reserva);
 
 	// Convierte el titular del dominio en el resumen incluido en la respuesta.
-	@Mapping(target = "email", ignore = true)
-	@Mapping(target = "telefono", ignore = true)
-	ReservaResponse.TitularResumenDto aTitular(Ocupante titular);
+	default ReservaResponse.RetrasoDto aRetraso(NotificacionRetraso retraso) {
+		return retraso == null ? null
+				: new ReservaResponse.RetrasoDto(retraso.nuevaHoraEstimada(), retraso.motivo(),
+						retraso.fechaHoraNotificacion());
+	}
+
+	// El correo no es del ocupante sino de la reserva (correo de contacto); puede no existir.
+	default ReservaResponse.TitularResumenDto aTitular(Reserva reserva) {
+		Ocupante titular = reserva.getTitular();
+		String correo = reserva.getCorreoContacto() == null ? null : reserva.getCorreoContacto().valor();
+		return new ReservaResponse.TitularResumenDto(
+				titular.getNombre(),
+				aDocumento(titular.getDocumento()),
+				correo);
+	}
 
 	// Convierte un ocupante del dominio en el DTO de respuesta correspondiente.
 	ReservaResponse.OcupanteResumenDto aOcupante(Ocupante ocupante);

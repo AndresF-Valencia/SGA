@@ -60,12 +60,18 @@ export interface CrearReservaRequest {
   cantidadMascotas: number;
 }
 
-// Espejo de: ReservaResponse.TitularResumenDto (email y teléfono llegan null hoy)
+// Espejo de: ReservaResponse.TitularResumenDto. El correo es el de contacto de la reserva
 export interface TitularResumen {
   nombre: string;
   documento: string;
-  email: string | null;
-  telefono: string | null;
+  email?: string | null;
+}
+
+// Espejo de: ReservaResponse.RetrasoDto (RNP-04). Solo llega si el titular avisó
+export interface RetrasoReserva {
+  nuevaHoraEstimada: string; // "21:30:00"
+  motivo: string;
+  fechaNotificacion: string;
 }
 
 // Espejo de: ReservaResponse.OcupanteResumenDto
@@ -86,8 +92,8 @@ export interface ReservaResponse {
   fechaSalida: string;
   fechaCreacion: string;
   horaEstimadaLlegada: string | null;
-  valorTotal: number; // pesos, sin decimales (Long en Java)
-  saldoPendiente: number | null; // hoy siempre null: el saldo está en el folio
+  retraso?: RetrasoReserva | null;
+  valorTotal: number; // pesos, sin decimales (Long en Java). El saldo está en el folio
   titular: TitularResumen;
   ocupantes: OcupanteResumen[];
   cantidadMascotas: number;

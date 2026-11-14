@@ -51,7 +51,7 @@ public class PoliticaCancelacionController {
         VersionPolitica nuevaVersion = publicarPoliticaUseCase.ejecutar(politica);
 
         // 3. Mapear la respuesta y construir la URI de ubicación con la versión asignada
-        PoliticaCancelacionResponse response = politicaMapper.aPolitica(politica);
+        PoliticaCancelacionResponse response = politicaMapper.aPolitica(nuevaVersion, politica);
         
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{version}")
@@ -72,7 +72,7 @@ public class PoliticaCancelacionController {
         Map<Integer, PoliticaCancelacionResponse> responseMap = historial.entrySet().stream()
                 .collect(Collectors.toMap(
                         entry -> entry.getKey().numero(),
-                        entry -> politicaMapper.aPolitica(entry.getValue())
+                        entry -> politicaMapper.aPolitica(entry.getKey(), entry.getValue())
                 ));
 
         return ResponseEntity.ok(responseMap);

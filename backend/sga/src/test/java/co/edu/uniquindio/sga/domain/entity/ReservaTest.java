@@ -80,7 +80,8 @@ class ReservaTest {
                 new TiempoPreparacion(3), // en horas (máximo 24),
                 new PlazoConfirmacion(24),
                 true,
-                50);
+                50,
+                Dinero.de(70_000));
     }
 
     // ---------- Ayudantes ----------

@@ -6,11 +6,13 @@ import co.edu.uniquindio.sga.application.dto.request.CrearApartamentoRequest;
 import co.edu.uniquindio.sga.application.dto.request.RegistrarNovedadRequest;
 import co.edu.uniquindio.sga.application.dto.response.ApartamentoDetalleResponse;
 import co.edu.uniquindio.sga.application.dto.response.ApartamentoEstadoResponse;
+import co.edu.uniquindio.sga.application.dto.response.BloqueoResponse;
 import co.edu.uniquindio.sga.application.dto.response.NovedadResponse;
 import co.edu.uniquindio.sga.application.dto.response.PaginaResponse;
 import co.edu.uniquindio.sga.application.exception.AccesoDenegadoException;
 import co.edu.uniquindio.sga.application.usecase.CambiarEstadoOperativoUseCase;
 import co.edu.uniquindio.sga.application.usecase.GestionarApartamentoUseCase;
+import co.edu.uniquindio.sga.application.usecase.GestionarBloqueoUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarNovedadUseCase;
 import co.edu.uniquindio.sga.domain.valueobject.CapacidadOcupantes;
 import co.edu.uniquindio.sga.domain.valueobject.Dormitorio;
@@ -21,6 +23,7 @@ import co.edu.uniquindio.sga.domain.valueobject.TiempoPreparacion;
 import co.edu.uniquindio.sga.domain.valueobject.Rol;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
 import co.edu.uniquindio.sga.infrastructure.rest.mapper.ApartamentoMapper;
+import co.edu.uniquindio.sga.infrastructure.rest.mapper.BloqueoMapper;
 import co.edu.uniquindio.sga.infrastructure.security.UsuarioAutenticado;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -54,6 +57,8 @@ public class ApartamentoController {
     private final GestionarApartamentoUseCase gestionarApartamentoUseCase;
     private final ApartamentoMapper apartamentoMapper;
     private final RegistrarNovedadUseCase registrarNovedadUseCase;
+    private final GestionarBloqueoUseCase gestionarBloqueoUseCase;
+    private final BloqueoMapper bloqueoMapper;
 
     @PostMapping
     @Operation(summary = "Crear un apartamento", description = "Se crea inactivo; se activa cuando tenga tarifas completas.")
@@ -170,12 +175,28 @@ public class ApartamentoController {
                         ap.getIdentificacion().valor(),
                         ap.getNombre(),
                         ap.getEstadoOperativo().name(),
-                        null, // Código de reserva actual si aplica
+                        gestionarApartamentoUseCase.codigoReservaEnCurso(ap.getIdentificacion()),
                         ap.getNovedades().isEmpty() ? "Sin novedades"
                                 : ap.getNovedades().get(ap.getNovedades().size() - 1).descripcion()))
                 .toList();
 
         return ResponseEntity.ok(new ApartamentoEstadoResponse(detalles.size(), detalles));
+    }
+
+    @GetMapping("/{identificacion}/bloqueos")
+    @Operation(summary = "Consultar los bloqueos de un apartamento", description = "Vigentes y levantados. Roles: Administrador.")
+    @ApiResponse(responseCode = "200", description = "Página de bloqueos")
+    @ApiResponse(responseCode = "404", description = "Apartamento no encontrado")
+    public ResponseEntity<PaginaResponse<BloqueoResponse>> consultarBloqueos(
+            @PathVariable String identificacion,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        // obtener() responde 404 si el apartamento no existe
+        var apartamento = gestionarApartamentoUseCase.obtener(new IdentificacionApartamento(identificacion));
+        List<BloqueoResponse> bloqueos = gestionarBloqueoUseCase.listar(apartamento.getIdentificacion()).stream()
+                .map(bloqueo -> bloqueoMapper.aBloqueo(bloqueo))
+                .toList();
+        return ResponseEntity.ok(PaginaResponse.de(bloqueos, page, size));
     }
 
     @PostMapping("/{identificacion}/novedades")
