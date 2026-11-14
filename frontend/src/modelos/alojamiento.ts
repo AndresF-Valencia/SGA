@@ -21,5 +21,6 @@ export interface Alojamiento {
   edadUmbralFacturable: number;
   exigeAnticipo: boolean;
   porcentajeAnticipo: number;
+  recargoMascota: number;
   versionPoliticaVigente: number;
 }
