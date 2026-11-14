@@ -10,6 +10,7 @@ import co.edu.uniquindio.sga.domain.port.CifradorContrasena;
 import co.edu.uniquindio.sga.domain.port.NotificadorReserva;
 import co.edu.uniquindio.sga.domain.repository.UsuarioRepository;
 import co.edu.uniquindio.sga.application.usecase.CancelarReservaUseCase;
+import co.edu.uniquindio.sga.application.usecase.RegistrarEventoCanalUseCase;
 import co.edu.uniquindio.sga.application.usecase.EnviarRecordatoriosLlegadaUseCase;
 import co.edu.uniquindio.sga.application.usecase.GenerarReporteUseCase;
 import co.edu.uniquindio.sga.application.usecase.CerrarFolioUseCase;
@@ -43,6 +44,7 @@ import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
 import co.edu.uniquindio.sga.domain.repository.ApartamentoRepository;
 import co.edu.uniquindio.sga.domain.repository.BloqueoRepository;
 import co.edu.uniquindio.sga.domain.repository.ConflictoCanalRepository;
+import co.edu.uniquindio.sga.domain.repository.EventoCanalRepository;
 import co.edu.uniquindio.sga.domain.repository.FolioRepository;
 import co.edu.uniquindio.sga.domain.port.NotificadorUsuario;
 import co.edu.uniquindio.sga.application.usecase.AdministrarUsuariosUseCase;
@@ -327,6 +329,11 @@ public class UseCaseConfig {
     public ResolverConflictoCanalUseCase resolverConflictoCanalUseCase(
             ConflictoCanalRepository conflictoCanalRepository) {
         return new ResolverConflictoCanalUseCase(conflictoCanalRepository);
+    }
+
+    @Bean
+    public RegistrarEventoCanalUseCase registrarEventoCanalUseCase(EventoCanalRepository eventoCanalRepository) {
+        return new RegistrarEventoCanalUseCase(eventoCanalRepository);
     }
 
     // ---------- Usuarios y sesión (7.2) ----------

@@ -99,7 +99,7 @@ public class SecurityConfig {
                         // ---------- Solo administrador ----------
                         .requestMatchers("/api/usuarios/**", "/api/alojamiento/**", "/api/apartamentos/**",
                                 "/api/bloqueos/**", "/api/temporadas/**", "/api/politicas-cancelacion/**",
-                                "/api/conflictos-canal/**", "/api/reportes/**").hasRole(ADMINISTRADOR)
+                                "/api/conflictos-canal/**", "/api/eventos-canal/**", "/api/reportes/**").hasRole(ADMINISTRADOR)
 
                         // Cualquier otra ruta: al menos haber iniciado sesión
                         .anyRequest().authenticated())

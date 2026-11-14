@@ -1676,6 +1676,28 @@ paths:
         '403':
           $ref: '#/components/responses/SinPermiso'
 
+  /api/eventos-canal:
+    get:
+      tags:
+      - Canal Externo
+      summary: Consultar la bitácora de eventos de los canales (7.8)
+      operationId: listarEventosCanal
+      description: 'Cada consulta, reserva y cancelación que envió un canal externo, con su resultado, del más reciente al más antiguo (los 500 más recientes). También quedan los mensajes con credencial inválida. Roles: Administrador.'
+      parameters:
+      - $ref: '#/components/parameters/Pagina'
+      - $ref: '#/components/parameters/Tamano'
+      responses:
+        '200':
+          description: Página de eventos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaEventoCanalResponse'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+
   /api/conflictos-canal/{id}/resolver:
     put:
       tags:
@@ -3554,6 +3576,60 @@ components:
         totalPaginas:
           type: integer
           format: int32
+
+    PaginaEventoCanalResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventoCanalResponse'
+        pagina:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+
+    EventoCanalResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 3f0c2a6e-7d1b-4c58-9a3e-5b1f0a2d9c11
+        canal:
+          type: string
+          example: Booking
+          description: Nombre del canal, o "Sin identificar" si la credencial no era válida.
+        operacion:
+          type: string
+          example: RESERVA_EXTERNA
+          enum:
+          - CONSULTA_DISPONIBILIDAD
+          - RESERVA_EXTERNA
+          - CANCELACION_EXTERNA
+        codigoExterno:
+          type: string
+          example: BKG-998877
+          description: No viene en las consultas de disponibilidad.
+        resultado:
+          type: string
+          example: EXITOSO
+          enum:
+          - EXITOSO
+          - RECHAZADO
+        detalle:
+          type: string
+          example: 'AP005, del 2026-11-24 al 2026-11-27. Reserva creada: RES-2026-00002'
+        fecha:
+          type: string
+          format: date-time
   responses:
 
     DatosInvalidos:
