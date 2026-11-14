@@ -1,6 +1,5 @@
 package co.edu.uniquindio.sga.application.dto.response;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -14,11 +13,8 @@ import java.util.List;
  */
 public record PoliticaCancelacionResponse(
 
-        String id,
+        int version,
         String nombre,
-        String descripcion,
-        boolean activa,
-        LocalDateTime fechaCreacion,
         List<TramoPoliticaDto> tramos
 
 ) {

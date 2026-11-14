@@ -20,3 +20,10 @@ export async function cerrarFolio(codigo: string, datos: { autor: string; motivo
   const respuesta = await api.put<Folio>(`/reservas/${codigo}/folio/cerrar`, datos);
   return respuesta.data;
 }
+
+// RN-16: un cargo no se borra; se registra un ajuste inverso con su motivo.
+// El backend identifica el cargo por su descripción.
+export async function corregirCargo(codigo: string, descripcionCargo: string, motivo: string): Promise<Folio> {
+  const respuesta = await api.post<Folio>(`/reservas/${codigo}/folio/correcciones`, { movimientoIdOriginal: descripcionCargo, motivo });
+  return respuesta.data;
+}

@@ -128,13 +128,18 @@ function revisarTramos(tramos: TramoFila[]): string | null {
 // Política de cancelación (POST /api/politicas-cancelacion): una versión nueva con sus tramos.
 // Cada tramo dice cuánto se retiene si el huésped cancela con esos días de anticipación.
 export function AdminPolitica() {
-  const [version, setVersion] = useState('2');
+  // La versión la asigna el backend; aquí solo se muestra la que está vigente
+  const [versionVigente, setVersionVigente] = useState<number | null>(null);
   const [tramos, setTramos] = useState<TramoFila[]>([
     { diasMinimo: 0, diasMaximo: 6, porcentajeRetencion: 100 },
     { diasMinimo: 7, diasMaximo: 9999, porcentajeRetencion: 0 },
   ]);
   const [aviso, setAviso] = useState<string | null>(null);
   const [publicando, setPublicando] = useState(false);
+
+  useEffect(() => {
+    obtenerParametrosAlojamiento().then((datos) => setVersionVigente(datos.versionPoliticaVigente ?? null)).catch(() => setVersionVigente(null));
+  }, []);
 
   function cambiarTramo(indice: number, cambio: Partial<TramoFila>) {
     setTramos((actuales) => actuales.map((t, i) => (i === indice ? { ...t, ...cambio } : t)));
@@ -153,8 +158,9 @@ export function AdminPolitica() {
     if (problema) return;
     setPublicando(true);
     try {
-      await publicarPolitica({ version: version.trim(), tramos });
-      await notificarExito(`Política versión ${version.trim()} publicada.`);
+      await publicarPolitica({ tramos });
+      setVersionVigente((actual) => (actual === null ? null : actual + 1));
+      await notificarExito('Política publicada. Las reservas nuevas ya la usan.');
     } catch (e: unknown) {
       await notificarError(mensajeDeError(e));
     } finally {
@@ -170,10 +176,9 @@ export function AdminPolitica() {
         Las versiones anteriores se conservan para las reservas que ya las tenían.
       </p>
 
-      <div className="mb-3" style={{ maxWidth: '12rem' }}>
-        <label className="form-label" htmlFor="politica-version">Versión</label>
-        <input id="politica-version" className="form-control" value={version} onChange={(e) => setVersion(e.target.value)} required />
-      </div>
+      {versionVigente !== null && (
+        <p className="small mb-3">Hoy está vigente la <strong>versión {versionVigente}</strong>. Al publicar se crea la versión {versionVigente + 1}.</p>
+      )}
 
       <div className="table-responsive">
         <table className="table align-middle mb-2">

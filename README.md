@@ -162,20 +162,24 @@ Si el correo falla o tarda más de 5 segundos, **la reserva se crea igual** y el
 |---|---|
 | Modelo de dominio: 11 agregados y entidades, 41 value objects, `ReglaDominioException` | ✅ |
 | Servicios de dominio (disponibilidad, cotizador, estancia mínima, confirmación, llegada, salida, cancelación, no-show, modificación, bloqueos) | ✅ |
-| Casos de uso: 21, en `application/usecase` | ✅ |
+| Casos de uso en `application/usecase`, incluidos reportes y recordatorios | ✅ |
 | DTOs de request y response (records) | ✅ |
-| Contrato de la API: 54 operaciones en `docs/api/openapi.yaml`, con seguridad, roles y 401/403 por ruta | ✅ |
+| Contrato de la API en `docs/api/openapi.yaml`, con seguridad, roles y 401/403 por ruta | ✅ |
 | Beans de Spring: `UseCaseConfig` y `DomainServiceConfig` | ✅ |
 | **Persistencia JPA en MySQL (Docker) de todos los repositorios; H2 en las pruebas** | ✅ |
-| Controllers REST, mappers REST y `GlobalExceptionHandler` | ✅ (faltan novedades, correcciones del folio y tablero de estados: Corte 3) |
+| Controllers REST, mappers REST y `GlobalExceptionHandler` | ✅ |
 | Datos de prueba al iniciar (12.3): alojamiento, apartamentos, temporadas, tarifas, política, canal, bloqueos y reservas en todos los estados | ✅ |
 | Seguridad: usuarios, registro, login con JWT, roles por endpoint y verificación del propietario. El token deja de servir si el usuario se elimina y usa el rol actual si se lo cambian | ✅ |
 | Perfil, cambio y recuperación de contraseña, eliminación lógica, listar usuarios y cambiar rol | ✅ |
 | Canal externo: credencial (`X-Canal-Credencial`), idempotencia, conflictos registrados y simulador `.http` (10.3.1) | ✅ |
 | Vencimiento automático de reservas pendientes (cada minuto) | ✅ |
+| Recordatorio de llegada por correo, todos los días a las 9:00 a. m. (`sga.recordatorios.cron`) | ✅ |
+| Reporte de gestión: ocupación, ingresos y reservas de un periodo (`GET /api/reportes`) | ✅ |
+| Bloqueos (listar y levantar), novedades, tablero de estados, correcciones del folio y aviso de retraso (RNP-04) | ✅ |
+| Recargo de mascotas en el folio (RNP-02) y autorización del cierre con saldo (RN-17) | ✅ |
 | Notificación por correo al crear, confirmar y cancelar (integración de salida, 10.3.2) | ✅ |
 | Asistente con IA (10.2) | ⬜ |
-| Frontend en React: búsqueda, detalle, cotización, reserva, mis reservas, folio, preparación y administración | ✅ |
+| Frontend en React: búsqueda, detalle, cotización, reserva, mis reservas, folio, preparación con novedades, administración y reportes | ✅ |
 
 ## 4. Arquitectura
 
@@ -313,10 +317,7 @@ Con el backend y el front encendidos, este recorrido toca todo el ciclo de una r
 
 ## 9. Pendientes
 
-- [ ] Endpoints de Corte 3 que ya están en el contrato: novedades, bloqueos por apartamento, correcciones del folio y tablero de estados.
-- [ ] Bitácora de eventos intercambiados con los canales (7.8).
-- [ ] Leer el plazo de confirmación desde `Alojamiento` en `VencerReservasPendientesUseCase`, en lugar de `application.properties`, para no tenerlo en dos lugares.
-- [ ] Ajustes de DTOs: gravedad de la novedad, autor y motivo en las autorizaciones (RN-17), y `horaEstimadaLlegada` en `CrearReservaRequest`.
+- [ ] Bitácora de eventos intercambiados con los canales (7.8), si sigue en el alcance.
 
 ## 10. Documentación
 

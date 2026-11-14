@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga.infrastructure.config;
 
+import co.edu.uniquindio.sga.application.usecase.EnviarRecordatoriosLlegadaUseCase;
 import co.edu.uniquindio.sga.application.usecase.VencerReservasPendientesUseCase;
 import co.edu.uniquindio.sga.domain.entity.Reserva;
 import org.slf4j.Logger;
@@ -9,7 +10,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 /**
@@ -30,9 +33,30 @@ public class TareasProgramadas {
     private static final Logger log = LoggerFactory.getLogger(TareasProgramadas.class);
 
     private final VencerReservasPendientesUseCase vencerReservasPendientesUseCase;
+    private final EnviarRecordatoriosLlegadaUseCase enviarRecordatoriosLlegadaUseCase;
 
-    public TareasProgramadas(VencerReservasPendientesUseCase vencerReservasPendientesUseCase) {
+    public TareasProgramadas(VencerReservasPendientesUseCase vencerReservasPendientesUseCase,
+                             EnviarRecordatoriosLlegadaUseCase enviarRecordatoriosLlegadaUseCase) {
         this.vencerReservasPendientesUseCase = vencerReservasPendientesUseCase;
+        this.enviarRecordatoriosLlegadaUseCase = enviarRecordatoriosLlegadaUseCase;
+    }
+
+    /**
+     * Recordatorio de llegada: todos los días a las 9:00 a. m. (hora de Colombia) se le avisa
+     * a quien tiene una reserva confirmada con entrada al día siguiente.
+     * El horario se cambia con sga.recordatorios.cron; con el valor "-" queda apagado.
+     */
+    @Scheduled(cron = "${sga.recordatorios.cron:0 0 9 * * *}", zone = "America/Bogota")
+    public void recordarLlegadas() {
+        try {
+            List<Reserva> avisadas = enviarRecordatoriosLlegadaUseCase.ejecutar(
+                    LocalDate.now(ZoneId.of("America/Bogota")));
+            if (!avisadas.isEmpty()) {
+                log.info("Se enviaron {} recordatorio(s) de llegada", avisadas.size());
+            }
+        } catch (RuntimeException e) {
+            log.error("Falló el envío de recordatorios de llegada", e);
+        }
     }
 
     @Scheduled(initialDelayString = "${sga.vencimiento.retraso-inicial-ms:3600000}",

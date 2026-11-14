@@ -2,7 +2,9 @@ package co.edu.uniquindio.sga.infrastructure.rest.controller;
 
 import co.edu.uniquindio.sga.application.dto.request.CrearBloqueoRequest;
 import co.edu.uniquindio.sga.application.dto.response.BloqueoResponse;
+import co.edu.uniquindio.sga.application.dto.response.PaginaResponse;
 import co.edu.uniquindio.sga.application.usecase.GestionarBloqueoUseCase;
+import co.edu.uniquindio.sga.domain.valueobject.IdentificacionApartamento;
 import co.edu.uniquindio.sga.domain.valueobject.IdentificacionBloqueo;
 import co.edu.uniquindio.sga.domain.valueobject.MotivoBloqueo;
 import co.edu.uniquindio.sga.infrastructure.rest.mapper.BloqueoMapper;
@@ -12,14 +14,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -52,6 +57,23 @@ public class BloqueoController {
                                 .buildAndExpand(response.id())
                                 .toUri();
                 return ResponseEntity.created(location).body(response);
+        }
+
+        @GetMapping
+        @Operation(summary = "Consultar los bloqueos", description = "Vigentes y levantados, del más reciente al más antiguo. Con el parámetro 'apartamento' devuelve solo los de esa unidad.")
+        @ApiResponse(responseCode = "200", description = "Página de bloqueos")
+        public ResponseEntity<PaginaResponse<BloqueoResponse>> consultarBloqueos(
+                        @RequestParam(required = false) String apartamento,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size) {
+                IdentificacionApartamento filtro = (apartamento == null || apartamento.isBlank())
+                                ? null
+                                : new IdentificacionApartamento(apartamento.trim());
+                List<BloqueoResponse> bloqueos = gestionarBloqueoUseCase.listar(filtro).stream()
+                                .sorted((a, b) -> b.getPeriodo().desde().compareTo(a.getPeriodo().desde()))
+                                .map(bloqueo -> bloqueoMapper.aBloqueo(bloqueo))
+                                .toList();
+                return ResponseEntity.ok(PaginaResponse.de(bloqueos, page, size));
         }
 
         @PutMapping("/{id}/levantar")

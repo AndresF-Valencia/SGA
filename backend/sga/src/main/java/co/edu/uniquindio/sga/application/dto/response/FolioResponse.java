@@ -16,29 +16,32 @@ import java.util.List;
  * para mantener la consistencia financiera estricta del dominio.
  */
 public record FolioResponse(
-
         String codigoReserva,
         String estadoFolio,
         Long subtotalCargos,
         Long totalPagos,
         Long saldoPendiente,
         List<CargoResumenDto> cargos,
-        List<PagoResumenDto> pagos
-
+        List<PagoResumenDto> pagos,
+        CierreDto autorizacionCierre
 ) {
     public record CargoResumenDto(
-            String id,
             String descripcion,
+            String tipo,
             Long monto,
-            LocalDateTime fechaRegistro,
-            String registradoPor
+            LocalDateTime fechaRegistro
     ) {}
 
     public record PagoResumenDto(
-            String id,
             String medioPago,
             Long monto,
-            LocalDateTime fechaPago,
-            String referencia
+            LocalDateTime fechaPago
+    ) {}
+
+    /** RN-17: quién autorizó cerrar el folio con saldo, por qué y cuándo. Nulo si no hubo autorización. */
+    public record CierreDto(
+            String autor,
+            String motivo,
+            LocalDateTime fecha
     ) {}
 }

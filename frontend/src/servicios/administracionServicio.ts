@@ -1,4 +1,5 @@
-import type { ApartamentoAdmin, Bloqueo, ConflictoCanal, PaginaUsuarios, Temporada } from '../modelos/administracion';
+import type { ApartamentoAdmin, Bloqueo, ConflictoCanal, PaginaUsuarios, Reporte, Temporada } from '../modelos/administracion';
+import type { Pagina } from '../modelos/pagina';
 import type { Alojamiento } from '../modelos/alojamiento';
 import type { UsuarioResponse } from '../modelos/usuario';
 import { api } from './api';
@@ -106,4 +107,20 @@ export async function listarConflictos(pagina = 0): Promise<{ contenido: Conflic
 
 export async function resolverConflicto(id: string, resolucion: string): Promise<void> {
   await api.put(`/conflictos-canal/${id}/resolver`, { resolucion });
+}
+
+export async function listarBloqueos(pagina = 0, apartamento = ''): Promise<Pagina<Bloqueo>> {
+  const respuesta = await api.get<Pagina<Bloqueo>>('/bloqueos', { params: { page: pagina, size: 10, apartamento: apartamento || undefined } });
+  return respuesta.data;
+}
+
+// El bloqueo no se borra: queda levantado y las noches vuelven a estar disponibles
+export async function levantarBloqueo(id: string): Promise<Bloqueo> {
+  const respuesta = await api.put<Bloqueo>(`/bloqueos/${encodeURIComponent(id)}/levantar`);
+  return respuesta.data;
+}
+
+export async function obtenerReporte(desde: string, hasta: string): Promise<Reporte> {
+  const respuesta = await api.get<Reporte>('/reportes', { params: { desde, hasta } });
+  return respuesta.data;
 }

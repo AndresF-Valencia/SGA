@@ -29,6 +29,11 @@ public class NotificadorReservaConsola implements NotificadorReserva {
         escribir(MensajeReserva.cancelada(reserva));
     }
 
+    @Override
+    public void recordatorioLlegada(Reserva reserva) {
+        escribir(MensajeReserva.recordatorio(reserva));
+    }
+
     private void escribir(MensajeReserva mensaje) {
         if (mensaje.destinatario() == null) {
             log.info("Aviso no enviado: la reserva no tiene correo de contacto ({})", mensaje.asunto());

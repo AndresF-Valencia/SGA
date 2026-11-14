@@ -11,6 +11,7 @@ import co.edu.uniquindio.sga.application.dto.request.RegistrarPagoRequest;
 import co.edu.uniquindio.sga.application.dto.response.FolioResponse;
 import co.edu.uniquindio.sga.domain.entity.Folio;
 import co.edu.uniquindio.sga.domain.entity.Pago;
+import co.edu.uniquindio.sga.domain.valueobject.AutorizacionCierre;
 import co.edu.uniquindio.sga.domain.valueobject.Cargo;
 import co.edu.uniquindio.sga.domain.valueobject.Dinero;
 
@@ -31,22 +32,26 @@ public interface FolioMapper {
     @Mapping(target = "saldoPendiente", expression = "java(aDinero(folio.saldo()))")
     @Mapping(target = "cargos", source = "cargos")
     @Mapping(target = "pagos", source = "pagos")
+    @Mapping(target = "autorizacionCierre", expression = "java(aCierre(folio.getAutorizacionCierre()))")
     FolioResponse aFolio(Folio folio);
 
+    // RN-17: la autorización solo existe cuando el folio se cerró con saldo distinto de cero.
+    default FolioResponse.CierreDto aCierre(AutorizacionCierre autorizacion) {
+        return autorizacion == null ? null
+                : new FolioResponse.CierreDto(autorizacion.autor(), autorizacion.motivo(), autorizacion.fecha());
+    }
+
     // Convierte un cargo del folio en el resumen de cargo de la respuesta.
-    @Mapping(target = "id", ignore = true)
     @Mapping(target = "descripcion", source = "descripcion")
+    @Mapping(target = "tipo", source = "tipo")
     @Mapping(target = "monto", source = "valor")
     @Mapping(target = "fechaRegistro", source = "fecha")
-    @Mapping(target = "registradoPor", ignore = true)
     FolioResponse.CargoResumenDto aCargo(Cargo cargo);
 
     // Convierte un pago del folio en el resumen de pago de la respuesta.
-    @Mapping(target = "id", ignore = true)
     @Mapping(target = "medioPago", source = "medioPago")
     @Mapping(target = "monto", source = "monto")
     @Mapping(target = "fechaPago", source = "horaPago")
-    @Mapping(target = "referencia", ignore = true)
     FolioResponse.PagoResumenDto aPago(Pago pago);
 
     /** ==================== CONVERSIONES DE REQUEST ==================== */

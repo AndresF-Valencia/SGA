@@ -18,4 +18,8 @@ public interface NotificadorReserva {
     void reservaConfirmada(Reserva reserva);
 
     void reservaCancelada(Reserva reserva);
+
+    /** Recordatorio de que la llegada es mañana. Por defecto no hace nada, para no obligar a cada implementación. */
+    default void recordatorioLlegada(Reserva reserva) {
+    }
 }

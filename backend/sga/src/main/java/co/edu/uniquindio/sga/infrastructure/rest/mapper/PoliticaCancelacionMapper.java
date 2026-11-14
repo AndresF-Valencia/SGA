@@ -23,13 +23,14 @@ public interface PoliticaCancelacionMapper {
     /** ==================== DOMINIO -> RESPONSE ==================== */
 
     // Convierte la política del dominio en su respuesta plana.
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "nombre", source = "nombre")
-    @Mapping(target = "descripcion", ignore = true)
-    @Mapping(target = "activa", ignore = true)
-    @Mapping(target = "fechaCreacion", ignore = true)
-    @Mapping(target = "tramos", source = "tramos")
-    PoliticaCancelacionResponse aPolitica(PoliticaCancelacion politica);
+    default PoliticaCancelacionResponse aPolitica(VersionPolitica version, PoliticaCancelacion politica) {
+        Objects.requireNonNull(version, "La versión de la política es obligatoria");
+        Objects.requireNonNull(politica, "La política es obligatoria");
+        List<PoliticaCancelacionResponse.TramoPoliticaDto> tramos = politica.tramos().stream()
+                .map(tramo -> aTramo(tramo))
+                .toList();
+        return new PoliticaCancelacionResponse(version.numero(), politica.nombre(), tramos);
+    }
 
     // Convierte un tramo del dominio, que almacena devolución, en retención.
     @Mapping(target = "diasMinimosAnticipacion", source = "diasMinimosAnticipacion")
@@ -39,11 +40,6 @@ public interface PoliticaCancelacionMapper {
 
     /** ==================== CONVERSIONES DE REQUEST ==================== */
 
-    // Convierte la versión textual del request en su objeto de valor.
-    default VersionPolitica aVersion(PublicarPoliticaCancelacionRequest request) {
-        Objects.requireNonNull(request, "El request de política es obligatorio");
-        return new VersionPolitica(Integer.parseInt(request.version()));
-    }
 
     // Convierte todos los tramos del request en value objects del dominio.
     default List<TramoCancelacion> aTramos(PublicarPoliticaCancelacionRequest request) {

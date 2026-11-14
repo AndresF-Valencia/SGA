@@ -2,7 +2,6 @@ package co.edu.uniquindio.sga.application.dto.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
@@ -11,11 +10,9 @@ import java.util.List;
  * Mapea al endpoint: PUT /api/politica-cancelacion/versiones.
  * 
  * Nota de diseño: Crea una nueva versión de la política y conserva las anteriores (F-07, RN-22).
+ * El número de versión lo asigna el sistema: el cliente solo envía los tramos.
  */
 public record PublicarPoliticaCancelacionRequest(
-
-        @NotBlank(message = "La versión de la política es obligatoria")
-        String version,
 
         @NotEmpty(message = "La política debe contener al menos un tramo de retención")
         @Valid

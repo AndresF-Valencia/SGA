@@ -26,8 +26,8 @@ public record ReservaResponse(
         LocalDate fechaSalida,
         LocalDateTime fechaCreacion,
         LocalTime horaEstimadaLlegada,
+        RetrasoDto retraso,
         Long valorTotal,
-        Long saldoPendiente,
         TitularResumenDto titular,
         List<OcupanteResumenDto> ocupantes,
         int cantidadMascotas
@@ -36,8 +36,14 @@ public record ReservaResponse(
     public record TitularResumenDto(
             String nombre,
             String documento,
-            String email,
-            String telefono
+            String email
+    ) {}
+
+    /** RNP-04: aviso de retraso del titular; nulo si no ha avisado. */
+    public record RetrasoDto(
+            LocalTime nuevaHoraEstimada,
+            String motivo,
+            LocalDateTime fechaNotificacion
     ) {}
 
     public record OcupanteResumenDto(

@@ -4,11 +4,11 @@ import { Cargando } from '../componentes/Cargando';
 import { Puerta } from '../componentes/Puerta';
 import { EstadoReservaBadge } from '../componentes/EstadoReservaBadge';
 import type { Alojamiento } from '../modelos/alojamiento';
-import type { Folio } from '../modelos/folio';
+import type { CargoFolio, Folio } from '../modelos/folio';
 import type { ReservaResponse } from '../modelos/reserva';
 import { obtenerAlojamiento } from '../servicios/alojamientoServicio';
-import { cerrarFolio, obtenerFolio, registrarCargo, registrarPago } from '../servicios/folioServicio';
-import { cancelarReserva, confirmarReserva, declararNoShow, modificarReserva, obtenerReserva, registrarLlegada, registrarSalida } from '../servicios/reservaServicio';
+import { cerrarFolio, corregirCargo, obtenerFolio, registrarCargo, registrarPago } from '../servicios/folioServicio';
+import { cancelarReserva, confirmarReserva, declararNoShow, modificarReserva, notificarRetraso, obtenerReserva, registrarLlegada, registrarSalida } from '../servicios/reservaServicio';
 import { mensajeDeError } from '../utilidades/errores';
 import { formatearFecha, formatearPesos } from '../utilidades/formato';
 import { etiquetaCanal } from '../utilidades/identidad';
@@ -31,6 +31,9 @@ export default function DetalleReserva() {
   const [salida, setSalida] = useState({ motivo: '', observaciones: '' });
   const [cargo, setCargo] = useState({ concepto: '', monto: 0 });
   const [pago, setPago] = useState({ monto: 0, medioPago: 'EFECTIVO', fechaPago: FECHA_HOY });
+  // RNP-04: aviso de retraso del titular
+  const [avisandoRetraso, setAvisandoRetraso] = useState(false);
+  const [retraso, setRetraso] = useState({ nuevaHoraEstimadaLlegada: '', motivo: '' });
 
   useEffect(() => {
     obtenerAlojamiento().then(setAlojamiento).catch(() => setAlojamiento(null));
@@ -121,8 +124,24 @@ export default function DetalleReserva() {
     } catch (e: unknown) { await notificarError(mensajeDeError(e)); }
   }
 
+  async function avisarRetraso(evento: React.FormEvent) {
+    evento.preventDefault();
+    await ejecutarReserva(() => notificarRetraso(codigo, { nuevaHoraEstimadaLlegada: retraso.nuevaHoraEstimadaLlegada, motivo: retraso.motivo.trim() }), 'Aviso de retraso registrado.');
+    setAvisandoRetraso(false);
+  }
+
+  // RN-16: el cargo no se borra; queda un ajuste inverso con el motivo
+  async function corregir(cargoOriginal: CargoFolio) {
+    const motivo = await pedirMotivo(`Corregir "${cargoOriginal.descripcion}"`, 'Registrar corrección', 'Explica por qué se corrige este cargo');
+    if (!motivo) return;
+    try {
+      setFolio(await corregirCargo(codigo, cargoOriginal.descripcion, motivo));
+      await notificarExito('Corrección registrada.');
+    } catch (e: unknown) { await notificarError(mensajeDeError(e)); }
+  }
+
   async function cerrar() {
-    const motivo = await pedirMotivo('Motivo para cerrar el folio');
+    const motivo = await pedirMotivo('Motivo para cerrar el folio', 'Cerrar folio', 'Escribe el motivo del cierre');
     if (!motivo) return;
     try {
       setFolio(await cerrarFolio(codigo, { autor: sesion?.correo ?? '', motivo, observaciones: '' }));
@@ -141,6 +160,9 @@ export default function DetalleReserva() {
   // Mismo cálculo que ConfirmacionReservaService: porcentaje del valor total
   const anticipo = alojamiento?.exigeAnticipo ? Math.ceil((reserva.valorTotal * alojamiento.porcentajeAnticipo) / 100) : null;
   const avisoPago = tieneRol('HUESPED') && reserva.estadoReserva === 'PENDIENTE';
+  const puedeAvisarRetraso = ['PENDIENTE', 'CONFIRMADA'].includes(reserva.estadoReserva);
+  // Un cargo ya corregido tiene un ajuste que lo nombra: no se ofrece corregirlo otra vez
+  const yaCorregido = (c: CargoFolio) => folio?.cargos.some((otro) => otro.tipo === 'AJUSTE' && otro.descripcion.startsWith(`Corrección (${c.descripcion})`)) ?? false;
   const MEDIOS: Record<string, string> = { EFECTIVO: 'Efectivo', TARJETA_CREDITO: 'Tarjeta de crédito', TARJETA_DEBITO: 'Tarjeta débito' };
 
   return (
@@ -192,9 +214,24 @@ export default function DetalleReserva() {
                 <div><dt>Grupo</dt><dd>{reserva.ocupantes.length === 1 ? '1 persona' : `${reserva.ocupantes.length} personas`}{reserva.cantidadMascotas > 0 && `, ${reserva.cantidadMascotas === 1 ? '1 mascota' : `${reserva.cantidadMascotas} mascotas`}`}</dd></div>
                 <div><dt>Origen</dt><dd>{etiquetaCanal(reserva.canalOrigen)}{reserva.codigoExterno && <span className="text-body-secondary"> ({reserva.codigoExterno})</span>}</dd></div>
                 <div><dt>Valor de la estancia</dt><dd className="fs-5 fw-bold cifra">{formatearPesos(reserva.valorTotal)}</dd></div>
+                {reserva.retraso && (
+                  <div><dt>Aviso de retraso</dt><dd>Llega hacia las {reserva.retraso.nuevaHoraEstimada.slice(0, 5)}<span className="text-body-secondary d-block small">{reserva.retraso.motivo}</span></dd></div>
+                )}
               </dl>
             </div>
           </div>
+
+          {avisandoRetraso && puedeAvisarRetraso && (
+            <form className="card card-body mb-4" onSubmit={(evento) => void avisarRetraso(evento)}>
+              <h2 className="h5">Avisar que la llegada se retrasa</h2>
+              <p className="text-body-secondary small">Con este aviso la reserva no se marca como no presentada mientras llega el grupo.</p>
+              <div className="row g-2">
+                <div className="col-md-4"><label className="form-label" htmlFor="ret-hora">Nueva hora de llegada</label><input id="ret-hora" type="time" className="form-control" value={retraso.nuevaHoraEstimadaLlegada} onChange={(e) => setRetraso({ ...retraso, nuevaHoraEstimadaLlegada: e.target.value })} required /></div>
+                <div className="col-md-8"><label className="form-label" htmlFor="ret-motivo">Motivo</label><input id="ret-motivo" className="form-control" maxLength={300} placeholder="Ej.: el vuelo se retrasó" value={retraso.motivo} onChange={(e) => setRetraso({ ...retraso, motivo: e.target.value })} required /></div>
+              </div>
+              <button className="btn btn-primary mt-3 align-self-start">Enviar aviso</button>
+            </form>
+          )}
 
           {esRecepcion && editando && (
             <form className="card card-body mb-4" onSubmit={(evento) => void modificar(evento)}>
@@ -231,11 +268,26 @@ export default function DetalleReserva() {
                 <table className="table table-sm align-middle mb-3">
                   <thead><tr><th>Concepto</th><th className="text-end">Valor</th></tr></thead>
                   <tbody>
-                    {folio.cargos.map((c) => <tr key={`c-${c.id}`}><td>{c.descripcion}</td><td className="text-end cifra">{formatearPesos(c.monto)}</td></tr>)}
-                    {folio.pagos.map((p) => <tr key={`p-${p.id}`} className="text-success"><td>Pago, {MEDIOS[p.medioPago] ?? p.medioPago}</td><td className="text-end cifra">−{formatearPesos(p.monto)}</td></tr>)}
+                    {folio.cargos.map((c, indice) => (
+                      <tr key={`c-${indice}`} className={c.tipo === 'AJUSTE' ? 'text-body-secondary' : undefined}>
+                        <td>
+                          {c.descripcion}
+                          {esRecepcion && folio.estadoFolio === 'ABIERTO' && c.tipo === 'SERVICIO_ADICIONAL' && c.monto > 0 && !yaCorregido(c) && (
+                            <button type="button" className="btn btn-link btn-sm py-0 ms-2 align-baseline" onClick={() => void corregir(c)}>Corregir</button>
+                          )}
+                        </td>
+                        <td className="text-end cifra">{c.monto < 0 ? `−${formatearPesos(Math.abs(c.monto))}` : formatearPesos(c.monto)}</td>
+                      </tr>
+                    ))}
+                    {folio.pagos.map((p, indice) => <tr key={`p-${indice}`} className="text-success"><td>Pago, {MEDIOS[p.medioPago] ?? p.medioPago}</td><td className="text-end cifra">−{formatearPesos(p.monto)}</td></tr>)}
                   </tbody>
                   <tfoot><tr><th>Saldo pendiente</th><th className="text-end fs-5 cifra">{formatearPesos(folio.saldoPendiente)}</th></tr></tfoot>
                 </table>
+                {folio.autorizacionCierre && (
+                  <p className="small text-body-secondary mb-3">
+                    Se cerró con saldo pendiente. Lo autorizó {folio.autorizacionCierre.autor} el {formatearFecha(folio.autorizacionCierre.fecha.slice(0, 10))}: {folio.autorizacionCierre.motivo}
+                  </p>
+                )}
                 {esRecepcion && folio.estadoFolio === 'ABIERTO' && (
                   <div className="row g-3">
                     <form className="col-12 col-md-6" onSubmit={(evento) => void agregarCargo(evento)}>
@@ -266,6 +318,7 @@ export default function DetalleReserva() {
               {esRecepcion && reserva.estadoReserva === 'PENDIENTE' && <button type="button" className="btn btn-primary" onClick={() => void confirmar()}>Confirmar reserva</button>}
               {esRecepcion && reserva.estadoReserva === 'CONFIRMADA' && <button type="button" className="btn btn-primary" onClick={() => void llegada()}>Registrar llegada</button>}
               <button type="button" className="btn btn-outline-primary" onClick={() => void verFolio()}>{folio ? 'Actualizar folio' : 'Ver folio'}</button>
+              {puedeAvisarRetraso && <button type="button" className="btn btn-outline-secondary" aria-expanded={avisandoRetraso} onClick={() => setAvisandoRetraso(!avisandoRetraso)}>{avisandoRetraso ? 'Cerrar aviso de retraso' : 'Avisar retraso'}</button>}
               {esRecepcion && ['PENDIENTE', 'CONFIRMADA'].includes(reserva.estadoReserva) && <button type="button" className="btn btn-outline-secondary" onClick={() => setEditando(!editando)}>{editando ? 'Cerrar modificación' : 'Modificar estancia'}</button>}
               {esRecepcion && ['CONFIRMADA', 'EN_CURSO'].includes(reserva.estadoReserva) && <button type="button" className="btn btn-outline-secondary" onClick={() => void noShow()}>Marcar no-show</button>}
               {esRecepcion && folio?.estadoFolio === 'ABIERTO' && <button type="button" className="btn btn-outline-secondary" onClick={() => void cerrar()}>Cerrar folio</button>}

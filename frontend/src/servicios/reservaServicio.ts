@@ -80,3 +80,10 @@ export async function listarMisReservas(estado?: EstadoReserva, pagina = 0): Pro
   });
   return respuesta.data;
 }
+
+
+// RNP-04: el titular avisa que llega más tarde; con el aviso no se le puede marcar no-show
+export async function notificarRetraso(codigo: string, datos: { nuevaHoraEstimadaLlegada: string; motivo: string }): Promise<ReservaResponse> {
+  const respuesta = await api.put<ReservaResponse>(`/reservas/${codigo}/notificar-retraso`, datos);
+  return respuesta.data;
+}

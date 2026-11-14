@@ -7,6 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 import co.edu.uniquindio.sga.application.exception.AlojamientoNoEncontradoException;
 import co.edu.uniquindio.sga.application.exception.ApartamentoNoEncontradoException;
 import co.edu.uniquindio.sga.domain.entity.Apartamento;
+import co.edu.uniquindio.sga.domain.valueobject.EstadoReserva;
+import co.edu.uniquindio.sga.domain.entity.Reserva;
 import co.edu.uniquindio.sga.domain.entity.Temporada;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.repository.AlojamientoRepository;
@@ -75,6 +77,17 @@ public class GestionarApartamentoUseCase {
     @Transactional(readOnly = true)
     public List<Apartamento> listar() {
         return apartamentoRepository.listar();
+    }
+
+    /** Código de la reserva que ocupa hoy el apartamento (EN_CURSO), o null si está libre. */
+    @Transactional(readOnly = true)
+    public String codigoReservaEnCurso(IdentificacionApartamento id) {
+        for (Reserva reserva : reservaRepository.buscarActivasPorApartamento(id)) {
+            if (reserva.getEstado() == EstadoReserva.EN_CURSO) {
+                return reserva.getCodigo().valor();
+            }
+        }
+        return null;
     }
 
     @Transactional

@@ -1,7 +1,6 @@
 package co.edu.uniquindio.sga.application.dto.response;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * DTO de respuesta que encapsula el detalle de un bloqueo de apartamento (CU-17).
@@ -20,7 +19,6 @@ public record BloqueoResponse(
         LocalDate fechaInicio,
         LocalDate fechaFin,
         String motivo,
-        String registradoPor,
-        LocalDateTime fechaCreacion
+        String estado
 
 ) {}

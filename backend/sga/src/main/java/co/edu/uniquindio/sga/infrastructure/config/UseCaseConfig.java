@@ -10,6 +10,8 @@ import co.edu.uniquindio.sga.domain.port.CifradorContrasena;
 import co.edu.uniquindio.sga.domain.port.NotificadorReserva;
 import co.edu.uniquindio.sga.domain.repository.UsuarioRepository;
 import co.edu.uniquindio.sga.application.usecase.CancelarReservaUseCase;
+import co.edu.uniquindio.sga.application.usecase.EnviarRecordatoriosLlegadaUseCase;
+import co.edu.uniquindio.sga.application.usecase.GenerarReporteUseCase;
 import co.edu.uniquindio.sga.application.usecase.CerrarFolioUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfigurarParametrosAlojamientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConfirmarReservaUseCase;
@@ -157,6 +159,21 @@ public class UseCaseConfig {
             ReservaRepository reservaRepository,
             AlojamientoRepository alojamientoRepository) {
         return new VencerReservasPendientesUseCase(reservaRepository, alojamientoRepository);
+    }
+
+    @Bean
+    public EnviarRecordatoriosLlegadaUseCase enviarRecordatoriosLlegadaUseCase(
+            ReservaRepository reservaRepository,
+            NotificadorReserva notificador) {
+        return new EnviarRecordatoriosLlegadaUseCase(reservaRepository, notificador);
+    }
+
+    @Bean
+    public GenerarReporteUseCase generarReporteUseCase(
+            ReservaRepository reservaRepository,
+            ApartamentoRepository apartamentoRepository,
+            FolioRepository folioRepository) {
+        return new GenerarReporteUseCase(reservaRepository, apartamentoRepository, folioRepository);
     }
 
     @Bean

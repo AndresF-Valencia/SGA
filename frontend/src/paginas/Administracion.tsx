@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { AdminApartamentos } from '../componentes/administracion/AdminApartamentos';
 import { AdminAlojamiento, AdminConflictos, AdminPolitica } from '../componentes/administracion/AdminConfiguracion';
 import { AdminBloqueos } from '../componentes/administracion/AdminBloqueos';
+import { AdminReportes } from '../componentes/administracion/AdminReportes';
 import { AdminTemporadas } from '../componentes/administracion/AdminTemporadas';
 import { AdminUsuarios } from '../componentes/administracion/AdminUsuarios';
 
-type Seccion = 'usuarios' | 'apartamentos' | 'temporadas' | 'bloqueos' | 'alojamiento' | 'politica' | 'conflictos';
+type Seccion = 'usuarios' | 'apartamentos' | 'temporadas' | 'bloqueos' | 'alojamiento' | 'politica' | 'conflictos' | 'reportes';
 
 const SECCIONES: { id: Seccion; titulo: string }[] = [
   { id: 'usuarios', titulo: 'Usuarios' },
@@ -15,6 +16,7 @@ const SECCIONES: { id: Seccion; titulo: string }[] = [
   { id: 'alojamiento', titulo: 'Alojamiento' },
   { id: 'politica', titulo: 'Política' },
   { id: 'conflictos', titulo: 'Conflictos' },
+  { id: 'reportes', titulo: 'Reportes' },
 ];
 
 export default function Administracion() {
@@ -29,5 +31,6 @@ export default function Administracion() {
     {seccion === 'alojamiento' && <AdminAlojamiento />}
     {seccion === 'politica' && <AdminPolitica />}
     {seccion === 'conflictos' && <AdminConflictos />}
+    {seccion === 'reportes' && <AdminReportes />}
   </section>;
 }

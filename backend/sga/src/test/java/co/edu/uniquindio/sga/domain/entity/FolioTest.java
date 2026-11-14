@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga.domain.entity;
 
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -30,7 +31,7 @@ class FolioTest {
 
     @BeforeEach
     void setUp() {
-        folio = new Folio(RESERVA, cargo(600_000, TipoCargo.ALOJAMIENTO));
+        folio = new Folio(RESERVA, List.of(cargo(600_000, TipoCargo.ALOJAMIENTO)));
     }
 
     // ---------- Ayudantes ----------
@@ -65,7 +66,7 @@ class FolioTest {
     void exigeReservaYCargo() {
         Cargo alojamiento = cargo(600_000, TipoCargo.ALOJAMIENTO);
 
-        assertThrows(ReglaDominioException.class, () -> new Folio(null, alojamiento));
+        assertThrows(ReglaDominioException.class, () -> new Folio(null, List.of(alojamiento)));
         assertThrows(ReglaDominioException.class, () -> new Folio(RESERVA, null));
     }
 
@@ -73,9 +74,9 @@ class FolioTest {
     @DisplayName("F-08: solo se abre con un cargo de tipo alojamiento")
     void soloAbreConAlojamiento() {
         assertThrows(ReglaDominioException.class,
-                () -> new Folio(RESERVA, cargo(50_000, TipoCargo.SERVICIO_ADICIONAL)));
+                () -> new Folio(RESERVA, List.of(cargo(50_000, TipoCargo.SERVICIO_ADICIONAL))));
         assertThrows(ReglaDominioException.class,
-                () -> new Folio(RESERVA, cargo(100_000, TipoCargo.PENALIDAD_NO_SHOW)));
+                () -> new Folio(RESERVA, List.of(cargo(100_000, TipoCargo.PENALIDAD_NO_SHOW))));
     }
 
     // ---------- Saldo y pagos (RN-15) ----------
