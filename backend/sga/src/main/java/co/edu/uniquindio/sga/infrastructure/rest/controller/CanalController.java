@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga.application.dto.request.RecibirReservaExternaReques
 import co.edu.uniquindio.sga.application.dto.request.ResolverConflictoCanalRequest;
 import co.edu.uniquindio.sga.application.dto.response.ConflictoCanalResponse;
 import co.edu.uniquindio.sga.application.dto.response.DisponibilidadResponse;
+import co.edu.uniquindio.sga.application.dto.response.EventoCanalResponse;
 import co.edu.uniquindio.sga.application.dto.response.PaginaResponse;
 import co.edu.uniquindio.sga.application.dto.response.ReservaResponse;
 import co.edu.uniquindio.sga.application.exception.ReservaNoEncontradaException;
@@ -13,9 +14,11 @@ import co.edu.uniquindio.sga.application.usecase.ConsultarDisponibilidadUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarDisponibilidadUseCase.Criterios;
 import co.edu.uniquindio.sga.application.usecase.ConsultarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.RecibirReservaExternaUseCase;
+import co.edu.uniquindio.sga.application.usecase.RegistrarEventoCanalUseCase;
 import co.edu.uniquindio.sga.application.usecase.ResolverConflictoCanalUseCase;
 import co.edu.uniquindio.sga.domain.entity.Canal;
 import co.edu.uniquindio.sga.domain.entity.ConflictoCanal;
+import co.edu.uniquindio.sga.domain.entity.EventoCanal;
 import co.edu.uniquindio.sga.domain.entity.Ocupante;
 import co.edu.uniquindio.sga.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga.domain.valueobject.CantidadMascota;
@@ -28,6 +31,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,6 +64,7 @@ import java.util.List;
 public class CanalController {
 
     private static final String CREDENCIAL = "X-Canal-Credencial";
+    private static final Logger log = LoggerFactory.getLogger(CanalController.class);
 
     private final AutenticarCanalUseCase autenticarCanalUseCase;
     private final ConsultarDisponibilidadUseCase consultarDisponibilidadUseCase;
@@ -66,6 +72,7 @@ public class CanalController {
     private final RecibirReservaExternaUseCase recibirReservaExternaUseCase;
     private final CancelarReservaUseCase cancelarReservaUseCase;
     private final ResolverConflictoCanalUseCase resolverConflictoUseCase;
+    private final RegistrarEventoCanalUseCase registrarEventoCanalUseCase;
     private final ReservaMapper reservaMapper;
 
     /** 1. Consultar disponibilidad para un rango de fechas y una composición de grupo. */
@@ -81,8 +88,21 @@ public class CanalController {
             @RequestParam(defaultValue = "0") int mascotas,
             @RequestParam(name = "page", defaultValue = "0") int pagina,
             @RequestParam(name = "size", defaultValue = "10") int tamano) {
-        autenticarCanalUseCase.ejecutar(credencial);
+        Canal canal = autenticar(credencial, EventoCanal.CONSULTA_DISPONIBILIDAD, null);
+        String consulta = "Del " + fechaEntrada + " al " + fechaSalida + ", " + personas + " persona(s)";
+        try {
+            DisponibilidadResponse respuesta = disponibilidad(fechaEntrada, fechaSalida, personas, mascotas, pagina, tamano);
+            bitacora(canal.getNombre(), EventoCanal.CONSULTA_DISPONIBILIDAD, null, true,
+                    consulta + ": " + respuesta.totalDisponibles() + " apartamento(s) disponible(s)");
+            return ResponseEntity.ok(respuesta);
+        } catch (RuntimeException e) {
+            bitacora(canal.getNombre(), EventoCanal.CONSULTA_DISPONIBILIDAD, null, false, consulta + ". " + e.getMessage());
+            throw e;
+        }
+    }
 
+    private DisponibilidadResponse disponibilidad(LocalDate fechaEntrada, LocalDate fechaSalida, int personas,
+            int mascotas, int pagina, int tamano) {
         var dtos = consultarDisponibilidadUseCase.buscar(new Criterios(
                         fechaEntrada, fechaSalida, personas, new CantidadMascota(mascotas),
                         null, null, null, null)).stream()
@@ -95,8 +115,8 @@ public class CanalController {
                         r.tarifaPorNoche()))
                 .toList();
         PaginaResponse<DisponibilidadResponse.ApartamentoDisponibleDto> p = PaginaResponse.de(dtos, pagina, tamano);
-        return ResponseEntity.ok(new DisponibilidadResponse(fechaEntrada, fechaSalida,
-                (int) p.totalElementos(), p.contenido(), p.pagina(), p.tamano(), p.totalPaginas()));
+        return new DisponibilidadResponse(fechaEntrada, fechaSalida,
+                (int) p.totalElementos(), p.contenido(), p.pagina(), p.tamano(), p.totalPaginas());
     }
 
     /**
@@ -113,9 +133,23 @@ public class CanalController {
     public ResponseEntity<ReservaResponse> recibirReservaExterna(
             @RequestHeader(value = CREDENCIAL, required = false) String credencial,
             @Valid @RequestBody RecibirReservaExternaRequest request) {
-        Canal canal = autenticarCanalUseCase.ejecutar(credencial);
-        boolean repetida = existe(request.codigoExterno());
+        Canal canal = autenticar(credencial, EventoCanal.RESERVA_EXTERNA, request.codigoExterno());
+        String pedido = request.identificacionApartamento() + ", del " + request.fechaEntrada() + " al " + request.fechaSalida();
+        try {
+            boolean repetida = existe(request.codigoExterno());
+            ReservaResponse respuesta = crearReservaExterna(canal, request);
+            bitacora(canal.getNombre(), EventoCanal.RESERVA_EXTERNA, request.codigoExterno(), true,
+                    pedido + (repetida ? ". Mensaje repetido: se devolvió la reserva " : ". Reserva creada: ")
+                            + respuesta.codigoReserva());
+            return ResponseEntity.status(repetida ? HttpStatus.OK : HttpStatus.CREATED).body(respuesta);
+        } catch (RuntimeException e) {
+            bitacora(canal.getNombre(), EventoCanal.RESERVA_EXTERNA, request.codigoExterno(), false,
+                    pedido + ". Rechazada: " + e.getMessage());
+            throw e;
+        }
+    }
 
+    private ReservaResponse crearReservaExterna(Canal canal, RecibirReservaExternaRequest request) {
         LocalDate hoy = LocalDate.now();
         Ocupante titular = new Ocupante(new DocumentoIdentidad(request.titular().documento()),
                 request.titular().nombre(), request.titular().fechaNacimiento(), hoy);
@@ -133,8 +167,7 @@ public class CanalController {
                 ocupantes,
                 new CantidadMascota(request.cantidadMascotas()),
                 LocalDateTime.now());
-        return ResponseEntity.status(repetida ? HttpStatus.OK : HttpStatus.CREATED)
-                .body(reservaMapper.aReserva(reserva));
+        return reservaMapper.aReserva(reserva);
     }
 
     /** 3. Cancelar una reserva externa previamente creada. */
@@ -148,10 +181,33 @@ public class CanalController {
             @RequestHeader(value = CREDENCIAL, required = false) String credencial,
             @PathVariable String codigoExterno,
             @RequestParam(defaultValue = "Cancelación solicitada por el canal") String motivo) {
-        Canal canal = autenticarCanalUseCase.ejecutar(credencial);
-        var reserva = cancelarReservaUseCase.ejecutarPorCodigoExterno(
-                codigoExterno, motivo, LocalDateTime.now(), "CANAL " + canal.getNombre());
-        return ResponseEntity.ok(reservaMapper.aReserva(reserva));
+        Canal canal = autenticar(credencial, EventoCanal.CANCELACION_EXTERNA, codigoExterno);
+        try {
+            var reserva = cancelarReservaUseCase.ejecutarPorCodigoExterno(
+                    codigoExterno, motivo, LocalDateTime.now(), "CANAL " + canal.getNombre());
+            bitacora(canal.getNombre(), EventoCanal.CANCELACION_EXTERNA, codigoExterno, true,
+                    "Reserva " + reserva.getCodigo().valor() + " cancelada. Motivo: " + motivo);
+            return ResponseEntity.ok(reservaMapper.aReserva(reserva));
+        } catch (RuntimeException e) {
+            bitacora(canal.getNombre(), EventoCanal.CANCELACION_EXTERNA, codigoExterno, false,
+                    "No se canceló: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    /** Bitácora de eventos intercambiados con los canales (administrador, 7.8). Usa JWT. */
+    @GetMapping("/eventos-canal")
+    @Operation(summary = "Consultar la bitácora de eventos de los canales",
+            description = "Cada consulta, reserva y cancelación que envió un canal externo, con su resultado. Roles: Administrador.")
+    @ApiResponse(responseCode = "200", description = "Página de eventos, del más reciente al más antiguo")
+    public ResponseEntity<PaginaResponse<EventoCanalResponse>> listarEventos(
+            @RequestParam(name = "page", defaultValue = "0") int pagina,
+            @RequestParam(name = "size", defaultValue = "10") int tamano) {
+        List<EventoCanalResponse> eventos = registrarEventoCanalUseCase.listar().stream()
+                .map(e -> new EventoCanalResponse(e.getId(), e.getCanal(), e.getOperacion(), e.getCodigoExterno(),
+                        e.fueExitoso() ? "EXITOSO" : "RECHAZADO", e.getDetalle(), e.getOcurridoEn()))
+                .toList();
+        return ResponseEntity.ok(PaginaResponse.de(eventos, pagina, tamano));
     }
 
     /** Conflictos de canal registrados (administrador, 7.8). Este sí usa JWT. */
@@ -182,6 +238,25 @@ public class CanalController {
                 c.getFechaEntrada(), c.getFechaSalida(), c.getTitularNombre(), c.getTitularDocumento(),
                 c.getMotivo(), c.getRecibidoEn(), c.estaResuelto() ? "RESUELTO" : "PENDIENTE",
                 c.getResolucion(), c.getResueltoPor(), c.getResueltoEn());
+    }
+
+    /** Valida la credencial; si no corresponde a ningún canal, el intento también queda en la bitácora. */
+    private Canal autenticar(String credencial, String operacion, String codigoExterno) {
+        try {
+            return autenticarCanalUseCase.ejecutar(credencial);
+        } catch (RuntimeException e) {
+            bitacora(null, operacion, codigoExterno, false, "Credencial de canal inválida");
+            throw e;
+        }
+    }
+
+    /** Nunca interrumpe la operación del canal: si la bitácora falla, solo queda en el log. */
+    private void bitacora(String canal, String operacion, String codigoExterno, boolean exitoso, String detalle) {
+        try {
+            registrarEventoCanalUseCase.registrar(canal, operacion, codigoExterno, exitoso, detalle, LocalDateTime.now());
+        } catch (RuntimeException e) {
+            log.error("No se pudo registrar el evento de canal {}: {}", operacion, e.getMessage());
+        }
     }
 
     private boolean existe(String codigoExterno) {
