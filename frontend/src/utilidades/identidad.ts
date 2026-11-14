@@ -83,6 +83,7 @@ export const ETIQUETA_CAMPO: Record<string, string> = {
   horasPlazoConfirmacion: 'Plazo para confirmar (horas)',
   edadUmbralFacturable: 'Edad desde la que se cobra',
   porcentajeAnticipo: 'Anticipo (%)',
+  recargoMascota: 'Recargo por mascotas ($)',
 };
 
 // Fotos del lugar para la portada (Unsplash, licencia libre). Créditos en CREDITOS-FOTOS.md

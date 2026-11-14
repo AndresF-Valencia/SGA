@@ -327,3 +327,23 @@ Con el backend y el front encendidos, este recorrido toca todo el ciclo de una r
 ## Equipo
 
 Juan Pablo Espinosa · Andrés F. Valencia · Mateo Gómez Marulanda
+---
+
+## Despliegue (Render + Vercel)
+
+El backend corre en Render con el `Dockerfile` de `backend/sga`, y el front en Vercel desde `frontend/`.
+
+**Variables de entorno del backend (Render → Environment):**
+
+| Variable | Valor |
+|---|---|
+| `SGA_DB_URL`, `SGA_DB_USUARIO`, `SGA_DB_CLAVE` | Conexión a la base MySQL en la nube |
+| `SGA_JWT_SECRETO` | Un texto fijo de 32 caracteres o más. **Sin él, las sesiones se caen cada vez que Render reinicia el servicio.** |
+| `SGA_CORS_ORIGENES` | La dirección del front, sin `/` al final. Ej.: `https://sga.vercel.app`. Admite comodines y varias separadas por coma: `https://sga.vercel.app,https://sga-*.vercel.app` |
+| `SGA_CHAT_TRAS_PROXY` | `true` (Render pone un proxy delante; así el límite del chat es por visitante) |
+| `GEMINI_API_KEY` | La clave del asistente |
+| `SPRING_PROFILES_ACTIVE` | `prod` |
+
+**Front (Vercel):** la dirección del backend está en `frontend/.env.production` y **debe terminar en `/api`**. Si en Vercel existe una variable `VITE_API_URL`, tiene que ser la misma (`https://sga-fsvy.onrender.com/api`) o hay que borrarla.
+
+> El plan gratuito de Render apaga el servicio tras 15 minutos sin uso: la primera petición después puede tardar cerca de un minuto.

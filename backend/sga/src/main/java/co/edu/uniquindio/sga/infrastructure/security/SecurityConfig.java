@@ -113,7 +113,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource(
             @Value("${sga.cors.origenes:http://localhost:5173}") List<String> origenes) {
         CorsConfiguration cors = new CorsConfiguration();
-        cors.setAllowedOrigins(origenes);
+        // Patrones y no orígenes fijos: así SGA_CORS_ORIGENES admite comodines como https://*.vercel.app
+        cors.setAllowedOriginPatterns(origenes);
         cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         cors.setAllowedHeaders(List.of("*"));
         cors.setExposedHeaders(List.of("Location"));

@@ -11,13 +11,13 @@ interface TramoFila { diasMinimo: number; diasMaximo: number; porcentajeRetencio
 // Parámetros del alojamiento (PUT /api/alojamiento/parametros). Los servicios adicionales se
 // editan como filas de nombre y precio, no como JSON.
 export function AdminAlojamiento() {
-  const [formulario, setFormulario] = useState({ direccion: '', latitud: '', longitud: '', normasConvivencia: '', horaEntrada: '14:00', horaSalida: '11:00', horaLimiteNoShow: '20:00', horasPreparacion: 3, horasPlazoConfirmacion: 1, edadUmbralFacturable: 5, exigeAnticipo: true, porcentajeAnticipo: 50 });
+  const [formulario, setFormulario] = useState({ direccion: '', latitud: '', longitud: '', normasConvivencia: '', horaEntrada: '14:00', horaSalida: '11:00', horaLimiteNoShow: '20:00', horasPreparacion: 3, horasPlazoConfirmacion: 1, edadUmbralFacturable: 5, exigeAnticipo: true, porcentajeAnticipo: 50, recargoMascota: 0 });
   const [servicios, setServicios] = useState<ServicioFila[]>([]);
   const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
     obtenerParametrosAlojamiento().then((datos) => {
-      setFormulario((actual) => ({ ...actual, direccion: datos.direccion, latitud: String(datos.latitud), longitud: String(datos.longitud), normasConvivencia: datos.normasConvivencia, horaEntrada: datos.horaEntrada?.slice(0, 5) ?? '', horaSalida: datos.horaSalida?.slice(0, 5) ?? '', horaLimiteNoShow: datos.horaLimiteNoShow?.slice(0, 5) ?? '', horasPreparacion: datos.minutosPreparacion / 60, horasPlazoConfirmacion: datos.horasPlazoConfirmacion, edadUmbralFacturable: datos.edadUmbralFacturable, exigeAnticipo: datos.exigeAnticipo, porcentajeAnticipo: datos.porcentajeAnticipo }));
+      setFormulario((actual) => ({ ...actual, direccion: datos.direccion, latitud: String(datos.latitud), longitud: String(datos.longitud), normasConvivencia: datos.normasConvivencia, horaEntrada: datos.horaEntrada?.slice(0, 5) ?? '', horaSalida: datos.horaSalida?.slice(0, 5) ?? '', horaLimiteNoShow: datos.horaLimiteNoShow?.slice(0, 5) ?? '', horasPreparacion: datos.minutosPreparacion / 60, horasPlazoConfirmacion: datos.horasPlazoConfirmacion, edadUmbralFacturable: datos.edadUmbralFacturable, exigeAnticipo: datos.exigeAnticipo, porcentajeAnticipo: datos.porcentajeAnticipo, recargoMascota: datos.recargoMascota ?? 0 }));
       setServicios((datos.serviciosAdicionales ?? []).map((s: ServicioFila) => ({ nombre: s.nombre, valor: s.valor })));
     }).catch((e: unknown) => void notificarError(mensajeDeError(e)));
   }, []);
@@ -71,7 +71,7 @@ export function AdminAlojamiento() {
             <input id={`aloj-${campo}`} type="time" className="form-control" value={formulario[campo]} onChange={(e) => setFormulario({ ...formulario, [campo]: e.target.value })} />
           </div>
         ))}
-        {(['horasPreparacion', 'horasPlazoConfirmacion', 'edadUmbralFacturable', 'porcentajeAnticipo'] as const).map((campo) => (
+        {(['horasPreparacion', 'horasPlazoConfirmacion', 'edadUmbralFacturable', 'porcentajeAnticipo', 'recargoMascota'] as const).map((campo) => (
           <div key={campo} className="col-6 col-md-3">
             <label className="form-label" htmlFor={`aloj-${campo}`}>{ETIQUETA_CAMPO[campo] ?? campo}</label>
             <input id={`aloj-${campo}`} type="number" min="0" max={campo === 'porcentajeAnticipo' ? 100 : undefined} className="form-control" value={formulario[campo]}
