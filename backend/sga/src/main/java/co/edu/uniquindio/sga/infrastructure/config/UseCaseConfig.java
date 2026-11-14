@@ -16,6 +16,7 @@ import co.edu.uniquindio.sga.application.usecase.ConfirmarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarAlojamientoUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarDisponibilidadUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarFolioUseCase;
+import co.edu.uniquindio.sga.application.usecase.ConsultarHistorialPoliticasCancelacionUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarReservaUseCase;
 import co.edu.uniquindio.sga.application.usecase.ConsultarReservasUseCase;
 import co.edu.uniquindio.sga.application.usecase.CorregirMovimientoUseCase;
@@ -26,6 +27,7 @@ import co.edu.uniquindio.sga.application.usecase.GestionarApartamentoUseCase;
 import co.edu.uniquindio.sga.application.usecase.GestionarBloqueoUseCase;
 import co.edu.uniquindio.sga.application.usecase.GestionarTemporadasTarifasUseCase;
 import co.edu.uniquindio.sga.application.usecase.ModificarReservaUseCase;
+import co.edu.uniquindio.sga.application.usecase.NotificarRetrasoUseCase;
 import co.edu.uniquindio.sga.application.usecase.PublicarPoliticaCancelacionUseCase;
 import co.edu.uniquindio.sga.application.usecase.RecibirReservaExternaUseCase;
 import co.edu.uniquindio.sga.application.usecase.RegistrarCargoUseCase;
@@ -71,7 +73,8 @@ import org.springframework.context.annotation.Configuration;
  * beans (los repositorios @Repository en memoria y los servicios de
  * DomainServiceConfig) y se los pasa al constructor.
  *
- * Los parámetros van por el tipo de la INTERFAZ del dominio (ReservaRepository),
+ * Los parámetros van por el tipo de la INTERFAZ del dominio
+ * (ReservaRepository),
  * nunca por la clase en memoria. Cuando llegue JPA solo cambia qué clase lleva
  * @Repository; esta configuración no se toca.
  */
@@ -163,6 +166,11 @@ public class UseCaseConfig {
             NoShowService noShowService,
             AlojamientoRepository alojamientoRepository) {
         return new DeclararNoShowUseCase(reservaRepository, folioRepository, noShowService, alojamientoRepository);
+    }
+
+    @Bean
+    public NotificarRetrasoUseCase notificarRetrasoUseCase(ReservaRepository reservaRepository) {
+        return new NotificarRetrasoUseCase(reservaRepository);
     }
 
     // ---------- Estancia (llegada y salida) ----------
@@ -261,9 +269,10 @@ public class UseCaseConfig {
     }
 
     @Bean
-    public PublicarPoliticaCancelacionUseCase publicarPoliticaCancelacionUseCase(AlojamientoRepository alojamientoRepository,
+    public PublicarPoliticaCancelacionUseCase publicarPoliticaCancelacionUseCase(
+            AlojamientoRepository alojamientoRepository,
             PoliticaCancelacionRepository politicaCancelacionRepository) {
-        return new PublicarPoliticaCancelacionUseCase(alojamientoRepository,politicaCancelacionRepository);
+        return new PublicarPoliticaCancelacionUseCase(alojamientoRepository, politicaCancelacionRepository);
     }
 
     // ---------- Canales externos ----------
@@ -358,8 +367,7 @@ public class UseCaseConfig {
                 disponibilidadService,
                 temporadaRepository,
                 tarifaRepository,
-                cotizadorService
-        );
+                cotizadorService);
     }
 
     @Bean
@@ -367,6 +375,12 @@ public class UseCaseConfig {
             FolioRepository folioRepository,
             ReservaRepository reservaRepository) {
         return new ConsultarFolioUseCase(folioRepository, reservaRepository);
+    }
+
+    @Bean
+    public ConsultarHistorialPoliticasCancelacionUseCase consultarHistorialPoliticasCancelacionUseCase(
+            PoliticaCancelacionRepository politicaCancelacionRepository) {
+        return new ConsultarHistorialPoliticasCancelacionUseCase(politicaCancelacionRepository);
     }
 
     // ---------- Canal externo (7.8) ----------

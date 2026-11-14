@@ -7,7 +7,7 @@ import { obtenerToken } from './sesion';
 // Sin Content-Type fijo: Axios pone application/json para objetos
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 10_000,
+  timeout: 70_000,
 });
 
 // Las rutas /auth/** son públicas: no llevan token y su 401 es "credenciales incorrectas"

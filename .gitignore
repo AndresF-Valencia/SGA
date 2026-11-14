@@ -38,3 +38,7 @@ Thumbs.db
 
 # ---------- Secretos locales (API key del chatbot) ----------
 application-local.properties
+
+# ---------- Archivos de prueba locales ----------
+log.txt
+.env.local

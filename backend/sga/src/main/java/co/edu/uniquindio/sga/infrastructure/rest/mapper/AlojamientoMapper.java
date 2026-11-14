@@ -46,7 +46,8 @@ public interface AlojamientoMapper {
         return new NormasConvivencia(request.normasConvivencia());
     }
 
-    // Convierte los servicios adicionales del request en objetos de valor (lista vacía si no hay).
+    // Convierte los servicios adicionales del request en objetos de valor (lista
+    // vacía si no hay).
     default List<ServicioAdicional> aServiciosAdicionales(ConfigurarParametrosAlojamientoRequest request) {
         if (request.serviciosAdicionales() == null) {
             return List.of();
@@ -71,7 +72,9 @@ public interface AlojamientoMapper {
         return new UmbralEdadFacturable(request.edadUmbralFacturable());
     }
 
-    /** ==================== CONVERSIONES DE OBJETOS DE VALOR ==================== */
+    /**
+     * ==================== CONVERSIONES DE OBJETOS DE VALOR ====================
+     */
 
     // El dominio almacena el tiempo en horas y la respuesta lo expone en minutos.
     default int aMinutos(TiempoPreparacion tiempoPreparacion) {
@@ -84,5 +87,9 @@ public interface AlojamientoMapper {
 
     default int aAnios(UmbralEdadFacturable umbralEdadFacturable) {
         return umbralEdadFacturable == null ? 0 : umbralEdadFacturable.anios();
+    }
+
+    default int aPesos(Dinero dinero) {
+        return dinero == null ? 0 : dinero.valor().intValueExact();
     }
 }
